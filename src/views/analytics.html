@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RestaurantOS - Executive Sales Analytics & Gemini AI</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <link rel="stylesheet" href="../styles/tokens.css">
+  <link rel="stylesheet" href="../styles/components.css">
+
+  <style>
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .metric-card {
+      background: var(--bg-dark-surface);
+      border: 1px solid var(--bg-dark-border);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      backdrop-filter: var(--glass-backdrop);
+    }
+
+    .metric-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--accent-amber);
+      margin-top: 6px;
+    }
+
+    .ai-insight-box {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(236, 72, 153, 0.15) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-top: 24px;
+    }
+
+    @media (max-width: 860px) {
+      .metrics-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-glow bg-glow-amber"></div>
+  <div class="bg-glow bg-glow-pink"></div>
+
+  <main class="app-container" style="max-width: 1180px;">
+    <!-- Analytics Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon" style="background: var(--accent-gradient-secondary);">
+          <i class="fa-solid fa-chart-line"></i>
+        </div>
+        <div class="brand-text">
+          <h1>Restaurant<span>OS</span> <small style="font-size: 14px; color: var(--text-secondary); font-weight: 500;">/ Sales Analytics & AI</small></h1>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 12px;">
+        <a href="../../index.html" class="btn-chip btn-chip-otp" style="text-decoration: none; padding: 10px 16px;">
+          <i class="fa-solid fa-credit-card"></i> Payment Enclave
+        </a>
+        <a href="pos.html" class="btn-chip btn-chip-success" style="text-decoration: none; padding: 10px 16px;">
+          <i class="fa-solid fa-cash-register"></i> POS Terminal
+        </a>
+      </div>
+    </header>
+
+    <!-- Key Executive Metrics -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <span style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">Gross Revenue Today</span>
+        <div class="metric-value">$1,842.50</div>
+      </div>
+      <div class="metric-card">
+        <span style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">Total Orders Fulfilled</span>
+        <div class="metric-value" style="color: #fff;">42 Orders</div>
+      </div>
+      <div class="metric-card">
+        <span style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">Average Table Check</span>
+        <div class="metric-value" style="color: var(--color-success);">$43.86</div>
+      </div>
+      <div class="metric-card">
+        <span style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">Payment Approval Rate</span>
+        <div class="metric-value" style="color: #a5b4fc;">98.4%</div>
+      </div>
+    </div>
+
+    <!-- Gemini AI Recommendations Panel -->
+    <div class="ai-insight-box">
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+        <i class="fa-solid fa-wand-magic-sparkles" style="font-size: 20px; color: var(--accent-pink);"></i>
+        <h3 style="font-size: 18px; font-weight: 700;">Gemini AI Intelligence Insights</h3>
+        <span class="badge sandbox-badge" style="margin-left: auto;">Gemini 2.5 Active</span>
+      </div>
+      <p style="font-size: 14px; line-height: 1.6; color: var(--text-primary); margin-bottom: 14px;" id="ai-summary">
+        Today's gross revenue reached <strong>$1,842.50</strong>, led by strong customer demand in <strong>Signature Starters & Steaks</strong>.
+      </p>
+      <div style="background: rgba(11, 15, 25, 0.6); padding: 16px; border-radius: var(--radius-md); border-left: 4px solid var(--accent-indigo); font-size: 13px; color: #a5b4fc;">
+        <i class="fa-solid fa-lightbulb" style="margin-right: 6px;"></i>
+        <strong id="ai-tip">Gemini AI Recommendation:</strong> Run a 10% promotional beverage bundle on Wagyu Sliders & Artisanal Cocktails during dinner rush (7 PM - 9 PM) to boost ticket sizes by an estimated 14%.
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { geminiService } from '../services/geminiService.js';
+    document.addEventListener('DOMContentLoaded', async () => {
+      const insight = await geminiService.generateDailyRevenueInsight(1842.50, 'Mains & Steaks');
+      document.getElementById('ai-summary').innerHTML = insight.summary;
+      document.getElementById('ai-tip').textContent = insight.aiTip;
+    });
+  </script>
+</body>
+</html>
