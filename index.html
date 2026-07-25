@@ -6,18 +6,18 @@
   <title>RestaurantOS — One Intelligent Operating System for Modern Restaurants</title>
   <meta name="description" content="AI-Powered Smart Restaurant Operating System connecting Customers, Waitstaff, Kitchen, Inventory, and Management. Built for VibeAthon 6.0 by Team HexCore.">
   
-  <!-- Fonts & CDN Icons -->
+  <!-- Sentry Design System Fonts & FontAwesome -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  <!-- Component & Landing Styles -->
+  <!-- Component & Theme Styles -->
   <link rel="stylesheet" href="src/styles/tokens.css">
   <link rel="stylesheet" href="src/styles/components.css">
 
   <style>
-    /* SaaS Landing Page Styling */
+    /* Sentry Landing Page Layout */
     .hero-section {
       text-align: center;
       padding: 60px 20px 40px;
@@ -30,61 +30,58 @@
       align-items: center;
       gap: 8px;
       padding: 6px 16px;
-      background: rgba(99, 102, 241, 0.15);
-      border: 1px solid rgba(99, 102, 241, 0.3);
-      color: #a5b4fc;
-      border-radius: 30px;
-      font-size: 13px;
+      background: rgba(194, 239, 78, 0.12);
+      border: 1px solid rgba(194, 239, 78, 0.3);
+      color: var(--color-accent-lime);
+      border-radius: var(--radius-xl);
+      font-size: 12px;
       font-weight: 600;
-      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.2px;
+      margin-bottom: 24px;
     }
 
     .hero-title {
-      font-size: 48px;
-      font-weight: 800;
-      letter-spacing: -1.5px;
+      font-family: var(--font-display);
+      font-size: 52px;
+      font-weight: 700;
+      letter-spacing: -1px;
       line-height: 1.15;
-      margin-bottom: 20px;
-    }
-
-    .hero-title span {
-      background: var(--accent-gradient);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      margin-bottom: 24px;
+      color: var(--text-primary);
     }
 
     .hero-desc {
       font-size: 18px;
       color: var(--text-secondary);
       line-height: 1.6;
-      margin-bottom: 36px;
-      max-width: 760px;
+      margin-bottom: 40px;
+      max-width: 780px;
       margin-left: auto;
       margin-right: auto;
     }
 
     .demo-accounts-bar {
-      background: rgba(18, 26, 41, 0.85);
-      border: 1px solid var(--accent-amber);
-      border-radius: var(--radius-lg);
-      padding: 20px 24px;
+      background: var(--color-ink-deep);
+      border: 1px solid var(--border-violet);
+      border-radius: var(--radius-xl);
+      padding: 24px;
       margin: 0 auto 50px;
       max-width: 900px;
-      backdrop-filter: var(--glass-backdrop);
-      box-shadow: var(--shadow-glow);
+      box-shadow: var(--shadow-card);
     }
 
     .demo-title {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
-      color: var(--accent-amber);
+      color: var(--color-accent-lime);
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.2px;
     }
 
     .demo-buttons {
@@ -95,13 +92,15 @@
     }
 
     .demo-btn {
-      background: var(--bg-dark-input);
-      border: 1px solid var(--bg-dark-border);
+      background: var(--color-primary);
+      border: 1px solid var(--border-violet);
       color: var(--text-primary);
       padding: 10px 16px;
-      border-radius: var(--radius-sm);
-      font-size: 13px;
+      border-radius: var(--radius-md);
+      font-size: 12px;
       font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.2px;
       text-decoration: none;
       display: inline-flex;
       align-items: center;
@@ -110,31 +109,34 @@
     }
 
     .demo-btn:hover {
-      border-color: var(--accent-amber);
-      background: var(--bg-dark-input-focus);
+      border-color: var(--color-accent-lime);
+      color: var(--color-accent-lime);
       transform: translateY(-2px);
     }
 
     .features-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
+      gap: 24px;
       margin-bottom: 60px;
     }
 
     .feature-card {
-      background: var(--bg-dark-surface);
-      border: 1px solid var(--bg-dark-border);
-      border-radius: var(--radius-lg);
+      background: var(--color-ink-deep);
+      border: 1px solid var(--border-violet);
+      border-radius: var(--radius-xl);
       padding: 28px;
       text-align: left;
-      backdrop-filter: var(--glass-backdrop);
       transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
 
     .feature-card:hover {
-      border-color: var(--accent-amber);
+      border-color: var(--color-accent-lime);
       transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.4);
     }
 
     .feature-icon {
@@ -144,25 +146,48 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 22px;
+      font-size: 20px;
       margin-bottom: 18px;
-      color: #fff;
+      background: var(--color-primary);
+      border: 1px solid var(--border-violet);
+      color: var(--color-accent-lime);
     }
 
     .ft-title {
-      font-size: 16px;
+      font-family: var(--font-display);
+      font-size: 18px;
       font-weight: 700;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
+      color: var(--text-primary);
     }
 
     .ft-desc {
-      font-size: 13px;
+      font-size: 14px;
       color: var(--text-secondary);
       line-height: 1.5;
+
+    }
+
+    .ft-link {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.2px;
+      color: var(--color-accent-lime);
+      text-decoration: none;
+      margin-top: 18px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: gap 0.2s ease;
+    }
+
+    .ft-link:hover {
+      gap: 10px;
     }
 
     @media (max-width: 900px) {
-      .hero-title { font-size: 34px; }
+      .hero-title { font-size: 38px; }
       .features-grid { grid-template-columns: 1fr; }
     }
   </style>
@@ -171,39 +196,42 @@
   <div class="bg-glow bg-glow-amber"></div>
   <div class="bg-glow bg-glow-pink"></div>
 
-  <!-- Global Master Navigation -->
-  <header style="background: rgba(10, 14, 23, 0.9); border-bottom: 1px solid var(--bg-dark-border); padding: 16px 24px; position: sticky; top: 0; z-index: 100; backdrop-filter: var(--glass-backdrop);">
-    <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
-      <a href="index.html" style="display: flex; align-items: center; gap: 12px; text-decoration: none; color: #fff;">
-        <div class="brand-icon" style="width: 38px; height: 38px; font-size: 18px;"><i class="fa-solid fa-utensils"></i></div>
-        <span style="font-weight: 800; font-size: 20px;">Restaurant<span style="color: var(--accent-amber);">OS</span></span>
+  <!-- Global Sentry Navigation -->
+  <header class="sentry-navbar">
+    <div class="sentry-navbar-inner">
+      <a href="index.html" class="sentry-brand">
+        <div class="brand-logo-icon"><i class="fa-solid fa-utensils"></i></div>
+        <span>Restaurant<span class="brand-highlight">OS</span></span>
       </a>
 
-      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-        <a href="src/views/digital_twin.html" class="demo-btn" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.3); color: #34d399;">
-          <i class="fa-solid fa-cubes"></i> Digital Twin Floor Map
+      <div class="sentry-nav-links">
+        <a href="src/views/digital_twin.html" class="btn-ghost-on-dark">
+          <i class="fa-solid fa-cubes"></i> Digital Twin
         </a>
-        <a href="src/views/opscopilot.html" class="demo-btn" style="background: rgba(99, 102, 241, 0.15); border-color: rgba(99, 102, 241, 0.3); color: #a5b4fc;">
+        <a href="src/views/opscopilot.html" class="btn-ghost-on-dark">
           <i class="fa-solid fa-robot"></i> OpsCopilot AI
         </a>
-        <a href="src/views/inventory.html" class="demo-btn">
+        <a href="src/views/inventory.html" class="btn-ghost-on-dark">
           <i class="fa-solid fa-boxes-stacked"></i> Inventory
         </a>
-        <a href="src/views/queue.html" class="demo-btn">
+        <a href="src/views/queue.html" class="btn-ghost-on-dark">
           <i class="fa-solid fa-people-group"></i> Virtual Queue
+        </a>
+        <a href="src/views/pos.html" class="btn-sentry">
+          <i class="fa-solid fa-cash-register"></i> Launch POS
         </a>
       </div>
     </div>
   </header>
 
-  <main class="app-container" style="max-width: 1200px;">
+  <main class="app-container">
     <!-- Hero Section -->
     <section class="hero-section">
       <div class="hero-tag">
-        <i class="fa-solid fa-trophy" style="color: var(--accent-amber);"></i> VibeAthon 6.0 Hackathon Submission • Team HexCore
+        <i class="fa-solid fa-trophy"></i> VibeAthon 6.0 Hackathon Submission • Team HexCore
       </div>
       <h1 class="hero-title">
-        One Intelligent <span>Operating System</span> for Modern Restaurants
+        One Intelligent <span class="chip-lime-keyword">OPERATING SYSTEM</span> for Modern Restaurants
       </h1>
       <p class="hero-desc">
         Eliminate communication bottlenecks between customers, waiters, chefs, and managers. RestaurantOS connects live inventory, table reservations, POS ordering, KDS tickets, 3D payment security, and Gemini AI ops intelligence into one real-time command center.
@@ -216,16 +244,16 @@
         </div>
         <div class="demo-buttons">
           <a href="src/views/payment.html" class="demo-btn">
-            <i class="fa-solid fa-user" style="color: var(--color-success);"></i> Customer (<code>customer@restaurantos.demo</code>)
+            <i class="fa-solid fa-user" style="color: var(--color-accent-lime);"></i> Customer (<code>customer@restaurantos.demo</code>)
           </a>
           <a href="src/views/pos.html" class="demo-btn">
-            <i class="fa-solid fa-concierge-bell" style="color: var(--accent-amber);"></i> Waiter (<code>waiter@restaurantos.demo</code>)
+            <i class="fa-solid fa-concierge-bell" style="color: var(--color-accent-pink);"></i> Waiter (<code>waiter@restaurantos.demo</code>)
           </a>
           <a href="src/views/kds.html" class="demo-btn">
-            <i class="fa-solid fa-fire" style="color: var(--color-danger);"></i> Kitchen (<code>kitchen@restaurantos.demo</code>)
+            <i class="fa-solid fa-fire" style="color: var(--color-warning);"></i> Kitchen (<code>kitchen@restaurantos.demo</code>)
           </a>
           <a href="src/views/analytics.html" class="demo-btn">
-            <i class="fa-solid fa-user-tie" style="color: var(--accent-indigo);"></i> Manager (<code>manager@restaurantos.demo</code>)
+            <i class="fa-solid fa-user-tie" style="color: var(--color-accent-violet);"></i> Manager (<code>manager@restaurantos.demo</code>)
           </a>
         </div>
       </div>
@@ -235,69 +263,88 @@
     <section class="features-grid">
       <!-- 1. Digital Twin Floor Plan -->
       <div class="feature-card">
-        <div class="feature-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
-          <i class="fa-solid fa-map-location-dot"></i>
+        <div>
+          <div class="feature-icon">
+            <i class="fa-solid fa-map-location-dot"></i>
+          </div>
+          <h3 class="ft-title">Digital Twin Floor Plan Map</h3>
+          <p class="ft-desc">Real-time interactive restaurant floor map. Track table occupancy, active meal times, seating capacity, and bottleneck health scores (86/100).</p>
         </div>
-        <h3 class="ft-title">Digital Twin Floor Plan Map</h3>
-        <p class="ft-desc">Real-time interactive restaurant floor map. Track table occupancy, active meal times, seating capacity, and bottleneck health scores (86/100).</p>
-        <a href="src/views/digital_twin.html" style="color: var(--accent-amber); font-weight: 700; text-decoration: none; font-size: 13px; margin-top: 14px; display: inline-block;">View Live Floor Map →</a>
+        <a href="src/views/digital_twin.html" class="ft-link">View Live Floor Map →</a>
       </div>
 
       <!-- 2. OpsCopilot AI -->
       <div class="feature-card">
-        <div class="feature-icon" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);">
-          <i class="fa-solid fa-wand-magic-sparkles"></i>
+        <div>
+          <div class="feature-icon">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+          </div>
+          <h3 class="ft-title">OpsCopilot AI Manager Assistant</h3>
+          <p class="ft-desc">Context-aware Gemini AI assistant connected to live inventory, menu items, peak hour demand, and stockout risk alerts.</p>
         </div>
-        <h3 class="ft-title">OpsCopilot AI Manager Assistant</h3>
-        <p class="ft-desc">Context-aware Gemini AI assistant connected to live inventory, menu items, peak hour demand, and stockout risk alerts.</p>
-        <a href="src/views/opscopilot.html" style="color: var(--accent-amber); font-weight: 700; text-decoration: none; font-size: 13px; margin-top: 14px; display: inline-block;">Ask OpsCopilot AI →</a>
+        <a href="src/views/opscopilot.html" class="ft-link">Ask OpsCopilot AI →</a>
       </div>
 
       <!-- 3. Smart Inventory & Stockout Predictor -->
       <div class="feature-card">
-        <div class="feature-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
-          <i class="fa-solid fa-boxes-stacked"></i>
+        <div>
+          <div class="feature-icon">
+            <i class="fa-solid fa-boxes-stacked"></i>
+          </div>
+          <h3 class="ft-title">AI Inventory Predictor</h3>
+          <p class="ft-desc">Automatic ingredient deduction when orders are placed. Generates stockout warnings and auto-calculates reorder quantities before dinner rush.</p>
         </div>
-        <h3 class="ft-title">AI Inventory Predictor</h3>
-        <p class="ft-desc">Automatic ingredient deduction when orders are placed. Generates stockout warnings and auto-calculates reorder quantities before dinner rush.</p>
-        <a href="src/views/inventory.html" style="color: var(--accent-amber); font-weight: 700; text-decoration: none; font-size: 13px; margin-top: 14px; display: inline-block;">View Inventory Dashboard →</a>
+        <a href="src/views/inventory.html" class="ft-link">View Inventory Dashboard →</a>
       </div>
 
       <!-- 4. POS Terminal -->
       <div class="feature-card">
-        <div class="feature-icon" style="background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);">
-          <i class="fa-solid fa-cash-register"></i>
+        <div>
+          <div class="feature-icon">
+            <i class="fa-solid fa-cash-register"></i>
+          </div>
+          <h3 class="ft-title">Point of Sale (POS) Terminal</h3>
+          <p class="ft-desc">High-speed waitstaff ordering interface with table selector, category pill filters, cart quantity modifiers, and instant KDS order dispatch.</p>
         </div>
-        <h3 class="ft-title">Point of Sale (POS) Terminal</h3>
-        <p class="ft-desc">High-speed waitstaff ordering interface with table selector, category pill filters, cart quantity modifiers, and instant KDS order dispatch.</p>
-        <a href="src/views/pos.html" style="color: var(--accent-amber); font-weight: 700; text-decoration: none; font-size: 13px; margin-top: 14px; display: inline-block;">Open POS Terminal →</a>
+        <a href="src/views/pos.html" class="ft-link">Open POS Terminal →</a>
       </div>
 
       <!-- 5. Kitchen Display System -->
       <div class="feature-card">
-        <div class="feature-icon" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
-          <i class="fa-solid fa-fire"></i>
+        <div>
+          <div class="feature-icon">
+            <i class="fa-solid fa-fire"></i>
+          </div>
+          <h3 class="ft-title">Kitchen Display System (KDS)</h3>
+          <p class="ft-desc">Live ticket display for kitchen chefs. Color-coded progression badges (`NEW` → `PREPARING` → `READY`) with order timers.</p>
         </div>
-        <h3 class="ft-title">Kitchen Display System (KDS)</h3>
-        <p class="ft-desc">Live ticket display for kitchen chefs. Color-coded progression badges (`NEW` → `PREPARING` → `READY`) with order timers.</p>
-        <a href="src/views/kds.html" style="color: var(--accent-amber); font-weight: 700; text-decoration: none; font-size: 13px; margin-top: 14px; display: inline-block;">Open Kitchen KDS →</a>
+        <a href="src/views/kds.html" class="ft-link">Open Kitchen KDS →</a>
       </div>
 
       <!-- 6. 3D Payment Security Enclave -->
       <div class="feature-card">
-        <div class="feature-icon" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
-          <i class="fa-solid fa-shield-halved"></i>
+        <div>
+          <div class="feature-icon">
+            <i class="fa-solid fa-shield-halved"></i>
+          </div>
+          <h3 class="ft-title">3D Payment Security Enclave</h3>
+          <p class="ft-desc">Risk-free sandbox payment gateway with 3D card flip visualizer, Luhn checksum validation, 3DS OTP passcode (`123456`), and receipts.</p>
         </div>
-        <h3 class="ft-title">3D Payment Security Enclave</h3>
-        <p class="ft-desc">Risk-free sandbox payment gateway with 3D card flip visualizer, Luhn checksum validation, 3DS OTP passcode (`123456`), and receipts.</p>
-        <a href="src/views/payment.html" style="color: var(--accent-amber); font-weight: 700; text-decoration: none; font-size: 13px; margin-top: 14px; display: inline-block;">Test Payment Enclave →</a>
+        <a href="src/views/payment.html" class="ft-link">Test Payment Enclave →</a>
       </div>
     </section>
 
+    <!-- Sentry Signature Lime Squiggle Divider -->
+    <div class="sentry-squiggle"></div>
+
     <!-- Team Footer -->
-    <footer style="text-align: center; border-top: 1px solid var(--bg-dark-border); padding: 32px 0; color: var(--text-tertiary); font-size: 13px;">
-      <p style="margin-bottom: 8px;"><strong>RestaurantOS</strong> — Built for <strong>VibeAthon 6.0 Hackathon</strong></p>
-      <p>Engineered with pride by <strong>Team HexCore</strong>: Saptak Sarathi Chakroborty • Shrinivas Ghosh • Amritanshu Shaw • Ritam Karmakar</p>
+    <footer class="sentry-footer-inner">
+      <div>
+        <strong style="color: var(--text-primary); font-family: var(--font-display);">RestaurantOS</strong> — Built for <strong>VibeAthon 6.0 Hackathon</strong>
+      </div>
+      <div>
+        Engineered by <strong>Team HexCore</strong>: Saptak Sarathi Chakroborty • Shrinivas Ghosh • Amritanshu Shaw • Ritam Karmakar
+      </div>
     </footer>
   </main>
 </body>

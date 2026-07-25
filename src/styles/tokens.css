@@ -1,49 +1,73 @@
 /* ==========================================================================
-   RestaurantOS - Design Tokens & Core Theme Variables
+   RestaurantOS - Sentry Design System Tokens
    ========================================================================== */
 
 :root {
-  /* Color Palette - Dark Premium Theme */
-  --bg-dark-primary: #0a0e17;
-  --bg-dark-surface: rgba(18, 26, 41, 0.75);
-  --bg-dark-card: rgba(23, 33, 52, 0.65);
-  --bg-dark-border: rgba(255, 255, 255, 0.08);
-  --bg-dark-input: rgba(11, 15, 25, 0.7);
-  --bg-dark-input-focus: rgba(28, 41, 66, 0.9);
+  /* Brand & Core Palette (Sentry Inspired) */
+  --color-primary: #150f23;
+  --color-ink-deep: #1f1633;
+  --color-on-primary: #ffffff;
+  --color-accent-lime: #c2ef4e;
+  --color-accent-pink: #fa7faa;
+  --color-accent-violet: #6a5fc1;
+  --color-accent-violet-deep: #422082;
+  --color-accent-violet-mid: #79628c;
 
-  /* Accent Gradients & Colors */
-  --accent-amber: #f59e0b;
-  --accent-amber-glow: rgba(245, 158, 11, 0.25);
-  --accent-indigo: #6366f1;
-  --accent-pink: #ec4899;
-  --accent-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%);
-  --accent-gradient-secondary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+  /* Canvas & Surface Colors */
+  --bg-dark-primary: #150f23;
+  --bg-dark-surface: #1f1633;
+  --bg-dark-card: #150f23;
+  --bg-dark-input: #150f23;
+  --bg-dark-input-focus: #1f1633;
+
+  /* Borders & Hairlines */
+  --border-violet: #362d59;
+  --border-cool: #cfcfdb;
+  --border-cloud: #e5e7eb;
+  --bg-dark-border: #362d59;
+
+  /* Text & Foreground Tokens */
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.72);
+  --text-tertiary: rgba(255, 255, 255, 0.45);
+  --text-faint: rgba(255, 255, 255, 0.18);
+  --ink-deep: #1f1633;
+
+  /* Gradients & Accents */
+  --accent-amber: #c2ef4e; /* Sentry Electric Lime */
+  --accent-lime: #c2ef4e;
+  --accent-pink: #fa7faa;
+  --accent-indigo: #6a5fc1;
+  --accent-gradient: linear-gradient(135deg, #c2ef4e 0%, #a8e028 100%);
+  --accent-gradient-secondary: linear-gradient(135deg, #6a5fc1 0%, #422082 100%);
 
   /* Status Colors */
-  --color-success: #10b981;
-  --color-success-bg: rgba(16, 185, 129, 0.15);
-  --color-danger: #ef4444;
-  --color-danger-bg: rgba(239, 68, 68, 0.15);
+  --color-success: #c2ef4e;
+  --color-success-bg: rgba(194, 239, 78, 0.15);
+  --color-danger: #fa7faa;
+  --color-danger-bg: rgba(250, 127, 170, 0.15);
   --color-warning: #f59e0b;
-  --color-info: #3b82f6;
+  --color-info: #6a5fc1;
 
   /* Typography */
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-tertiary: #64748b;
+  --font-sans: 'Rubik', -apple-system, system-ui, sans-serif;
+  --font-display: 'Space Grotesk', 'Rubik', system-ui, sans-serif;
+  --font-mono: 'Monaco', 'Menlo', 'JetBrains Mono', monospace;
 
-  /* Border Radii */
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --radius-xl: 28px;
+  /* Radii Scale (Sentry Standard) */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-xxl: 18px;
+  --radius-full: 9999px;
 
-  /* Shadows & Glass Effects */
-  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
-  --shadow-glow: 0 8px 32px rgba(245, 158, 11, 0.25);
-  --glass-backdrop: blur(16px);
+  /* Shadows & Depth */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-glow: 0 0 20px rgba(194, 239, 78, 0.15);
+  --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+  --glass-backdrop: blur(12px);
 }
 
 /* Global Reset */
@@ -60,4 +84,5 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   position: relative;
+  line-height: 1.5;
 }

@@ -7,7 +7,7 @@
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <link rel="stylesheet" href="../styles/tokens.css">
@@ -22,11 +22,10 @@
     }
 
     .table-twin-card {
-      background: var(--bg-dark-surface);
-      border: 1px solid var(--bg-dark-border);
-      border-radius: var(--radius-lg);
+      background: var(--color-ink-deep);
+      border: 1px solid var(--border-violet);
+      border-radius: var(--radius-xl);
       padding: 24px;
-      backdrop-filter: var(--glass-backdrop);
       transition: all 0.2s ease;
       cursor: pointer;
       position: relative;
@@ -34,19 +33,20 @@
 
     .table-twin-card:hover {
       transform: translateY(-3px);
-      border-color: var(--accent-amber);
+      border-color: var(--color-accent-lime);
+      box-shadow: var(--shadow-card);
     }
 
-    .status-available { border-top: 4px solid var(--color-success); }
-    .status-occupied { border-top: 4px solid var(--accent-amber); }
-    .status-preparing { border-top: 4px solid #3b82f6; }
-    .status-pending { border-top: 4px solid #ec4899; }
-    .status-cleaning { border-top: 4px solid #94a3b8; }
+    .status-available { border-top: 4px solid var(--color-accent-lime); }
+    .status-occupied { border-top: 4px solid var(--color-accent-pink); }
+    .status-preparing { border-top: 4px solid var(--color-accent-violet); }
+    .status-pending { border-top: 4px solid var(--color-warning); }
+    .status-cleaning { border-top: 4px solid var(--border-cool); }
 
     .health-score-banner {
-      background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(99, 102, 241, 0.15) 100%);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      border-radius: var(--radius-lg);
+      background: var(--color-ink-deep);
+      border: 1px solid var(--border-violet);
+      border-radius: var(--radius-xl);
       padding: 24px;
       display: flex;
       justify-content: space-between;
@@ -58,109 +58,119 @@
       width: 72px;
       height: 72px;
       border-radius: 50%;
-      background: var(--color-success-bg);
-      border: 3px solid var(--color-success);
+      background: var(--color-primary);
+      border: 3px solid var(--color-accent-lime);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 22px;
-      font-weight: 800;
-      color: var(--color-success);
+      font-family: var(--font-mono);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--color-accent-lime);
+    }
+
+    @media (max-width: 860px) {
+      .floorplan-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
   <div class="bg-glow bg-glow-amber"></div>
 
-  <main class="app-container" style="max-width: 1200px;">
-    <!-- Navigation -->
-    <nav style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-dark-surface); border: 1px solid var(--bg-dark-border); padding: 12px 20px; border-radius: var(--radius-lg); margin-bottom: 24px;">
-      <a href="../../index.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #fff;">
-        <i class="fa-solid fa-house" style="color: var(--accent-amber);"></i>
-        <span style="font-weight: 800;">Restaurant<span style="color: var(--accent-amber);">OS</span> Digital Twin</span>
+  <!-- Global Sentry Navigation Bar -->
+  <header class="sentry-navbar">
+    <div class="sentry-navbar-inner">
+      <a href="../../index.html" class="sentry-brand">
+        <div class="brand-logo-icon"><i class="fa-solid fa-utensils"></i></div>
+        <span>Restaurant<span class="brand-highlight">OS</span></span>
       </a>
-      <div style="display: flex; gap: 10px;">
-        <a href="pos.html" class="btn-chip btn-chip-success" style="text-decoration: none;">POS Terminal</a>
-        <a href="kds.html" class="btn-chip btn-chip-otp" style="text-decoration: none;">Kitchen KDS</a>
-        <a href="opscopilot.html" class="btn-chip btn-chip-decline" style="text-decoration: none; color: #f472b6;">OpsCopilot AI</a>
-      </div>
-    </nav>
 
+      <div class="sentry-nav-links">
+        <a href="../../index.html" class="btn-ghost-on-dark"><i class="fa-solid fa-house"></i> Hub</a>
+        <a href="digital_twin.html" class="btn-ghost-on-dark active"><i class="fa-solid fa-cubes"></i> Digital Twin</a>
+        <a href="pos.html" class="btn-ghost-on-dark"><i class="fa-solid fa-cash-register"></i> POS Terminal</a>
+        <a href="kds.html" class="btn-ghost-on-dark"><i class="fa-solid fa-fire"></i> KDS Kitchen</a>
+        <a href="opscopilot.html" class="btn-ghost-on-dark"><i class="fa-solid fa-robot"></i> OpsCopilot</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-container" style="max-width: 1200px; padding-top: 24px;">
     <!-- Health Score Banner -->
     <div class="health-score-banner">
       <div>
-        <div style="font-size: 12px; font-weight: 700; color: var(--color-success); text-transform: uppercase; margin-bottom: 4px;">
+        <div style="font-size: 11px; font-weight: 600; color: var(--color-accent-lime); text-transform: uppercase; letter-spacing: 0.2px; margin-bottom: 6px;">
           <i class="fa-solid fa-heart-pulse"></i> Operational Bottleneck Detection Engine
         </div>
-        <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 6px;">Restaurant Operational Health Score</h2>
-        <p style="font-size: 13px; color: var(--text-secondary);">Kitchen prep efficiency is optimal. Minor 6 min delay detected at Table 04 during payment billing.</p>
+        <h2 style="font-family: var(--font-display); font-size: 24px; font-weight: 700; margin-bottom: 6px;">Restaurant Operational Health Score</h2>
+        <p style="font-size: 14px; color: var(--text-secondary);">Kitchen prep efficiency is optimal. Minor 6 min delay detected at Table 04 during payment billing.</p>
       </div>
       <div class="score-circle">86/100</div>
     </div>
 
     <!-- Digital Twin Floor Plan Map -->
-    <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">
-      <i class="fa-solid fa-map-location-dot"></i> Live Floor Plan (6 Active Dining Tables)
+    <h3 style="font-family: var(--font-display); font-size: 20px; font-weight: 700; margin-bottom: 20px;">
+      <i class="fa-solid fa-map-location-dot" style="color: var(--color-accent-lime);"></i> Live Floor Plan (6 Active Dining Tables)
     </h3>
 
     <div class="floorplan-grid">
       <!-- Table 01 -->
       <div class="table-twin-card status-available">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <strong style="font-size: 18px;">Table 01</strong>
-          <span class="badge badge-success">AVAILABLE</span>
+          <strong style="font-family: var(--font-display); font-size: 18px;">Table 01</strong>
+          <span class="badge sandbox-badge">AVAILABLE</span>
         </div>
-        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">Capacity: 2 Guests • Section: Patio</p>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Capacity: 2 Guests • Section: Patio</p>
         <span style="font-size: 11px; color: var(--text-tertiary);">Ready for seating</span>
       </div>
 
       <!-- Table 02 -->
       <div class="table-twin-card status-occupied">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <strong style="font-size: 18px;">Table 02</strong>
-          <span class="badge sandbox-badge">OCCUPIED</span>
+          <strong style="font-family: var(--font-display); font-size: 18px;">Table 02</strong>
+          <span class="badge" style="background: rgba(250, 127, 170, 0.15); color: var(--color-accent-pink);">OCCUPIED</span>
         </div>
-        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">Party of 4 • Order #ORD-4921</p>
-        <span style="font-size: 11px; color: var(--accent-amber); font-weight: 600;">Seated 34 mins ago</span>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Party of 4 • Order #ORD-4921</p>
+        <span style="font-size: 11px; color: var(--color-accent-pink); font-weight: 600;">Seated 34 mins ago</span>
       </div>
 
       <!-- Table 03 -->
       <div class="table-twin-card status-preparing">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <strong style="font-size: 18px;">Table 03</strong>
-          <span class="badge" style="background: rgba(59, 130, 246, 0.2); color: #3b82f6;">PREPARING</span>
+          <strong style="font-family: var(--font-display); font-size: 18px;">Table 03</strong>
+          <span class="badge" style="background: rgba(106, 95, 193, 0.2); color: var(--color-accent-violet);">PREPARING</span>
         </div>
-        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">Party of 3 • Kitchen KDS Cooking</p>
-        <span style="font-size: 11px; color: #3b82f6; font-weight: 600;">Est. Ready: 6 mins</span>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Party of 3 • Kitchen KDS Cooking</p>
+        <span style="font-size: 11px; color: var(--color-accent-violet); font-weight: 600;">Est. Ready: 6 mins</span>
       </div>
 
       <!-- Table 04 -->
       <div class="table-twin-card status-pending">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <strong style="font-size: 18px;">Table 04</strong>
-          <span class="badge" style="background: rgba(236, 72, 153, 0.2); color: #ec4899;">PAYMENT PENDING</span>
+          <strong style="font-family: var(--font-display); font-size: 18px;">Table 04</strong>
+          <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--color-warning);">PAYMENT PENDING</span>
         </div>
-        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">Party of 6 • Bill Printed ($139.00)</p>
-        <span style="font-size: 11px; color: #ec4899; font-weight: 600;">Waiting for payment</span>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Party of 6 • Bill Printed ($139.00)</p>
+        <span style="font-size: 11px; color: var(--color-warning); font-weight: 600;">Waiting for payment</span>
       </div>
 
       <!-- Table 05 -->
       <div class="table-twin-card status-cleaning">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <strong style="font-size: 18px;">Table 05</strong>
-          <span class="badge" style="background: rgba(148, 163, 184, 0.2); color: #94a3b8;">CLEANING</span>
+          <strong style="font-family: var(--font-display); font-size: 18px;">Table 05</strong>
+          <span class="badge" style="background: rgba(207, 207, 219, 0.2); color: var(--border-cool);">CLEANING</span>
         </div>
-        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">Busser assigned • Table reset</p>
-        <span style="font-size: 11px; color: #94a3b8;">Sanitizing surfaces</span>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Busser assigned • Table reset</p>
+        <span style="font-size: 11px; color: var(--border-cool);">Sanitizing surfaces</span>
       </div>
 
       <!-- Table 06 -->
       <div class="table-twin-card status-available">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <strong style="font-size: 18px;">Table 06</strong>
-          <span class="badge badge-success">AVAILABLE</span>
+          <strong style="font-family: var(--font-display); font-size: 18px;">Table 06</strong>
+          <span class="badge sandbox-badge">AVAILABLE</span>
         </div>
-        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">Capacity: 8 Guests • Main Hall</p>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Capacity: 8 Guests • Main Hall</p>
         <span style="font-size: 11px; color: var(--text-tertiary);">Ready for large group</span>
       </div>
     </div>

@@ -7,7 +7,7 @@
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <link rel="stylesheet" href="../styles/tokens.css">
@@ -22,26 +22,26 @@
     }
 
     .ticket-card {
-      background: var(--bg-dark-surface);
-      border: 1px solid var(--bg-dark-border);
-      border-radius: var(--radius-md);
+      background: var(--color-ink-deep);
+      border: 1px solid var(--border-violet);
+      border-radius: var(--radius-xl);
       padding: 20px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      backdrop-filter: var(--glass-backdrop);
+      box-shadow: var(--shadow-sm);
     }
 
-    .ticket-card.new { border-left: 4px solid var(--accent-amber); }
-    .ticket-card.preparing { border-left: 4px solid #3b82f6; }
-    .ticket-card.ready { border-left: 4px solid var(--color-success); }
+    .ticket-card.new { border-left: 4px solid var(--color-accent-lime); }
+    .ticket-card.preparing { border-left: 4px solid var(--color-accent-violet); }
+    .ticket-card.ready { border-left: 4px solid #10b981; }
 
     .ticket-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding-bottom: 12px;
-      border-bottom: 1px solid var(--bg-dark-border);
+      border-bottom: 1px solid var(--border-violet);
       margin-bottom: 14px;
     }
 
@@ -64,34 +64,31 @@
 <body>
   <div class="bg-glow bg-glow-amber"></div>
 
-  <main class="app-container" style="max-width: 1280px;">
-    <!-- Unified Top Navigation Bar -->
-    <nav style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-dark-surface); border: 1px solid var(--bg-dark-border); padding: 12px 20px; border-radius: var(--radius-lg); margin-bottom: 24px; backdrop-filter: var(--glass-backdrop);">
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <i class="fa-solid fa-utensils" style="color: var(--accent-amber); font-size: 20px;"></i>
-        <span style="font-weight: 800; font-size: 16px;">Restaurant<span style="color: var(--accent-amber);">OS</span> Navigation:</span>
-      </div>
-      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-        <a href="../../index.html" class="btn-chip btn-chip-otp" style="text-decoration: none; padding: 8px 14px;">
-          <i class="fa-solid fa-credit-card"></i> 1. Payment Enclave
-        </a>
-        <a href="pos.html" class="btn-chip btn-chip-success" style="text-decoration: none; padding: 8px 14px;">
-          <i class="fa-solid fa-cash-register"></i> 2. POS Terminal
-        </a>
-        <a href="kds.html" class="btn-chip btn-chip-otp" style="text-decoration: none; padding: 8px 14px; background: var(--accent-amber); color: #000; font-weight: 700;">
-          <i class="fa-solid fa-fire"></i> 3. Kitchen KDS
-        </a>
-        <a href="analytics.html" class="btn-chip btn-chip-decline" style="text-decoration: none; padding: 8px 14px; background: rgba(236, 72, 153, 0.15); color: #f472b6;">
-          <i class="fa-solid fa-chart-line"></i> 4. AI Analytics
-        </a>
-      </div>
-    </nav>
+  <!-- Global Sentry Navigation Bar -->
+  <header class="sentry-navbar">
+    <div class="sentry-navbar-inner">
+      <a href="../../index.html" class="sentry-brand">
+        <div class="brand-logo-icon"><i class="fa-solid fa-utensils"></i></div>
+        <span>Restaurant<span class="brand-highlight">OS</span></span>
+      </a>
 
+      <div class="sentry-nav-links">
+        <a href="../../index.html" class="btn-ghost-on-dark"><i class="fa-solid fa-house"></i> Hub</a>
+        <a href="payment.html" class="btn-ghost-on-dark"><i class="fa-solid fa-credit-card"></i> Payment</a>
+        <a href="pos.html" class="btn-ghost-on-dark"><i class="fa-solid fa-cash-register"></i> POS Terminal</a>
+        <a href="kds.html" class="btn-ghost-on-dark active"><i class="fa-solid fa-fire"></i> KDS Kitchen</a>
+        <a href="analytics.html" class="btn-ghost-on-dark"><i class="fa-solid fa-chart-line"></i> Analytics</a>
+        <a href="opscopilot.html" class="btn-ghost-on-dark"><i class="fa-solid fa-robot"></i> OpsCopilot</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-container" style="max-width: 1280px; padding-top: 24px;">
     <!-- KDS Header -->
     <header class="app-header">
       <div class="brand">
-        <div class="brand-icon" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
-          <i class="fa-solid fa-fire"></i>
+        <div class="brand-icon">
+          <i class="fa-solid fa-fire" style="color: var(--color-accent-pink);"></i>
         </div>
         <div class="brand-text">
           <h1>Restaurant<span>OS</span> <small style="font-size: 14px; color: var(--text-secondary); font-weight: 500;">/ Kitchen Display System (KDS)</small></h1>
