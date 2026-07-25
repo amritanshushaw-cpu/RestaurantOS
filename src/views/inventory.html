@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RestaurantOS - Inventory & AI Stockout Predictor</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <link rel="stylesheet" href="../styles/tokens.css">
+  <link rel="stylesheet" href="../styles/components.css">
+
+  <style>
+    .inventory-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--bg-dark-surface);
+      border: 1px solid var(--bg-dark-border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .inventory-table th, .inventory-table td {
+      padding: 16px 20px;
+      text-align: left;
+      border-bottom: 1px solid var(--bg-dark-border);
+      font-size: 13px;
+    }
+
+    .inventory-table th {
+      background: rgba(11, 15, 25, 0.6);
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-glow bg-glow-amber"></div>
+
+  <main class="app-container" style="max-width: 1180px;">
+    <!-- Navigation -->
+    <nav style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-dark-surface); border: 1px solid var(--bg-dark-border); padding: 12px 20px; border-radius: var(--radius-lg); margin-bottom: 24px;">
+      <a href="../../index.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #fff;">
+        <i class="fa-solid fa-house" style="color: var(--accent-amber);"></i>
+        <span style="font-weight: 800;">Restaurant<span style="color: var(--accent-amber);">OS</span> Inventory</span>
+      </a>
+      <div style="display: flex; gap: 10px;">
+        <a href="opscopilot.html" class="btn-chip btn-chip-decline" style="text-decoration: none; color: #f472b6;">OpsCopilot AI</a>
+        <a href="analytics.html" class="btn-chip btn-chip-otp" style="text-decoration: none;">Analytics</a>
+      </div>
+    </nav>
+
+    <!-- AI Stockout Alert Box -->
+    <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: var(--radius-lg); padding: 20px 24px; margin-bottom: 24px; display: flex; align-items: center; gap: 16px;">
+      <i class="fa-solid fa-triangle-exclamation" style="font-size: 28px; color: var(--accent-amber);"></i>
+      <div>
+        <h4 style="font-size: 15px; font-weight: 700; color: var(--accent-amber); margin-bottom: 4px;">AI Stockout Alert (OpsCopilot Engine)</h4>
+        <p style="font-size: 13px; color: var(--text-secondary);">Based on historical Friday dinner demand, <strong>Wagyu Beef Patties</strong> and <strong>Truffle Oil</strong> are expected to run out by 8:30 PM. Recommended action: Restock 12 kg before 7:00 PM service.</p>
+      </div>
+    </div>
+
+    <!-- Inventory Data Table -->
+    <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px;"><i class="fa-solid fa-boxes-stacked"></i> Real-time Stock Levels</h3>
+
+    <table class="inventory-table">
+      <thead>
+        <tr>
+          <th>Ingredient Name</th>
+          <th>Category</th>
+          <th>Stock Quantity</th>
+          <th>Min Threshold</th>
+          <th>Status</th>
+          <th>Supplier</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Wagyu Beef Patties</strong></td>
+          <td>Meat & Proteins</td>
+          <td>4.5 kg</td>
+          <td>10.0 kg</td>
+          <td><span class="badge sandbox-badge" style="background: rgba(239, 68, 68, 0.2); color: #ef4444;">CRITICAL LOW</span></td>
+          <td>Prime Meats Co.</td>
+        </tr>
+        <tr>
+          <td><strong>Truffle Oil & Aioli</strong></td>
+          <td>Oils & Condiments</td>
+          <td>1.2 Liters</td>
+          <td>2.5 Liters</td>
+          <td><span class="badge sandbox-badge" style="background: rgba(239, 68, 68, 0.2); color: #ef4444;">LOW STOCK</span></td>
+          <td>Artisanal Imports</td>
+        </tr>
+        <tr>
+          <td><strong>Dry-Aged Ribeye Steaks</strong></td>
+          <td>Meat & Proteins</td>
+          <td>18.0 kg</td>
+          <td>8.0 kg</td>
+          <td><span class="badge badge-success">HEALTHY</span></td>
+          <td>Prime Meats Co.</td>
+        </tr>
+        <tr>
+          <td><strong>Smoked Bourbon</strong></td>
+          <td>Beverages & Spirits</td>
+          <td>14 Bottles</td>
+          <td>5 Bottles</td>
+          <td><span class="badge badge-success">HEALTHY</span></td>
+          <td>Heritage Spirits</td>
+        </tr>
+        <tr>
+          <td><strong>Arborio Risotto Rice</strong></td>
+          <td>Dry Grains</td>
+          <td>22.0 kg</td>
+          <td>6.0 kg</td>
+          <td><span class="badge badge-success">HEALTHY</span></td>
+          <td>Global Foods Ltd.</td>
+        </tr>
+      </tbody>
+    </table>
+  </main>
+</body>
+</html>

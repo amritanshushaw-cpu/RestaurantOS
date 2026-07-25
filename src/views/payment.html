@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RestaurantOS - Customer Self-Ordering & Payment Enclave</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <link rel="stylesheet" href="../styles/tokens.css">
+  <link rel="stylesheet" href="../styles/components.css">
+</head>
+<body>
+  <div class="bg-glow bg-glow-amber"></div>
+  <div class="bg-glow bg-glow-pink"></div>
+
+  <main class="app-container">
+    <!-- Role Switcher Top Header -->
+    <nav style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-dark-surface); border: 1px solid var(--bg-dark-border); padding: 12px 20px; border-radius: var(--radius-lg); margin-bottom: 24px; backdrop-filter: var(--glass-backdrop);">
+      <a href="../../index.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #fff;">
+        <i class="fa-solid fa-house" style="color: var(--accent-amber); font-size: 18px;"></i>
+        <span style="font-weight: 800; font-size: 16px;">Restaurant<span style="color: var(--accent-amber);">OS</span> Role Portal</span>
+      </a>
+      <span class="badge sandbox-badge"><i class="fa-solid fa-user"></i> Active Role: Customer</span>
+    </nav>
+
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon"><i class="fa-solid fa-credit-card"></i></div>
+        <div class="brand-text">
+          <h1>Customer<span>Payment</span></h1>
+          <span class="badge sandbox-badge"><i class="fa-solid fa-flask"></i> Sandbox Mode</span>
+        </div>
+      </div>
+
+      <div class="sandbox-controls">
+        <span style="font-size: 12px; color: var(--text-secondary); margin-right: 4px;">Test Presets:</span>
+        <button type="button" class="btn-chip btn-chip-success" id="btn-fill-success">
+          <i class="fa-solid fa-check"></i> Success Card
+        </button>
+        <button type="button" class="btn-chip btn-chip-otp" id="btn-fill-otp">
+          <i class="fa-solid fa-key"></i> 3DS OTP Card
+        </button>
+        <button type="button" class="btn-chip btn-chip-decline" id="btn-fill-decline">
+          <i class="fa-solid fa-xmark"></i> Decline Card
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Checkout Grid -->
+    <div class="checkout-grid" id="checkout-grid">
+      <section class="summary-section">
+        <div class="card-wrapper">
+          <div class="credit-card" id="credit-card">
+            <div class="card-face card-front">
+              <div class="card-top">
+                <div class="chip"></div>
+                <div class="card-brand" id="card-brand-logo"><i class="fa-brands fa-cc-visa"></i></div>
+              </div>
+              <div class="card-number-display" id="card-number-display">•••• •••• •••• ••••</div>
+              <div class="card-bottom">
+                <div>
+                  <span class="card-label">CARD HOLDER</span>
+                  <div class="card-holder-display" id="card-holder-display">YOUR NAME HERE</div>
+                </div>
+                <div>
+                  <span class="card-label">EXPIRES</span>
+                  <div class="card-expiry-display" id="card-expiry-display">MM/YY</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-face card-back">
+              <div class="magnetic-strip"></div>
+              <div class="cvv-section">
+                <div class="signature-bar">Authorized Signature</div>
+                <div class="cvv-box" id="card-cvv-display">•••</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="order-summary-box">
+          <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px;"><i class="fa-solid fa-receipt"></i> Table #08 Order Summary</h3>
+          <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px;">
+            <span>2x Wagyu Gourmet Burger</span> <strong>$48.00</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px;">
+            <span>1x Truffle Fries & Aioli</span> <strong>$16.00</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px;">
+            <span>2x Signature Craft Cocktails</span> <strong>$32.00</strong>
+          </div>
+          <div style="height: 1px; background: var(--bg-dark-border); margin: 14px 0;"></div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: 600;">Total Amount</span>
+            <span style="font-size: 24px; font-weight: 800; color: var(--accent-amber);">$96.00</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="payment-form-section">
+        <nav class="payment-tabs">
+          <button class="tab-btn active" data-tab="card"><i class="fa-regular fa-credit-card"></i> Card</button>
+          <button class="tab-btn" data-tab="upi"><i class="fa-solid fa-qrcode"></i> UPI</button>
+          <button class="tab-btn" data-tab="netbanking"><i class="fa-solid fa-building-columns"></i> NetBanking</button>
+          <button class="tab-btn" data-tab="wallet"><i class="fa-solid fa-wallet"></i> Wallet</button>
+        </nav>
+
+        <form id="payment-form" novalidate>
+          <div class="form-group">
+            <label for="card-holder-input">Cardholder Name</label>
+            <div class="input-icon-wrapper">
+              <i class="fa-regular fa-user"></i>
+              <input type="text" id="card-holder-input" placeholder="e.g. Alex Mercer" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="card-number-input">Card Number</label>
+            <div class="input-icon-wrapper">
+              <i class="fa-regular fa-credit-card"></i>
+              <input type="text" id="card-number-input" placeholder="4000 0000 0000 0000" maxlength="19" required>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 16px;">
+            <div class="form-group" style="flex: 1;">
+              <label for="card-expiry-input">Expiration</label>
+              <div class="input-icon-wrapper">
+                <i class="fa-regular fa-calendar"></i>
+                <input type="text" id="card-expiry-input" placeholder="MM/YY" maxlength="5" required>
+              </div>
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <label for="card-cvv-input">CVV</label>
+              <div class="input-icon-wrapper">
+                <i class="fa-solid fa-lock"></i>
+                <input type="password" id="card-cvv-input" placeholder="123" maxlength="4" required>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="pay-btn" id="pay-now-btn">
+            Pay $96.00 Now <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </form>
+      </section>
+    </div>
+
+    <!-- Processing Modal -->
+    <div class="modal-backdrop" id="processing-modal">
+      <div class="modal-box" style="text-align: center;">
+        <h3 style="font-size: 18px; margin-bottom: 8px;">Processing Mock Payment...</h3>
+        <p id="processing-status" style="font-size: 13px; color: var(--text-secondary);">Connecting to bank...</p>
+      </div>
+    </div>
+
+    <!-- 3DS OTP Modal -->
+    <div class="modal-backdrop" id="otp-modal">
+      <div class="modal-box">
+        <h3 style="font-size: 16px; margin-bottom: 12px; color: var(--accent-amber);">3D Secure Verification</h3>
+        <p style="font-size: 13px; margin-bottom: 16px;">Enter Sandbox Passcode: <strong>123456</strong></p>
+        <input type="text" id="otp-input" placeholder="123456" maxlength="6" style="width: 100%; padding: 12px; font-size: 18px; text-align: center; font-family: var(--font-mono); margin-bottom: 16px; background: var(--bg-dark-input); border: 1px solid var(--bg-dark-border); border-radius: var(--radius-sm); color: #fff;">
+        <button type="button" class="pay-btn" id="btn-submit-otp">Verify Passcode</button>
+      </div>
+    </div>
+
+    <!-- Receipt Container -->
+    <div class="receipt-container" id="receipt-container" style="display: none; max-width: 500px; margin: 40px auto;">
+      <div class="order-summary-box" style="text-align: center; padding: 36px;">
+        <i class="fa-solid fa-circle-check" id="receipt-icon" style="font-size: 54px; color: var(--color-success); margin-bottom: 16px;"></i>
+        <h2 id="receipt-title" style="font-size: 22px; font-weight: 800; margin-bottom: 8px;">Payment Successful!</h2>
+        <p id="receipt-subtitle" style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">Approved in sandbox mode. Zero real funds charged.</p>
+
+        <div style="background: rgba(11, 15, 25, 0.5); padding: 16px; border-radius: var(--radius-md); text-align: left; margin-bottom: 24px; font-size: 13px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span>Transaction ID:</span> <strong id="receipt-tx-id">REST-TXN-12345678-TEST</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>Amount Paid:</span> <strong style="color: var(--color-success);">$96.00 USD</strong>
+          </div>
+        </div>
+
+        <button type="button" class="pay-btn" id="btn-reset-payment">Make Another Payment</button>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="../app.js"></script>
+</body>
+</html>

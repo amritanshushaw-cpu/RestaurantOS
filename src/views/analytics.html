@@ -54,6 +54,28 @@
   <div class="bg-glow bg-glow-pink"></div>
 
   <main class="app-container" style="max-width: 1180px;">
+    <!-- Unified Top Navigation Bar -->
+    <nav style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-dark-surface); border: 1px solid var(--bg-dark-border); padding: 12px 20px; border-radius: var(--radius-lg); margin-bottom: 24px; backdrop-filter: var(--glass-backdrop);">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <i class="fa-solid fa-utensils" style="color: var(--accent-amber); font-size: 20px;"></i>
+        <span style="font-weight: 800; font-size: 16px;">Restaurant<span style="color: var(--accent-amber);">OS</span> Navigation:</span>
+      </div>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="../../index.html" class="btn-chip btn-chip-otp" style="text-decoration: none; padding: 8px 14px;">
+          <i class="fa-solid fa-credit-card"></i> 1. Payment Enclave
+        </a>
+        <a href="pos.html" class="btn-chip btn-chip-success" style="text-decoration: none; padding: 8px 14px;">
+          <i class="fa-solid fa-cash-register"></i> 2. POS Terminal
+        </a>
+        <a href="kds.html" class="btn-chip btn-chip-otp" style="text-decoration: none; padding: 8px 14px;">
+          <i class="fa-solid fa-fire"></i> 3. Kitchen KDS
+        </a>
+        <a href="analytics.html" class="btn-chip btn-chip-decline" style="text-decoration: none; padding: 8px 14px; background: var(--accent-amber); color: #000; font-weight: 700;">
+          <i class="fa-solid fa-chart-line"></i> 4. AI Analytics
+        </a>
+      </div>
+    </nav>
+
     <!-- Analytics Header -->
     <header class="app-header">
       <div class="brand">
@@ -63,15 +85,6 @@
         <div class="brand-text">
           <h1>Restaurant<span>OS</span> <small style="font-size: 14px; color: var(--text-secondary); font-weight: 500;">/ Sales Analytics & AI</small></h1>
         </div>
-      </div>
-
-      <div style="display: flex; gap: 12px;">
-        <a href="../../index.html" class="btn-chip btn-chip-otp" style="text-decoration: none; padding: 10px 16px;">
-          <i class="fa-solid fa-credit-card"></i> Payment Enclave
-        </a>
-        <a href="pos.html" class="btn-chip btn-chip-success" style="text-decoration: none; padding: 10px 16px;">
-          <i class="fa-solid fa-cash-register"></i> POS Terminal
-        </a>
       </div>
     </header>
 

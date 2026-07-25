@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RestaurantOS - OpsCopilot AI Manager Assistant</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <link rel="stylesheet" href="../styles/tokens.css">
+  <link rel="stylesheet" href="../styles/components.css">
+
+  <style>
+    .copilot-card {
+      background: var(--bg-dark-surface);
+      border: 1px solid var(--bg-dark-border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      height: 520px;
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: var(--glass-backdrop);
+    }
+
+    .chat-history {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 20px;
+      padding-right: 6px;
+    }
+
+    .chat-bubble {
+      max-width: 80%;
+      padding: 14px 18px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .bubble-copilot {
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #e0e7ff;
+      align-self: flex-start;
+    }
+
+    .bubble-user {
+      background: var(--accent-amber);
+      color: #000;
+      font-weight: 600;
+      align-self: flex-end;
+    }
+
+    .quick-prompts {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+    }
+
+    .prompt-chip {
+      background: var(--bg-dark-input);
+      border: 1px solid var(--bg-dark-border);
+      color: var(--text-secondary);
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-glow bg-glow-amber"></div>
+
+  <main class="app-container" style="max-width: 960px;">
+    <!-- Navigation -->
+    <nav style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-dark-surface); border: 1px solid var(--bg-dark-border); padding: 12px 20px; border-radius: var(--radius-lg); margin-bottom: 24px;">
+      <a href="../../index.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #fff;">
+        <i class="fa-solid fa-house" style="color: var(--accent-amber);"></i>
+        <span style="font-weight: 800;">Restaurant<span style="color: var(--accent-amber);">OS</span> OpsCopilot</span>
+      </a>
+      <div style="display: flex; gap: 10px;">
+        <a href="inventory.html" class="btn-chip btn-chip-success" style="text-decoration: none;">Inventory</a>
+        <a href="analytics.html" class="btn-chip btn-chip-otp" style="text-decoration: none;">Analytics</a>
+      </div>
+    </nav>
+
+    <div class="copilot-card">
+      <div style="display: flex; align-items: center; gap: 10px; padding-bottom: 14px; border-bottom: 1px solid var(--bg-dark-border); margin-bottom: 16px;">
+        <div class="brand-icon" style="width: 36px; height: 36px; font-size: 16px; background: var(--accent-gradient-secondary);"><i class="fa-solid fa-robot"></i></div>
+        <div>
+          <h3 style="font-size: 16px; font-weight: 700;">OpsCopilot AI Assistant</h3>
+          <span style="font-size: 11px; color: var(--color-success);"><i class="fa-solid fa-circle" style="font-size: 8px;"></i> Connected to Live Inventory & Orders</span>
+        </div>
+      </div>
+
+      <div class="chat-history" id="chat-history">
+        <div class="chat-bubble bubble-copilot">
+          <strong>OpsCopilot:</strong> Hello Manager! I am analyzing today's operational data. Wagyu Beef Sliders are your top seller. Chicken stock is estimated to run out by 8:30 PM. How can I assist your dinner service?
+        </div>
+      </div>
+
+      <!-- Quick Prompts -->
+      <div class="quick-prompts">
+        <button class="prompt-chip" data-prompt="What should I prepare for tonight?">What to prepare tonight?</button>
+        <button class="prompt-chip" data-prompt="Which items are likely to sell out?">Which items will sell out?</button>
+        <button class="prompt-chip" data-prompt="How can I reduce food waste?">Reduce food waste tips</button>
+      </div>
+
+      <form id="copilot-form" style="display: flex; gap: 10px;">
+        <input type="text" id="copilot-input" placeholder="Ask OpsCopilot about inventory, tables, or sales..." style="flex: 1; padding: 12px 16px; background: var(--bg-dark-input); border: 1px solid var(--bg-dark-border); border-radius: var(--radius-sm); color: #fff; outline: none;">
+        <button type="submit" class="pay-btn" style="width: auto; padding: 12px 24px;">Ask AI <i class="fa-solid fa-paper-plane"></i></button>
+      </form>
+    </div>
+  </main>
+
+  <script type="module">
+    import { geminiService } from '../services/geminiService.js';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const history = document.getElementById('chat-history');
+      const form = document.getElementById('copilot-form');
+      const input = document.getElementById('copilot-input');
+
+      document.querySelectorAll('.prompt-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          input.value = chip.getAttribute('data-prompt');
+          form.dispatchEvent(new Event('submit'));
+        });
+      });
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const text = input.value.trim();
+        if (!text) return;
+
+        // Add User Bubble
+        const userB = document.createElement('div');
+        userB.className = 'chat-bubble bubble-user';
+        userB.textContent = text;
+        history.appendChild(userB);
+
+        input.value = '';
+        history.scrollTop = history.scrollHeight;
+
+        // Simulated AI Response
+        setTimeout(() => {
+          const aiB = document.createElement('div');
+          aiB.className = 'chat-bubble bubble-copilot';
+          
+          if (text.includes('prepare') || text.includes('tonight')) {
+            aiB.innerHTML = `<strong>OpsCopilot:</strong> Based on 50+ historical Friday orders and 4 active reservations, prepare 15kg Wagyu beef, 8kg Ribeye steaks, and restock 12 bottles of Smoked Bourbon. Expected peak: 7:30 PM - 9:00 PM.`;
+          } else if (text.includes('sell out')) {
+            aiB.innerHTML = `<strong>OpsCopilot:</strong> High risk of stockout for: 1. Wagyu Beef Sliders (8 units remaining), 2. Truffle Fries (5 units remaining). Recommended action: Restock before 7:00 PM.`;
+          } else {
+            aiB.innerHTML = `<strong>OpsCopilot:</strong> Live Data Insight: Average check is $43.86 across 42 orders today. Kitchen prep time is optimal at 14 minutes per order.`;
+          }
+
+          history.appendChild(aiB);
+          history.scrollTop = history.scrollHeight;
+        }, 600);
+      });
+    });
+  </script>
+</body>
+</html>
