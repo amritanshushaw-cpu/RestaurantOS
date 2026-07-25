@@ -1,0 +1,22 @@
+{
+  "name": "restaurant-os",
+  "version": "1.0.0",
+  "description": "Full-stack Restaurant Operating System - POS, Kitchen Display System (KDS), Table Management & Payment Engine",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx http-server ./ -p 3000 -c-1",
+    "start": "npx http-server ./ -p 3000"
+  },
+  "keywords": [
+    "restaurant-os",
+    "pos",
+    "kds",
+    "table-booking",
+    "payment-gateway"
+  ],
+  "author": "Amritanshu Shaw",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
