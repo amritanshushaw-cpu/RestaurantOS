@@ -1,58 +1,36 @@
 /**
- * RestaurantOS - Menu & Inventory Management Service Layer
- * Manages category filtering, menu item search, availability toggling, and calculations.
+ * RestaurantOS - Menu Service Layer (Dynamic)
+ * Connects to DynamicDatabaseEngine for real CRUD operations.
  */
 
-import { dbClient } from './supabaseClient.js';
+import { dbEngine } from './supabaseClient.js';
 
 export class MenuService {
-  constructor() {
-    this.categories = [];
-    this.items = [];
-    this.isLoaded = false;
+  // Load Menu Data Dynamically
+  loadMenu() {
+    return dbEngine.getMenu();
   }
 
-  // Load Menu Data from Database Client
-  async loadMenu() {
-    const data = await dbClient.getMenu();
-    this.categories = data.categories;
-    this.items = data.items;
-    this.isLoaded = true;
-    return data;
-  }
-
-  // Get Items Filtered by Category ID
-  async getItemsByCategory(categoryId) {
-    if (!this.isLoaded) await this.loadMenu();
+  // Get Items Filtered by Category
+  getItemsByCategory(categoryId) {
+    const data = this.loadMenu();
     if (!categoryId || categoryId === 'ALL') {
-      return this.items.filter(i => i.is_available);
+      return data.items;
     }
-    return this.items.filter(i => i.category_id === categoryId && i.is_available);
+    return data.items.filter(i => i.category_id === categoryId);
   }
 
-  // Search Menu Items by Name or Description
-  async searchItems(query) {
-    if (!this.isLoaded) await this.loadMenu();
-    if (!query || !query.trim()) return this.items;
-
-    const term = query.toLowerCase().trim();
-    return this.items.filter(item => 
-      item.name.toLowerCase().includes(term) || 
-      (item.description && item.description.toLowerCase().includes(term))
-    );
+  // Add New Menu Item dynamically
+  addMenuItem(itemData) {
+    return dbEngine.addMenuItem(itemData);
   }
 
-  // Toggle Item Availability Status
-  toggleItemAvailability(itemId) {
-    const item = this.items.find(i => i.id === itemId);
-    if (item) {
-      item.is_available = !item.is_available;
-      return { success: true, item };
-    }
-    return { success: false, error: 'Item not found' };
+  // Toggle Item Stock Availability
+  toggleAvailability(itemId) {
+    return dbEngine.toggleItemAvailability(itemId);
   }
 
-  // Calculate Order Subtotal & Taxes
+  // Calculate Totals
   calculateOrderTotals(cartItems, taxRate = 8.5) {
     const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const tax = (subtotal * taxRate) / 100;

@@ -1,12 +1,11 @@
 /**
- * RestaurantOS - POS Terminal Controller Logic
- * Connects category pills, menu item grid rendering, cart management, and order dispatch.
+ * RestaurantOS - POS Terminal Controller (100% Dynamic Input & Dispatch)
  */
 
 import { menuService } from '../services/menuService.js';
-import { dbClient } from '../services/supabaseClient.js';
+import { dbEngine } from '../services/supabaseClient.js';
 
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
   const menuGrid = document.getElementById('pos-menu-grid');
   const categoryBar = document.getElementById('pos-category-bar');
   const cartList = document.getElementById('cart-items-list');
@@ -21,13 +20,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   let activeCart = [];
   let selectedTable = 'Table 02';
 
-  // Load Menu Data
-  await menuService.loadMenu();
-  renderMenuItems('ALL');
-
-  // Render Menu Grid
-  async function renderMenuItems(categoryId) {
-    const items = await menuService.getItemsByCategory(categoryId);
+  // Render Dynamic Menu
+  function renderMenuItems(categoryId) {
+    const items = menuService.getItemsByCategory(categoryId);
     menuGrid.innerHTML = '';
 
     items.forEach(item => {
@@ -41,7 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div class="food-desc">${item.description}</div>
           </div>
           <div class="food-bottom">
-            <span class="food-price">$${item.price.toFixed(2)}</span>
+            <span class="food-price">$${parseFloat(item.price).toFixed(2)}</span>
             <button class="add-btn"><i class="fa-solid fa-plus"></i></button>
           </div>
         </div>
@@ -52,7 +47,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Category Bar Click Event
+  // Category Filter Pills
   categoryBar.querySelectorAll('.category-pill').forEach(pill => {
     pill.addEventListener('click', () => {
       categoryBar.querySelectorAll('.category-pill').forEach(p => p.classList.remove('active'));
@@ -61,13 +56,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // Table Selector Change Event
+  // Table Selector Sync
   tableSelect.addEventListener('change', (e) => {
     selectedTable = e.target.options[e.target.selectedIndex].text.split(' (')[0];
     tableBadge.textContent = selectedTable;
   });
 
-  // Add Item to Cart
+  // Cart Management
   function addToCart(item) {
     const existing = activeCart.find(i => i.id === item.id);
     if (existing) {
@@ -78,7 +73,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateCartUI();
   }
 
-  // Update Cart UI
   function updateCartUI() {
     if (activeCart.length === 0) {
       cartList.innerHTML = `<p style="text-align: center; color: var(--text-tertiary); margin-top: 40px; font-size: 13px;">Cart is empty. Click any food item to add.</p>`;
@@ -107,7 +101,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       cartList.appendChild(row);
     });
 
-    // Quantity Handlers
     cartList.querySelectorAll('.btn-minus').forEach(b => {
       b.addEventListener('click', () => {
         const idx = parseInt(b.getAttribute('data-index'), 10);
@@ -128,7 +121,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     });
 
-    // Calculate Totals
     const totals = menuService.calculateOrderTotals(activeCart);
     subtotalEl.textContent = `$${totals.subtotal}`;
     taxEl.textContent = `$${totals.tax}`;
@@ -136,13 +128,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     btnDispatch.disabled = false;
   }
 
-  // Dispatch Order to Kitchen (KDS)
-  btnDispatch.addEventListener('click', async () => {
+  // Real Dynamic Order Dispatch to DB & KDS
+  btnDispatch.addEventListener('click', () => {
     btnDispatch.disabled = true;
     btnDispatch.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Dispatching...`;
 
     const totals = menuService.calculateOrderTotals(activeCart);
-    const result = await dbClient.createOrder({
+    const newOrder = dbEngine.createOrder({
       table_id: tableSelect.value,
       table_number: selectedTable,
       items: [...activeCart],
@@ -152,12 +144,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       status: 'NEW'
     });
 
-    if (result.success) {
-      alert(`Order ${result.order.order_number} successfully dispatched to Kitchen KDS!`);
-      activeCart = [];
-      updateCartUI();
-    }
+    // Update Table status to Occupied
+    dbEngine.updateTableStatus(tableSelect.value, 'OCCUPIED');
 
+    alert(`Order ${newOrder.order_number} for ${selectedTable} ($${totals.total}) dispatched to Kitchen KDS & inventory deducted!`);
+    activeCart = [];
+    updateCartUI();
     btnDispatch.innerHTML = `Send Order to Kitchen <i class="fa-solid fa-paper-plane"></i>`;
   });
+
+  // Initial Load
+  renderMenuItems('ALL');
 });

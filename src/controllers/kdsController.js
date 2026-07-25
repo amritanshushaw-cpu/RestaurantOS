@@ -1,43 +1,22 @@
 /**
- * RestaurantOS - Kitchen Display System (KDS) Controller Logic
- * Fetches active kitchen tickets, renders live order cards, and updates preparation status.
+ * RestaurantOS - Kitchen Display System (KDS) Controller (100% Dynamic Input & State Mutation)
  */
 
-import { dbClient } from '../services/supabaseClient.js';
+import { dbEngine } from '../services/supabaseClient.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const ticketsContainer = document.getElementById('kds-tickets-container');
 
-  // Initial Mock Sample Kitchen Ticket if empty
-  dbClient.getKitchenOrders().then(orders => {
-    if (orders.length === 0) {
-      dbClient.createOrder({
-        table_number: 'Table 08',
-        status: 'NEW',
-        items: [
-          { name: 'Wagyu Beef Sliders', quantity: 2 },
-          { name: 'Truffle Fries & Aioli', quantity: 1 },
-          { name: 'Signature Craft Cocktails', quantity: 2 }
-        ],
-        total: '96.00'
-      }).then(() => refreshKDSTickets());
-    } else {
-      refreshKDSTickets();
-    }
-  });
+  // Poll & Render Dynamic Tickets
+  function refreshKDSTickets() {
+    const allOrders = dbEngine.getOrders();
+    const activeOrders = allOrders.filter(o => o.status !== 'PAID' && o.status !== 'CANCELLED');
 
-  // Periodically Poll Kitchen Orders every 4 seconds
-  setInterval(refreshKDSTickets, 4000);
-
-  // Refresh Tickets UI
-  async function refreshKDSTickets() {
-    const orders = await dbClient.getKitchenOrders();
-
-    if (orders.length === 0) {
+    if (activeOrders.length === 0) {
       ticketsContainer.innerHTML = `
         <div style="grid-column: 1 / -1; text-align: center; color: var(--text-tertiary); margin-top: 60px;">
           <i class="fa-solid fa-utensils" style="font-size: 36px; margin-bottom: 12px;"></i>
-          <p>No active kitchen orders. New orders will appear here automatically.</p>
+          <p>No active kitchen orders. Place an order from the POS Terminal or Customer Payment page to see live tickets appear here!</p>
         </div>
       `;
       return;
@@ -45,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     ticketsContainer.innerHTML = '';
 
-    orders.forEach(order => {
+    activeOrders.forEach(order => {
       const card = document.createElement('div');
       const statusClass = order.status.toLowerCase();
       card.className = `ticket-card ${statusClass}`;
@@ -92,11 +71,15 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
 
       card.querySelector('.btn-progress-ticket').addEventListener('click', () => {
-        order.status = nextStatus;
+        dbEngine.updateOrderStatus(order.id, nextStatus);
         refreshKDSTickets();
       });
 
       ticketsContainer.appendChild(card);
     });
   }
+
+  // Poll state every 2 seconds
+  setInterval(refreshKDSTickets, 2000);
+  refreshKDSTickets();
 });
