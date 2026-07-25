@@ -123,7 +123,7 @@ This project is optimized for 1-click deployment on **Vercel**:
 
 | Name | Role |
 |---|---|
-| **Saptak Sarathi Chakroborty** | Full-Stack Architect & Backend Engine |
+| **Saptak Sarathi Chakraborty** | Full-Stack Architect & Backend Engine |
 | **Shrinivas Ghosh** | System Design & Database Infrastructure |
 | **Amritanshu Shaw** | UI/UX Systems & Payment Enclave Specialist |
 | **Ritam Karmakar** | Frontend Engineering & KDS Workflow |
