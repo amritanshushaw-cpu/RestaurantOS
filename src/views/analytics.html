@@ -129,9 +129,10 @@
     async function renderAnalytics() {
       const summary = dbEngine.getAnalyticsSummary();
 
-      document.getElementById('metric-revenue').textContent = `$${summary.grossRevenue.toFixed(2)}`;
+      document.getElementById('metric-revenue').textContent = `₹${summary.grossRevenue.toFixed(2)}`;
       document.getElementById('metric-orders').textContent = `${summary.orderCount} Orders`;
-      document.getElementById('metric-avg-check').textContent = `$${summary.avgCheck.toFixed(2)}`;
+      document.getElementById('metric-avg-check').textContent = `₹${summary.avgCheck.toFixed(2)}`;
+
       document.getElementById('metric-approval').textContent = summary.orderCount > 0 || dbEngine.getPaymentStats().attempts > 0
         ? `${summary.approvalRate}%`
         : 'No data yet';
@@ -151,5 +152,11 @@
     // Keep the dashboard live as new orders/payments come in from other tabs (POS, KDS, Payment)
     setInterval(renderAnalytics, 4000);
   </script>
+
+  <!-- Google Identity Services & Auth Modules -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script type="module" src="../services/authService.js"></script>
+  <script type="module" src="../utils/navbarAuth.js"></script>
 </body>
 </html>
+

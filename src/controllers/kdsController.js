@@ -45,30 +45,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const itemsListHTML = order.items.map(item => `
         <li class="ticket-item">
-          <span>${item.quantity}x ${item.name || item.item_name}</span>
+          <span><span class="kds-item-qty-badge">${item.quantity}x</span> ${item.name || item.item_name}</span>
           <i class="fa-regular fa-circle"></i>
         </li>
       `).join('');
+
+      const cookingNotesHTML = order.special_instructions ? `
+        <div class="kds-cooking-instructions">
+          <i class="fa-solid fa-utensils"></i>
+          <div>
+            <strong style="color: var(--color-warning); text-transform: uppercase; letter-spacing: 0.3px;">Chef Note:</strong> ${order.special_instructions}
+          </div>
+        </div>
+      ` : '';
 
       card.innerHTML = `
         <div>
           <div class="ticket-header">
             <div>
               <strong style="font-size: 16px;">${order.order_number}</strong>
-              <span class="badge sandbox-badge" style="margin-left: 8px;">${order.table_number || 'Takeaway'}</span>
+              <span class="badge sandbox-badge" style="margin-left: 8px;">${order.table_number || order.table_id || 'Table 01'}</span>
             </div>
-            <span style="font-size: 11px; font-weight: 700; color: var(--accent-amber);">${order.status}</span>
+            <span class="badge" style="font-size: 11px; font-weight: 700; background: rgba(194, 239, 78, 0.15); color: var(--color-accent-lime);">${order.status}</span>
           </div>
+
+          ${cookingNotesHTML}
 
           <ul class="ticket-items">
             ${itemsListHTML}
           </ul>
         </div>
 
-        <button class="pay-btn btn-progress-ticket" style="background: ${btnBg}; color: #000; padding: 10px; font-size: 13px;">
+        <button class="pay-btn btn-progress-ticket" style="background: ${btnBg}; color: #000; padding: 10px; font-size: 13px; margin-top: 12px;">
           ${actionBtnText} <i class="fa-solid fa-arrow-right"></i>
         </button>
       `;
+
 
       card.querySelector('.btn-progress-ticket').addEventListener('click', () => {
         dbEngine.updateOrderStatus(order.id, nextStatus);

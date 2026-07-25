@@ -30,22 +30,22 @@ class DynamicDatabaseEngine {
 
     const defaultMenuItems = [
       // Indian Specialties & Mains
-      { id: 'item-ind-01', category_id: 'cat-05', name: 'Butter Chicken (Murgh Makhani)', description: 'Tender tandoori chicken simmered in rich creamy tomato butter gravy', price: 24.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?w=500' },
-      { id: 'item-ind-02', category_id: 'cat-05', name: 'Paneer Butter Masala', description: 'Soft cottage cheese cubes cooked in rich cashew and spiced tomato gravy', price: 20.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=500' },
-      { id: 'item-ind-03', category_id: 'cat-05', name: 'Hyderabadi Dum Biryani', description: 'Fragrant long-grain basmati rice layered with spiced chicken, saffron & mint', price: 22.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500' },
-      { id: 'item-ind-04', category_id: 'cat-05', name: 'Dal Makhani', description: 'Slow-cooked black lentils simmered overnight with butter & cream', price: 18.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500' },
-      { id: 'item-ind-05', category_id: 'cat-05', name: 'Garlic Butter Naan', description: 'Traditional clay oven tandoori bread brushed with fresh garlic butter & cilantro', price: 6.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1626074353765-517a681e40be?w=500' },
+      { id: 'item-ind-01', category_id: 'cat-05', name: 'Butter Chicken (Murgh Makhani)', description: 'Tender tandoori chicken simmered in rich creamy tomato butter gravy', price: 480.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?w=500' },
+      { id: 'item-ind-02', category_id: 'cat-05', name: 'Paneer Butter Masala', description: 'Soft cottage cheese cubes cooked in rich cashew and spiced tomato gravy', price: 420.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=500' },
+      { id: 'item-ind-03', category_id: 'cat-05', name: 'Hyderabadi Dum Biryani', description: 'Fragrant long-grain basmati rice layered with spiced chicken, saffron & mint', price: 450.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500' },
+      { id: 'item-ind-04', category_id: 'cat-05', name: 'Dal Makhani', description: 'Slow-cooked black lentils simmered overnight with butter & cream', price: 360.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500' },
+      { id: 'item-ind-05', category_id: 'cat-05', name: 'Garlic Butter Naan', description: 'Traditional clay oven tandoori bread brushed with fresh garlic butter & cilantro', price: 90.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1626074353765-517a681e40be?w=500' },
 
       // Indian Starters & Drinks
-      { id: 'item-ind-06', category_id: 'cat-01', name: 'Tandoori Paneer Tikka', description: 'Charcoal-grilled cottage cheese skewers marinated in spiced yogurt & mustard oil', price: 16.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?w=500' },
-      { id: 'item-ind-07', category_id: 'cat-01', name: 'Crispy Samosa Chaat', description: 'Crushed spiced potato samosas topped with chickpeas, tangy tamarind & mint chutney', price: 12.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=500' },
-      { id: 'item-ind-08', category_id: 'cat-03', name: 'Mango Lassi', description: 'Chilled creamy yogurt smoothie blended with Alphonso mango pulp & cardamom', price: 8.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1543339308-43e59d6b73a6?w=500' },
-      { id: 'item-ind-09', category_id: 'cat-04', name: 'Gulab Jamun with Kesar', description: 'Warm soft milk dumplings soaked in rosewater, cardamom & saffron syrup', price: 10.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=500' },
+      { id: 'item-ind-06', category_id: 'cat-01', name: 'Tandoori Paneer Tikka', description: 'Charcoal-grilled cottage cheese skewers marinated in spiced yogurt & mustard oil', price: 320.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?w=500' },
+      { id: 'item-ind-07', category_id: 'cat-01', name: 'Crispy Samosa Chaat', description: 'Crushed spiced potato samosas topped with chickpeas, tangy tamarind & mint chutney', price: 180.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=500' },
+      { id: 'item-ind-08', category_id: 'cat-03', name: 'Mango Lassi', description: 'Chilled creamy yogurt smoothie blended with Alphonso mango pulp & cardamom', price: 140.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1543339308-43e59d6b73a6?w=500' },
+      { id: 'item-ind-09', category_id: 'cat-04', name: 'Gulab Jamun with Kesar', description: 'Warm soft milk dumplings soaked in rosewater, cardamom & saffron syrup', price: 160.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=500' },
 
       // Western Favorites
-      { id: 'item-01', category_id: 'cat-01', name: 'Wagyu Beef Sliders', description: 'Truffle aioli, smoked cheddar, brioche bun', price: 24.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
-      { id: 'item-02', category_id: 'cat-02', name: 'Dry-Aged Ribeye 12oz', description: 'Rosemary butter, charred asparagus, jus', price: 58.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1558030006-450675393462?w=500' },
-      { id: 'item-03', category_id: 'cat-03', name: 'Smoked Old Fashioned', description: 'Bourbon, aromatic bitters, orange peel', price: 16.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=500' }
+      { id: 'item-01', category_id: 'cat-01', name: 'Wagyu Beef Sliders', description: 'Truffle aioli, smoked cheddar, brioche bun', price: 580.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
+      { id: 'item-02', category_id: 'cat-02', name: 'Dry-Aged Ribeye 12oz', description: 'Rosemary butter, charred asparagus, jus', price: 1280.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1558030006-450675393462?w=500' },
+      { id: 'item-03', category_id: 'cat-03', name: 'Smoked Old Fashioned', description: 'Bourbon, aromatic bitters, orange peel', price: 450.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=500' }
     ];
 
     const defaultInventory = [
@@ -59,15 +59,15 @@ class DynamicDatabaseEngine {
       { id: 'inv-08', name: 'Mango Pulp & Milk', quantity: 12, unit: 'Liters', threshold: 4, supplier: 'Fresh Harvest' }
     ];
 
-    // Ensure Categories & Menu Items stay updated with Indian Cuisine
+    // Ensure Categories & Menu Items stay updated with Indian Cuisine & INR pricing
     const currentCategories = JSON.parse(localStorage.getItem(STORAGE_KEYS.CATEGORIES) || '[]');
     if (currentCategories.length < 5) {
       localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(defaultCategories));
     }
 
     const currentMenu = JSON.parse(localStorage.getItem(STORAGE_KEYS.MENU) || '[]');
-    const hasIndianItems = currentMenu.some(item => item.id.startsWith('item-ind'));
-    if (!hasIndianItems || currentMenu.length < 8) {
+    const hasINR = currentMenu.some(item => item.price > 100);
+    if (!hasINR || currentMenu.length < 8) {
       localStorage.setItem(STORAGE_KEYS.MENU, JSON.stringify(defaultMenuItems));
     }
 
@@ -81,8 +81,45 @@ class DynamicDatabaseEngine {
     }
 
     if (!localStorage.getItem(STORAGE_KEYS.ORDERS)) {
-      localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify([]));
+      const defaultOrders = [
+        {
+          id: 'ord-demo-01',
+          order_number: 'ORD-#1042',
+          table_id: 'Table 02',
+          status: 'PREPARING',
+          customer_name: 'Alex Mercer',
+          special_instructions: 'Medium rare steak, extra truffle aioli on the side. Non-spicy for kids.',
+          items: [
+            { id: 'item-02', name: 'Dry-Aged Ribeye 12oz', price: 1280.00, quantity: 1 },
+            { id: 'item-ind-05', name: 'Garlic Butter Naan', price: 90.00, quantity: 2 }
+          ],
+          subtotal: 1460.00,
+          tax: 124.10,
+          total: 1584.10,
+          created_at: new Date(Date.now() - 8 * 60 * 1000).toISOString()
+        },
+        {
+          id: 'ord-demo-02',
+          order_number: 'ORD-#1043',
+          table_id: 'Table 04',
+          status: 'NEW',
+          customer_name: 'Elena Rostova',
+          special_instructions: 'Gluten-free preference. Extra mint chutney with Samosa Chaat!',
+          items: [
+            { id: 'item-ind-01', name: 'Butter Chicken (Murgh Makhani)', price: 480.00, quantity: 2 },
+            { id: 'item-ind-07', name: 'Crispy Samosa Chaat', price: 180.00, quantity: 1 },
+            { id: 'item-ind-08', name: 'Mango Lassi', price: 140.00, quantity: 2 }
+          ],
+          subtotal: 1420.00,
+          tax: 120.70,
+          total: 1540.70,
+          created_at: new Date(Date.now() - 2 * 60 * 1000).toISOString()
+        }
+      ];
+      localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(defaultOrders));
     }
+
+
 
     if (!localStorage.getItem(STORAGE_KEYS.QUEUE)) {
       localStorage.setItem(STORAGE_KEYS.QUEUE, JSON.stringify([

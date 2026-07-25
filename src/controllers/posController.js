@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="food-desc">${item.description || ''}</div>
           </div>
           <div class="food-bottom">
-            <span class="food-price">$${parseFloat(item.price).toFixed(2)}</span>
+            <span class="food-price">₹${parseFloat(item.price).toFixed(2)}</span>
             <button class="add-btn" type="button"><i class="fa-solid fa-plus"></i></button>
           </div>
         </div>
@@ -108,9 +108,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (activeCart.length === 0) {
       cartList.innerHTML = `<p style="text-align: center; color: var(--text-tertiary); margin-top: 40px; font-size: 13px;">Cart is empty. Click any food item to add.</p>`;
       if (btnDispatch) btnDispatch.disabled = true;
-      if (subtotalEl) subtotalEl.textContent = '$0.00';
-      if (taxEl) taxEl.textContent = '$0.00';
-      if (totalEl) totalEl.textContent = '$0.00';
+      if (subtotalEl) subtotalEl.textContent = '₹0.00';
+      if (taxEl) taxEl.textContent = '₹0.00';
+      if (totalEl) totalEl.textContent = '₹0.00';
       return;
     }
 
@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
       row.innerHTML = `
         <div>
           <div class="cart-item-name">${item.name}</div>
-          <div style="font-size: 11px; color: var(--color-accent-lime); font-weight: 600; font-family: var(--font-mono);">$${(item.price * item.quantity).toFixed(2)}</div>
+          <div style="font-size: 11px; color: var(--color-accent-lime); font-weight: 600; font-family: var(--font-mono);">₹${(item.price * item.quantity).toFixed(2)}</div>
         </div>
         <div class="cart-qty-controls">
           <button type="button" class="qty-btn btn-minus" data-index="${index}">-</button>
@@ -155,11 +155,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const totals = menuService.calculateOrderTotals(activeCart);
-    if (subtotalEl) subtotalEl.textContent = `$${totals.subtotal}`;
-    if (taxEl) taxEl.textContent = `$${totals.tax}`;
-    if (totalEl) totalEl.textContent = `$${totals.total}`;
+    if (subtotalEl) subtotalEl.textContent = `₹${totals.subtotal}`;
+    if (taxEl) taxEl.textContent = `₹${totals.tax}`;
+    if (totalEl) totalEl.textContent = `₹${totals.total}`;
     if (btnDispatch) btnDispatch.disabled = false;
   }
+
 
   // Real Dynamic Order Dispatch to DB & KDS
   if (btnDispatch) {
@@ -169,6 +170,9 @@ document.addEventListener('DOMContentLoaded', () => {
       btnDispatch.disabled = true;
       btnDispatch.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Dispatching...`;
 
+      const instructionsInput = document.getElementById('order-special-instructions');
+      const specialInstructions = instructionsInput ? instructionsInput.value.trim() : '';
+
       const totals = menuService.calculateOrderTotals(activeCart);
       const newOrder = dbEngine.createOrder({
         table_id: tableSelect ? tableSelect.value : 'tbl-02',
@@ -177,16 +181,24 @@ document.addEventListener('DOMContentLoaded', () => {
         subtotal: totals.subtotal,
         tax: totals.tax,
         total: totals.total,
+        special_instructions: specialInstructions,
         status: 'NEW'
       });
 
-      // Update Table status to Occupied
-      dbEngine.updateTableStatus(tableSelect ? tableSelect.value : 'tbl-02', 'OCCUPIED');
+      setTimeout(() => {
+        activeCart = [];
+        if (instructionsInput) instructionsInput.value = '';
+        updateCartUI();
+        btnDispatch.innerHTML = `Order Dispatched! <i class="fa-solid fa-check"></i>`;
+        btnDispatch.style.background = 'var(--color-accent-lime)';
+        btnDispatch.style.color = '#000';
 
-      alert(`Order ${newOrder.order_number} for ${selectedTable} ($${totals.total}) dispatched to Kitchen KDS & inventory deducted!`);
-      activeCart = [];
-      updateCartUI();
-      btnDispatch.innerHTML = `Send Order to Kitchen <i class="fa-solid fa-paper-plane"></i>`;
+        setTimeout(() => {
+          btnDispatch.innerHTML = `Send Order to Kitchen <i class="fa-solid fa-paper-plane"></i>`;
+          btnDispatch.style.background = '';
+          btnDispatch.style.color = '';
+        }, 2500);
+      }, 500);
     });
   }
 

@@ -74,7 +74,7 @@ export class PaymentEngine {
       this.currentState = PaymentStates.OTP_REQUIRED;
       this.activeTransaction = {
         id: this.generateTransactionId(),
-        amount: cardDetails.amount || '$139.00',
+        amount: cardDetails.amount || '₹1584.00',
         method: `Card ending in ${cardDetails.number.slice(-4)}`,
         scenario: 'OTP',
         passcode: '123456'
@@ -99,11 +99,12 @@ export class PaymentEngine {
     this.currentState = PaymentStates.SUCCESS;
     this.activeTransaction = {
       id: this.generateTransactionId(),
-      amount: cardDetails.amount || '$139.00',
+      amount: cardDetails.amount || '₹1584.00',
       method: `Card ending in ${cardDetails.number.slice(-4)}`,
       timestamp: new Date().toISOString(),
       status: 'APPROVED'
     };
+
 
     return {
       success: true,

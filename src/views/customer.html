@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Space & Dining Menu — RestaurantOS</title>
+  <meta name="description" content="Dedicated Customer Portal for RestaurantOS. Browse gourmet dishes, provide special cooking instructions, review itemized order summary and pay bills seamlessly.">
+
+  <!-- Sentry Fonts & FontAwesome -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Theme Styles -->
+  <link rel="stylesheet" href="../styles/tokens.css">
+  <link rel="stylesheet" href="../styles/components.css">
+  <link rel="stylesheet" href="../styles/pos.css">
+
+  <style>
+    .customer-hero {
+      background: linear-gradient(135deg, rgba(35, 23, 58, 0.9) 0%, rgba(20, 14, 34, 0.95) 100%);
+      border: 1px solid var(--border-violet);
+      border-radius: var(--radius-xl);
+      padding: 24px 30px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+      box-shadow: var(--shadow-card);
+    }
+
+    .customer-welcome-box {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .customer-avatar {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--color-accent-lime);
+      box-shadow: 0 4px 12px rgba(194, 239, 78, 0.25);
+    }
+
+    .customer-greeting-title {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .customer-greeting-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .table-select-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--color-primary);
+      border: 1px solid var(--border-violet);
+      padding: 8px 16px;
+      border-radius: 30px;
+    }
+
+    .table-select-dropdown {
+      background: transparent;
+      border: none;
+      color: var(--color-accent-lime);
+      font-weight: 700;
+      font-size: 13px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .bill-summary-card {
+      background: var(--color-ink-deep);
+      border: 1px solid var(--border-violet);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      margin-top: 14px;
+    }
+
+    .bill-summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .tip-pills-bar {
+      display: flex;
+      gap: 6px;
+      margin: 10px 0 14px;
+    }
+
+    .tip-pill {
+      flex: 1;
+      background: var(--color-primary);
+      border: 1px solid var(--border-violet);
+      color: var(--text-secondary);
+      padding: 6px;
+      border-radius: var(--radius-xs);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    .tip-pill.active {
+      background: rgba(194, 239, 78, 0.15);
+      border-color: var(--color-accent-lime);
+      color: var(--color-accent-lime);
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-glow bg-glow-amber"></div>
+  <div class="bg-glow bg-glow-pink"></div>
+
+  <!-- Sentry Master Navbar -->
+  <header class="sentry-navbar">
+    <div class="sentry-navbar-inner">
+      <a href="../../index.html" class="sentry-brand">
+        <div class="brand-logo-icon"><i class="fa-solid fa-utensils"></i></div>
+        <span>Restaurant<span class="brand-highlight">OS</span></span>
+      </a>
+
+      <div class="sentry-nav-links">
+        <a href="customer.html" class="btn-sentry" style="background: rgba(194, 239, 78, 0.15); border-color: var(--color-accent-lime); color: var(--color-accent-lime);">
+          <i class="fa-solid fa-utensils"></i> Customer Space
+        </a>
+        <a href="queue.html" class="btn-ghost-on-dark">
+          <i class="fa-solid fa-people-group"></i> Virtual Queue
+        </a>
+        <a href="payment.html" class="btn-ghost-on-dark">
+          <i class="fa-solid fa-credit-card"></i> Pay Bill
+        </a>
+        <a href="pos.html" class="btn-ghost-on-dark" style="color: var(--color-accent-pink);" title="Switch to Staff Command Center">
+          <i class="fa-solid fa-user-shield"></i> Staff Portal
+        </a>
+      </div>
+    </div>
+  </header>
+
+
+  <main class="app-container" style="max-width: 1200px;">
+    <!-- Customer Welcome Banner -->
+    <section class="customer-hero">
+      <div class="customer-welcome-box">
+        <img id="cust-profile-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=customer" class="customer-avatar" alt="Customer Profile">
+        <div>
+          <h1 class="customer-greeting-title" id="cust-greeting-name">Welcome to Dining Portal 👋</h1>
+          <p class="customer-greeting-desc">Select your food items, add special cooking instructions, review your live bill, and checkout securely.</p>
+        </div>
+      </div>
+
+      <div class="table-select-badge">
+        <i class="fa-solid fa-chair" style="color: var(--color-accent-lime);"></i>
+        <span style="font-size: 12px; color: var(--text-secondary);">Your Seating:</span>
+        <select id="cust-table-select" class="table-select-dropdown">
+          <option value="Table 01">Table 01 (Patio)</option>
+          <option value="Table 02" selected>Table 02 (Main Hall)</option>
+          <option value="Table 03">Table 03 (Main Hall)</option>
+          <option value="Table 04">Table 04 (VIP Booth)</option>
+          <option value="Table 05">Table 05 (Patio)</option>
+          <option value="Table 06">Table 06 (Main Hall)</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- Main Ordering & Bill Layout -->
+    <div class="pos-layout">
+      <!-- Menu Catalog Section -->
+      <section class="pos-menu-section">
+        <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap;">
+          <div style="flex: 1; position: relative; min-width: 220px;">
+            <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 14px; top: 12px; color: var(--text-muted);"></i>
+            <input type="text" id="cust-search-input" placeholder="Search dishes (e.g. Biryani, Wagyu Sliders, Butter Chicken)..." style="width: 100%; padding: 10px 14px 10px 38px; background: var(--color-ink-deep); border: 1px solid var(--border-violet); border-radius: var(--radius-md); color: var(--text-primary); font-size: 13px; outline: none;">
+          </div>
+        </div>
+
+        <!-- Category Pills Filter -->
+        <div class="pos-category-bar" id="cust-category-bar">
+          <button class="category-pill active" data-cat="ALL">All Items</button>
+        </div>
+
+        <!-- Dynamic Food Cards Grid -->
+        <div class="pos-menu-grid" id="cust-menu-grid"></div>
+      </section>
+
+      <!-- Customer Active Order & Bill Summary Sidebar -->
+      <aside class="pos-cart-sidebar">
+        <div class="cart-header">
+          <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700;">
+            <i class="fa-solid fa-receipt" style="color: var(--color-accent-lime);"></i> My Order & Bill Summary
+          </h3>
+          <span class="badge sandbox-badge" id="cust-table-badge">Table 02</span>
+        </div>
+
+        <!-- Selected Items List -->
+        <div class="cart-items-list" id="cust-cart-list">
+          <p style="text-align: center; color: var(--text-tertiary); margin-top: 30px; font-size: 13px;">Your cart is empty. Click any gourmet dish on the left to add.</p>
+        </div>
+
+        <!-- Special Cooking Instructions Box -->
+        <div style="border-top: 1px solid var(--border-violet); padding-top: 14px; margin-top: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label for="cust-special-notes" style="font-size: 11px; font-weight: 700; color: var(--color-warning); text-transform: uppercase; letter-spacing: 0.3px;">
+              <i class="fa-solid fa-utensils"></i> Special Cooking Instructions
+            </label>
+            <span style="font-size: 10px; color: var(--text-tertiary);">Chef Notes</span>
+          </div>
+          
+          <textarea id="cust-special-notes" placeholder="e.g. Medium rare steak, extra spicy curry, dressing on the side, no onions..." rows="2" style="width: 100%; background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-sm); color: var(--text-primary); padding: 8px 10px; font-size: 12px; font-family: var(--font-sans); outline: none; resize: vertical; margin-bottom: 6px;"></textarea>
+
+          <!-- Quick Suggestion Chips -->
+          <div style="display: flex; gap: 4px; flex-wrap: wrap;" id="quick-notes-chips">
+            <button type="button" class="chip-note" data-text="Extra Spicy 🌶️">Extra Spicy 🌶️</button>
+            <button type="button" class="chip-note" data-text="No Onions 🧅">No Onions 🧅</button>
+            <button type="button" class="chip-note" data-text="Gluten Free 🌿">Gluten Free 🌿</button>
+            <button type="button" class="chip-note" data-text="Sauce on Side 🥣">Sauce on Side 🥣</button>
+          </div>
+        </div>
+
+
+        <!-- Itemized Bill Breakdown -->
+        <div class="bill-summary-card">
+          <div class="bill-summary-row">
+            <span style="color: var(--text-secondary);">Items Subtotal</span>
+            <strong id="cust-bill-subtotal" style="font-family: var(--font-mono);">₹0.00</strong>
+          </div>
+          <div class="bill-summary-row">
+            <span style="color: var(--text-secondary);">Tax & Service (8.5%)</span>
+            <strong id="cust-bill-tax" style="font-family: var(--font-mono);">₹0.00</strong>
+          </div>
+
+          <!-- Optional Tip Selector -->
+          <div style="margin-top: 6px;">
+            <span style="font-size: 11px; color: var(--text-tertiary); font-weight: 600;">Add Chef Tip (Optional):</span>
+            <div class="tip-pills-bar">
+              <button class="tip-pill active" data-tip="0">0%</button>
+              <button class="tip-pill" data-tip="10">10%</button>
+              <button class="tip-pill" data-tip="15">15%</button>
+              <button class="tip-pill" data-tip="20">20%</button>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-violet); padding-top: 10px; margin-top: 6px;">
+            <span style="font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.2px;">Total Bill</span>
+            <span style="font-size: 22px; font-weight: 700; color: var(--color-accent-lime); font-family: var(--font-mono);" id="cust-bill-total">₹0.00</span>
+          </div>
+        </div>
+
+
+        <!-- Action Button -->
+        <button type="button" class="pay-btn" id="btn-cust-checkout" style="margin-top: 16px; width: 100%;" disabled>
+          Proceed to Payment Enclave <i class="fa-solid fa-lock" style="margin-left: 6px;"></i>
+        </button>
+      </aside>
+    </div>
+  </main>
+
+  <!-- Google Identity Services & Auth Scripts -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script type="module" src="../services/authService.js"></script>
+  <script type="module" src="../utils/navbarAuth.js"></script>
+  <script type="module" src="../controllers/customerController.js"></script>
+</body>
+</html>

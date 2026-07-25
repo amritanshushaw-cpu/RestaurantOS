@@ -56,10 +56,11 @@ export class GeminiService {
   // Generate Executive Revenue Insights
   async generateDailyRevenueInsight(totalSales, popularCategory) {
     return {
-      summary: `Today's revenue reached $${totalSales.toFixed(2)}, led by strong demand in ${popularCategory}.`,
+      summary: `Today's revenue reached ₹${totalSales.toFixed(2)}, led by strong demand in ${popularCategory}.`,
       aiTip: `Gemini AI Recommendation: Run a 10% promotional bundle on ${popularCategory} pairings during dinner rush (7 PM - 9 PM) to boost ticket sizes by an estimated 14%.`
     };
   }
+
 }
 
 export const geminiService = new GeminiService();

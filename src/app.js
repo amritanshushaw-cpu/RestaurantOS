@@ -60,14 +60,25 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    // Check for orderId URL query param
+    const urlParams = new URLSearchParams(window.location.search);
+    const paramOrderId = urlParams.get('orderId');
+
     unpaidOrders.forEach(order => {
       const opt = document.createElement('option');
       opt.value = order.id;
-      opt.textContent = `${order.table_number || 'Takeaway'} — ${order.order_number} ($${parseFloat(order.total).toFixed(2)})`;
+      opt.textContent = `${order.table_number || 'Takeaway'} — ${order.order_number} (₹${parseFloat(order.total).toFixed(2)})`;
       orderSelect.appendChild(opt);
     });
 
-    activeOrder = unpaidOrders[0];
+    if (paramOrderId) {
+      const found = unpaidOrders.find(o => o.id === paramOrderId || o.order_number === paramOrderId);
+      if (found) activeOrder = found;
+      else activeOrder = unpaidOrders[0];
+    } else {
+      activeOrder = unpaidOrders[0];
+    }
+
     orderSelect.value = activeOrder.id;
     renderOrderSummary(activeOrder);
     if (payNowBtn) payNowBtn.disabled = false;
@@ -79,8 +90,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!order) {
       if (orderSummaryTitle) orderSummaryTitle.textContent = 'No Open Orders';
       orderLineItems.innerHTML = `<p style="font-size: 13px; color: var(--text-tertiary);">Place an order from the POS Terminal, then come back here to collect payment.</p>`;
-      if (orderTotalDisplay) orderTotalDisplay.textContent = '$0.00';
-      if (payBtnAmount) payBtnAmount.textContent = '$0.00';
+      if (orderTotalDisplay) orderTotalDisplay.textContent = '₹0.00';
+      if (payBtnAmount) payBtnAmount.textContent = '₹0.00';
       return;
     }
 
@@ -88,14 +99,15 @@ document.addEventListener('DOMContentLoaded', () => {
     orderLineItems.innerHTML = (order.items || []).map(item => `
       <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px;">
         <span>${item.quantity}x ${item.name || item.item_name}</span>
-        <strong style="font-family: var(--font-mono);">$${(item.price * item.quantity).toFixed(2)}</strong>
+        <strong style="font-family: var(--font-mono);">₹${(item.price * item.quantity).toFixed(2)}</strong>
       </div>
     `).join('');
 
     const total = parseFloat(order.total || 0).toFixed(2);
-    if (orderTotalDisplay) orderTotalDisplay.textContent = `$${total}`;
-    if (payBtnAmount) payBtnAmount.textContent = `$${total}`;
+    if (orderTotalDisplay) orderTotalDisplay.textContent = `₹${total}`;
+    if (payBtnAmount) payBtnAmount.textContent = `₹${total}`;
   }
+
 
   if (orderSelect) {
     orderSelect.addEventListener('change', () => {
