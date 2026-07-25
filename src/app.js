@@ -5,6 +5,7 @@
 
 import { detectCardBrand, formatCardNumber, formatExpiryDate } from './utils/validation.js';
 import { PaymentEngine } from './services/paymentEngine.js';
+import { dbEngine } from './services/supabaseClient.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const engine = new PaymentEngine();
@@ -33,6 +34,75 @@ document.addEventListener('DOMContentLoaded', () => {
   const checkoutGrid = document.getElementById('checkout-grid');
   const receiptContainer = document.getElementById('receipt-container');
   const btnResetPayment = document.getElementById('btn-reset-payment');
+
+  // --- Live Order / Billing Wiring (payment.html only) ---
+  const orderSelect = document.getElementById('order-select');
+  const orderSummaryTitle = document.getElementById('order-summary-title');
+  const orderLineItems = document.getElementById('order-line-items');
+  const orderTotalDisplay = document.getElementById('order-total-display');
+  const payBtnAmount = document.getElementById('pay-btn-amount');
+  const payNowBtn = document.getElementById('pay-now-btn');
+  const receiptAmountEl = document.getElementById('receipt-amount');
+
+  let activeOrder = null;
+
+  function refreshOrderSelector() {
+    if (!orderSelect) return; // Not on the payment page
+
+    const unpaidOrders = dbEngine.getUnpaidOrders();
+    orderSelect.innerHTML = '';
+
+    if (unpaidOrders.length === 0) {
+      orderSelect.innerHTML = `<option value="">No open orders — send one from POS Terminal first</option>`;
+      activeOrder = null;
+      renderOrderSummary(null);
+      if (payNowBtn) payNowBtn.disabled = true;
+      return;
+    }
+
+    unpaidOrders.forEach(order => {
+      const opt = document.createElement('option');
+      opt.value = order.id;
+      opt.textContent = `${order.table_number || 'Takeaway'} — ${order.order_number} ($${parseFloat(order.total).toFixed(2)})`;
+      orderSelect.appendChild(opt);
+    });
+
+    activeOrder = unpaidOrders[0];
+    orderSelect.value = activeOrder.id;
+    renderOrderSummary(activeOrder);
+    if (payNowBtn) payNowBtn.disabled = false;
+  }
+
+  function renderOrderSummary(order) {
+    if (!orderLineItems) return;
+
+    if (!order) {
+      orderSummaryTitle.textContent = 'No Open Orders';
+      orderLineItems.innerHTML = `<p style="font-size: 13px; color: var(--text-tertiary);">Place an order from the POS Terminal, then come back here to collect payment.</p>`;
+      orderTotalDisplay.textContent = '$0.00';
+      if (payBtnAmount) payBtnAmount.textContent = '$0.00';
+      return;
+    }
+
+    orderSummaryTitle.textContent = `${order.table_number || 'Takeaway'} Order Summary`;
+    orderLineItems.innerHTML = order.items.map(item => `
+      <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px;">
+        <span>${item.quantity}x ${item.name}</span>
+        <strong style="font-family: var(--font-mono);">$${(item.price * item.quantity).toFixed(2)}</strong>
+      </div>
+    `).join('');
+
+    const total = parseFloat(order.total).toFixed(2);
+    orderTotalDisplay.textContent = `$${total}`;
+    if (payBtnAmount) payBtnAmount.textContent = `$${total}`;
+  }
+
+  orderSelect?.addEventListener('change', () => {
+    activeOrder = dbEngine.getOrderById(orderSelect.value);
+    renderOrderSummary(activeOrder);
+  });
+
+  refreshOrderSelector();
 
   // Test Fill Presets
   document.getElementById('btn-fill-success')?.addEventListener('click', () => {
@@ -106,14 +176,21 @@ document.addEventListener('DOMContentLoaded', () => {
   paymentForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
+    if (orderSelect && !activeOrder) {
+      alert('No open order selected. Send an order from the POS Terminal first.');
+      return;
+    }
+
     processingModal.classList.add('active');
+
+    const amountLabel = activeOrder ? `$${parseFloat(activeOrder.total).toFixed(2)}` : '$0.00';
 
     const result = await engine.processCardPayment({
       number: cardNumberInput.value,
       holder: cardHolderInput.value,
       expiry: cardExpiryInput.value,
       cvv: cardCvvInput.value,
-      amount: '$96.00'
+      amount: amountLabel
     }, (percent, statusText) => {
       processingStatus.textContent = statusText;
     });
@@ -124,8 +201,10 @@ document.addEventListener('DOMContentLoaded', () => {
       otpModal.classList.add('active');
       otpInput.focus();
     } else if (result.success) {
+      finalizeOrderPayment();
       showReceipt(true, result.transaction);
     } else {
+      dbEngine.logPaymentAttempt(false);
       showReceipt(false, { error: result.error });
     }
   });
@@ -135,11 +214,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const res = engine.verifyOTP(otpInput.value);
     if (res.success) {
       otpModal.classList.remove('active');
+      finalizeOrderPayment();
       showReceipt(true, res.transaction);
     } else {
       alert(res.error);
     }
   });
+
+  // Mark the real order as PAID and free the table once payment clears
+  function finalizeOrderPayment() {
+    dbEngine.logPaymentAttempt(true);
+    if (activeOrder) {
+      dbEngine.markOrderPaid(activeOrder.id);
+    }
+  }
 
   // Show Receipt
   function showReceipt(isSuccess, txnData) {
@@ -150,6 +238,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const title = document.getElementById('receipt-title');
     const subtitle = document.getElementById('receipt-subtitle');
     const txId = document.getElementById('receipt-tx-id');
+    const paidAmount = activeOrder ? `$${parseFloat(activeOrder.total).toFixed(2)}` : '$0.00';
+    if (receiptAmountEl) receiptAmountEl.textContent = `${paidAmount} USD`;
 
     if (isSuccess) {
       icon.className = 'fa-solid fa-circle-check';
@@ -175,6 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
     receiptContainer.style.display = 'none';
     checkoutGrid.style.display = 'grid';
     paymentForm.reset();
+    refreshOrderSelector();
     autofillCard('4000 0000 0000 0000', 'Alex Mercer', '12/28', '888');
   });
 

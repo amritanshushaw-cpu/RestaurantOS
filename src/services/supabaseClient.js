@@ -9,7 +9,9 @@ const STORAGE_KEYS = {
   INVENTORY: 'rest_os_inventory',
   ORDERS: 'rest_os_orders',
   QUEUE: 'rest_os_queue',
-  TABLES: 'rest_os_tables'
+  TABLES: 'rest_os_tables',
+  PAYMENTS: 'rest_os_payments',
+  QUEUE_SEQ: 'rest_os_queue_seq'
 };
 
 class DynamicDatabaseEngine {
@@ -57,11 +59,21 @@ class DynamicDatabaseEngine {
 
     if (!localStorage.getItem(STORAGE_KEYS.TABLES)) {
       localStorage.setItem(STORAGE_KEYS.TABLES, JSON.stringify([
-        { id: 'tbl-01', table_number: 'Table 01', capacity: 2, status: 'AVAILABLE' },
-        { id: 'tbl-02', table_number: 'Table 02', capacity: 4, status: 'OCCUPIED' },
-        { id: 'tbl-03', table_number: 'Table 03', capacity: 4, status: 'AVAILABLE' },
-        { id: 'tbl-04', table_number: 'Table 04', capacity: 6, status: 'RESERVED' }
+        { id: 'tbl-01', table_number: 'Table 01', capacity: 2, status: 'AVAILABLE', section: 'Patio' },
+        { id: 'tbl-02', table_number: 'Table 02', capacity: 4, status: 'AVAILABLE', section: 'Main Hall' },
+        { id: 'tbl-03', table_number: 'Table 03', capacity: 4, status: 'AVAILABLE', section: 'Main Hall' },
+        { id: 'tbl-04', table_number: 'Table 04', capacity: 6, status: 'AVAILABLE', section: 'Main Hall' },
+        { id: 'tbl-05', table_number: 'Table 05', capacity: 2, status: 'AVAILABLE', section: 'Patio' },
+        { id: 'tbl-06', table_number: 'Table 06', capacity: 8, status: 'AVAILABLE', section: 'Main Hall' }
       ]));
+    }
+
+    if (!localStorage.getItem(STORAGE_KEYS.PAYMENTS)) {
+      localStorage.setItem(STORAGE_KEYS.PAYMENTS, JSON.stringify([]));
+    }
+
+    if (!localStorage.getItem(STORAGE_KEYS.QUEUE_SEQ)) {
+      localStorage.setItem(STORAGE_KEYS.QUEUE_SEQ, '0');
     }
   }
 
@@ -155,6 +167,24 @@ class DynamicDatabaseEngine {
     return order;
   }
 
+  // Orders that still need to be checked out (excludes already-paid/cancelled tickets)
+  getUnpaidOrders() {
+    return this.getOrders().filter(o => o.status !== 'PAID' && o.status !== 'CANCELLED');
+  }
+
+  getOrderById(orderId) {
+    return this.getOrders().find(o => o.id === orderId) || null;
+  }
+
+  // Mark an order as paid and free up its table
+  markOrderPaid(orderId) {
+    const order = this.updateOrderStatus(orderId, 'PAID');
+    if (order && order.table_id) {
+      this.updateTableStatus(order.table_id, 'CLEANING');
+    }
+    return order;
+  }
+
   deductInventoryForOrder(items) {
     if (!items || !Array.isArray(items)) return;
     const inventory = this.getInventory();
@@ -207,6 +237,68 @@ class DynamicDatabaseEngine {
       localStorage.setItem(STORAGE_KEYS.TABLES, JSON.stringify(tables));
     }
     return table;
+  }
+
+  // --- PAYMENTS (for real, computed approval-rate analytics) ---
+  logPaymentAttempt(success) {
+    const payments = JSON.parse(localStorage.getItem(STORAGE_KEYS.PAYMENTS) || '[]');
+    payments.push({ success, at: new Date().toISOString() });
+    localStorage.setItem(STORAGE_KEYS.PAYMENTS, JSON.stringify(payments));
+  }
+
+  getPaymentStats() {
+    const payments = JSON.parse(localStorage.getItem(STORAGE_KEYS.PAYMENTS) || '[]');
+    if (payments.length === 0) return { attempts: 0, approvalRate: 100 };
+    const successCount = payments.filter(p => p.success).length;
+    return {
+      attempts: payments.length,
+      approvalRate: parseFloat(((successCount / payments.length) * 100).toFixed(1))
+    };
+  }
+
+  // --- LIVE ANALYTICS (derived entirely from real order/menu/payment state) ---
+  getAnalyticsSummary() {
+    const orders = this.getOrders().filter(o => o.status !== 'CANCELLED');
+    const { categories, items } = this.getMenu();
+    const orderCount = orders.length;
+    const grossRevenue = orders.reduce((sum, o) => sum + parseFloat(o.total || 0), 0);
+    const avgCheck = orderCount > 0 ? grossRevenue / orderCount : 0;
+
+    // Revenue by category, derived from each order's line items
+    const revenueByCategory = {};
+    orders.forEach(order => {
+      (order.items || []).forEach(line => {
+        const menuItem = items.find(i => i.id === line.id || i.name === line.name);
+        const catId = menuItem ? menuItem.category_id : null;
+        const cat = categories.find(c => c.id === catId);
+        const catName = cat ? cat.name : 'Uncategorized';
+        revenueByCategory[catName] = (revenueByCategory[catName] || 0) + (line.price * line.quantity);
+      });
+    });
+
+    let topCategory = categories[0] ? categories[0].name : 'Menu';
+    let topCategoryRevenue = 0;
+    Object.entries(revenueByCategory).forEach(([name, revenue]) => {
+      if (revenue > topCategoryRevenue) {
+        topCategory = name;
+        topCategoryRevenue = revenue;
+      }
+    });
+
+    return {
+      grossRevenue: parseFloat(grossRevenue.toFixed(2)),
+      orderCount,
+      avgCheck: parseFloat(avgCheck.toFixed(2)),
+      topCategory,
+      approvalRate: this.getPaymentStats().approvalRate
+    };
+  }
+
+  // --- VIRTUAL QUEUE POSITION HELPERS ---
+  getQueuePosition(entryId) {
+    const queue = this.getQueue().filter(q => q.status === 'WAITING');
+    const idx = queue.findIndex(q => q.id === entryId);
+    return idx === -1 ? null : idx + 1;
   }
 }
 

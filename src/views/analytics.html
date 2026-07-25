@@ -89,19 +89,19 @@
     <div class="metrics-grid">
       <div class="metric-card">
         <span style="font-size: 11px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.2px;">Gross Revenue Today</span>
-        <div class="metric-value">$1,842.50</div>
+        <div class="metric-value" id="metric-revenue">$0.00</div>
       </div>
       <div class="metric-card">
         <span style="font-size: 11px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.2px;">Total Orders Fulfilled</span>
-        <div class="metric-value" style="color: #fff;">42 Orders</div>
+        <div class="metric-value" style="color: #fff;" id="metric-orders">0 Orders</div>
       </div>
       <div class="metric-card">
         <span style="font-size: 11px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.2px;">Average Table Check</span>
-        <div class="metric-value" style="color: #10b981;">$43.86</div>
+        <div class="metric-value" style="color: #10b981;" id="metric-avg-check">$0.00</div>
       </div>
       <div class="metric-card">
         <span style="font-size: 11px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.2px;">Payment Approval Rate</span>
-        <div class="metric-value" style="color: var(--color-accent-violet);">98.4%</div>
+        <div class="metric-value" style="color: var(--color-accent-violet);" id="metric-approval">—</div>
       </div>
     </div>
 
@@ -113,22 +113,43 @@
         <span class="badge sandbox-badge" style="margin-left: auto;">Gemini 2.5 Active</span>
       </div>
       <p style="font-size: 15px; line-height: 1.6; color: var(--text-primary); margin-bottom: 16px;" id="ai-summary">
-        Today's gross revenue reached <strong>$1,842.50</strong>, led by strong customer demand in <strong>Signature Starters & Steaks</strong>.
+        Analyzing live order data...
       </p>
       <div style="background: var(--color-primary); padding: 16px; border-radius: var(--radius-md); border-left: 4px solid var(--color-accent-lime); font-size: 13px; color: var(--text-secondary);">
         <i class="fa-solid fa-lightbulb" style="color: var(--color-accent-lime); margin-right: 6px;"></i>
-        <strong id="ai-tip" style="color: var(--text-primary);">Gemini AI Recommendation:</strong> Run a 10% promotional beverage bundle on Wagyu Sliders & Artisanal Cocktails during dinner rush (7 PM - 9 PM) to boost ticket sizes by an estimated 14%.
+        <strong id="ai-tip" style="color: var(--text-primary);">Gemini AI Recommendation:</strong> <span id="ai-tip-text">Crunching today's numbers...</span>
       </div>
     </div>
   </main>
 
   <script type="module">
     import { geminiService } from '../services/geminiService.js';
-    document.addEventListener('DOMContentLoaded', async () => {
-      const insight = await geminiService.generateDailyRevenueInsight(1842.50, 'Mains & Steaks');
+    import { dbEngine } from '../services/supabaseClient.js';
+
+    async function renderAnalytics() {
+      const summary = dbEngine.getAnalyticsSummary();
+
+      document.getElementById('metric-revenue').textContent = `$${summary.grossRevenue.toFixed(2)}`;
+      document.getElementById('metric-orders').textContent = `${summary.orderCount} Orders`;
+      document.getElementById('metric-avg-check').textContent = `$${summary.avgCheck.toFixed(2)}`;
+      document.getElementById('metric-approval').textContent = summary.orderCount > 0 || dbEngine.getPaymentStats().attempts > 0
+        ? `${summary.approvalRate}%`
+        : 'No data yet';
+
+      if (summary.orderCount === 0) {
+        document.getElementById('ai-summary').innerHTML = `No orders have been placed yet today. Head to the <strong>POS Terminal</strong> to send an order and analytics will populate live.`;
+        document.getElementById('ai-tip-text').textContent = 'Insights will appear once real order data is available.';
+        return;
+      }
+
+      const insight = await geminiService.generateDailyRevenueInsight(summary.grossRevenue, summary.topCategory);
       document.getElementById('ai-summary').innerHTML = insight.summary;
-      document.getElementById('ai-tip').textContent = insight.aiTip;
-    });
+      document.getElementById('ai-tip-text').textContent = insight.aiTip.replace('Gemini AI Recommendation: ', '');
+    }
+
+    document.addEventListener('DOMContentLoaded', renderAnalytics);
+    // Keep the dashboard live as new orders/payments come in from other tabs (POS, KDS, Payment)
+    setInterval(renderAnalytics, 4000);
   </script>
 </body>
 </html>

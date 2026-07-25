@@ -117,8 +117,8 @@
       </div>
 
       <div class="chat-history" id="chat-history">
-        <div class="chat-bubble bubble-copilot">
-          <strong>OpsCopilot:</strong> Hello Manager! I am analyzing today's operational data. Wagyu Beef Sliders are your top seller. Chicken stock is estimated to run out by 8:30 PM. How can I assist your dinner service?
+        <div class="chat-bubble bubble-copilot" id="copilot-greeting">
+          <strong>OpsCopilot:</strong> Hello Manager! Analyzing today's operational data...
         </div>
       </div>
 
@@ -141,8 +141,47 @@
 
   <script type="module">
     import { geminiService } from '../services/geminiService.js';
+    import { dbEngine } from '../services/supabaseClient.js';
+
+    // Build a generalized snapshot of live restaurant state — no hardcoded numbers or item names
+    function getLiveContext() {
+      const inventory = dbEngine.getInventory();
+      const lowStock = inventory
+        .filter(i => i.quantity <= i.threshold)
+        .sort((a, b) => (a.quantity / (a.threshold || 1)) - (b.quantity / (b.threshold || 1)));
+
+      const summary = dbEngine.getAnalyticsSummary();
+      const { items } = dbEngine.getMenu();
+      const orders = dbEngine.getOrders();
+
+      // Top seller derived from actual quantities sold across all orders
+      const soldQty = {};
+      orders.forEach(o => (o.items || []).forEach(line => {
+        soldQty[line.name] = (soldQty[line.name] || 0) + line.quantity;
+      }));
+      let topSeller = null, topSellerQty = 0;
+      Object.entries(soldQty).forEach(([name, qty]) => {
+        if (qty > topSellerQty) { topSeller = name; topSellerQty = qty; }
+      });
+
+      return { inventory, lowStock, summary, items, topSeller, topSellerQty };
+    }
+
+    function renderGreeting() {
+      const ctx = getLiveContext();
+      const greeting = document.getElementById('copilot-greeting');
+      const topSellerLine = ctx.topSeller
+        ? `${ctx.topSeller} is your top seller so far today.`
+        : `No orders yet today — I'll surface trends as they come in.`;
+      const stockLine = ctx.lowStock.length > 0
+        ? `Heads up: ${ctx.lowStock[0].name} is running low (${ctx.lowStock[0].quantity} ${ctx.lowStock[0].unit} left).`
+        : `All ingredients are above their restock threshold right now.`;
+      greeting.innerHTML = `<strong>OpsCopilot:</strong> Hello Manager! ${topSellerLine} ${stockLine} How can I assist your dinner service?`;
+    }
 
     document.addEventListener('DOMContentLoaded', () => {
+      renderGreeting();
+
       const history = document.getElementById('chat-history');
       const form = document.getElementById('copilot-form');
       const input = document.getElementById('copilot-input');
@@ -168,17 +207,31 @@
         input.value = '';
         history.scrollTop = history.scrollHeight;
 
-        // Simulated AI Response
-        setTimeout(() => {
+        const lowerText = text.toLowerCase();
+        const ctx = getLiveContext();
+
+        setTimeout(async () => {
           const aiB = document.createElement('div');
           aiB.className = 'chat-bubble bubble-copilot';
-          
-          if (text.includes('prepare') || text.includes('tonight')) {
-            aiB.innerHTML = `<strong>OpsCopilot:</strong> Based on 50+ historical Friday orders and 4 active reservations, prepare 15kg Wagyu beef, 8kg Ribeye steaks, and restock 12 bottles of Smoked Bourbon. Expected peak: 7:30 PM - 9:00 PM.`;
-          } else if (text.includes('sell out')) {
-            aiB.innerHTML = `<strong>OpsCopilot:</strong> High risk of stockout for: 1. Wagyu Beef Sliders (8 units remaining), 2. Truffle Fries (5 units remaining). Recommended action: Restock before 7:00 PM.`;
+
+          if (lowerText.includes('prepare') || lowerText.includes('tonight')) {
+            if (ctx.topSeller) {
+              const pairing = await geminiService.getPairingRecommendation(ctx.topSeller);
+              aiB.innerHTML = `<strong>OpsCopilot:</strong> Based on today's ${ctx.summary.orderCount} order(s), ${ctx.topSeller} (${ctx.topSellerQty} sold) is leading demand. Consider prepping extra stock and pairing it with ${pairing.side} and ${pairing.beverage}.`;
+            } else {
+              aiB.innerHTML = `<strong>OpsCopilot:</strong> No orders have come in yet today, so I don't have a demand signal. Once the POS Terminal sends tickets, I'll recommend prep priorities.`;
+            }
+          } else if (lowerText.includes('sell out') || lowerText.includes('stock')) {
+            if (ctx.lowStock.length > 0) {
+              const list = ctx.lowStock.slice(0, 3).map((i, idx) => `${idx + 1}. ${i.name} (${i.quantity} ${i.unit} left, threshold ${i.threshold})`).join(', ');
+              aiB.innerHTML = `<strong>OpsCopilot:</strong> High risk of stockout for: ${list}. Recommended action: restock before the dinner rush.`;
+            } else {
+              aiB.innerHTML = `<strong>OpsCopilot:</strong> Good news — every ingredient is currently above its restock threshold. No stockout risk detected.`;
+            }
+          } else if (lowerText.includes('waste')) {
+            aiB.innerHTML = `<strong>OpsCopilot:</strong> To reduce waste, prep perishables in smaller batches matched to today's ${ctx.summary.orderCount}-order pace, and rotate ${ctx.inventory[0]?.name || 'high-turnover ingredients'} using first-in-first-out storage.`;
           } else {
-            aiB.innerHTML = `<strong>OpsCopilot:</strong> Live Data Insight: Average check is $43.86 across 42 orders today. Kitchen prep time is optimal at 14 minutes per order.`;
+            aiB.innerHTML = `<strong>OpsCopilot:</strong> Live Data Insight: Average check is $${ctx.summary.avgCheck.toFixed(2)} across ${ctx.summary.orderCount} order(s) today, with gross revenue of $${ctx.summary.grossRevenue.toFixed(2)}.`;
           }
 
           history.appendChild(aiB);

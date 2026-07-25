@@ -97,20 +97,18 @@
         </div>
 
         <div class="order-summary-box">
-          <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 16px;"><i class="fa-solid fa-receipt" style="color: var(--color-accent-lime);"></i> Table #08 Order Summary</h3>
-          <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px;">
-            <span>2x Wagyu Gourmet Burger</span> <strong style="font-family: var(--font-mono);">$48.00</strong>
+          <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 16px;"><i class="fa-solid fa-receipt" style="color: var(--color-accent-lime);"></i> <span id="order-summary-title">Select an Order to Pay</span></h3>
+
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label for="order-select">Open Table / Order</label>
+            <select id="order-select" style="width: 100%; padding: 10px 14px; background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-sm); color: #fff; font-family: var(--font-sans); outline: none;"></select>
           </div>
-          <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px;">
-            <span>1x Truffle Fries & Aioli</span> <strong style="font-family: var(--font-mono);">$16.00</strong>
-          </div>
-          <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px;">
-            <span>2x Signature Craft Cocktails</span> <strong style="font-family: var(--font-mono);">$32.00</strong>
-          </div>
+
+          <div id="order-line-items"></div>
           <div style="height: 1px; background: var(--border-violet); margin: 14px 0;"></div>
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <span style="font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 0.2px;">Total Amount</span>
-            <span style="font-size: 24px; font-weight: 700; color: var(--color-accent-lime); font-family: var(--font-mono);">$96.00</span>
+            <span style="font-size: 24px; font-weight: 700; color: var(--color-accent-lime); font-family: var(--font-mono);" id="order-total-display">$0.00</span>
           </div>
         </div>
       </section>
@@ -158,7 +156,7 @@
           </div>
 
           <button type="submit" class="pay-btn" id="pay-now-btn">
-            Pay $96.00 Now <i class="fa-solid fa-arrow-right"></i>
+            Pay <span id="pay-btn-amount">$0.00</span> Now <i class="fa-solid fa-arrow-right"></i>
           </button>
         </form>
       </section>
@@ -194,7 +192,7 @@
             <span>Transaction ID:</span> <strong id="receipt-tx-id" style="font-family: var(--font-mono);">REST-TXN-12345678-TEST</strong>
           </div>
           <div style="display: flex; justify-content: space-between;">
-            <span>Amount Paid:</span> <strong style="color: var(--color-accent-lime); font-family: var(--font-mono);">$96.00 USD</strong>
+            <span>Amount Paid:</span> <strong id="receipt-amount" style="color: var(--color-accent-lime); font-family: var(--font-mono);">$0.00 USD</strong>
           </div>
         </div>
 
