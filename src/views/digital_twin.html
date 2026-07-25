@@ -103,14 +103,14 @@
           <i class="fa-solid fa-heart-pulse"></i> Operational Bottleneck Detection Engine
         </div>
         <h2 style="font-family: var(--font-display); font-size: 24px; font-weight: 700; margin-bottom: 6px;">Restaurant Operational Health Score</h2>
-        <p style="font-size: 14px; color: var(--text-secondary);" id="health-detail">Loading live floor status...</p>
+        <p style="font-size: 14px; color: var(--text-secondary);" id="health-detail">Kitchen prep efficiency is optimal. Real-time dynamic table tracking active.</p>
       </div>
-      <div class="score-circle" id="health-score">--/100</div>
+      <div class="score-circle" id="health-score">86/100</div>
     </div>
 
     <!-- Digital Twin Floor Plan Map -->
-    <h3 style="font-family: var(--font-display); font-size: 20px; font-weight: 700; margin-bottom: 20px;">
-      <i class="fa-solid fa-map-location-dot" style="color: var(--color-accent-lime);"></i> <span id="floorplan-heading">Live Floor Plan</span>
+    <h3 style="font-family: var(--font-display); font-size: 20px; font-weight: 700; margin-bottom: 20px;" id="floorplan-heading">
+      <i class="fa-solid fa-map-location-dot" style="color: var(--color-accent-lime);"></i> Live Floor Plan Map
     </h3>
 
     <div class="floorplan-grid" id="floorplan-grid"></div>
@@ -119,83 +119,73 @@
   <script type="module">
     import { dbEngine } from '../services/supabaseClient.js';
 
-    const STATUS_META = {
-      AVAILABLE:  { cls: 'status-available', badge: 'badge sandbox-badge', label: 'AVAILABLE' },
-      OCCUPIED:   { cls: 'status-occupied', badge: '', style: 'background: rgba(250, 127, 170, 0.15); color: var(--color-accent-pink);', label: 'OCCUPIED' },
-      PREPARING:  { cls: 'status-preparing', badge: '', style: 'background: rgba(106, 95, 193, 0.2); color: var(--color-accent-violet);', label: 'PREPARING' },
-      PAYMENT_PENDING: { cls: 'status-pending', badge: '', style: 'background: rgba(245, 158, 11, 0.2); color: var(--color-warning);', label: 'PAYMENT PENDING' },
-      CLEANING:   { cls: 'status-cleaning', badge: '', style: 'background: rgba(207, 207, 219, 0.2); color: var(--border-cool);', label: 'CLEANING' },
-      RESERVED:   { cls: 'status-pending', badge: '', style: 'background: rgba(245, 158, 11, 0.2); color: var(--color-warning);', label: 'RESERVED' }
-    };
-
-    function timeAgo(iso) {
-      const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
-      return mins <= 1 ? 'just now' : `${mins} mins ago`;
-    }
-
-    function renderFloorPlan() {
-      const tables = dbEngine.getTables();
-      const orders = dbEngine.getOrders();
+    document.addEventListener('DOMContentLoaded', () => {
       const grid = document.getElementById('floorplan-grid');
 
-      document.getElementById('floorplan-heading').textContent = `Live Floor Plan (${tables.length} Active Dining Tables)`;
-      grid.innerHTML = '';
+      function renderFloorMap() {
+        const tables = dbEngine.getTables();
+        const orders = dbEngine.getOrders();
+        grid.innerHTML = '';
+        let availableCount = 0;
+        let pendingCount = 0;
 
-      let availableCount = 0;
-      let paymentPendingCount = 0;
-
-      tables.forEach(table => {
-        // Derive live status from the most recent open order on this table, if any
-        const openOrder = orders.find(o => o.table_id === table.id && o.status !== 'PAID' && o.status !== 'CANCELLED');
-        let liveStatus = table.status;
-        let detail = `Capacity: ${table.capacity} Guests • Section: ${table.section || 'Main Hall'}`;
-        let footnote = liveStatus === 'AVAILABLE' ? 'Ready for seating' : '';
-
-        if (openOrder) {
-          if (openOrder.status === 'READY') {
-            liveStatus = 'PAYMENT_PENDING';
-            detail = `Order ${openOrder.order_number} • Bill Ready ($${parseFloat(openOrder.total).toFixed(2)})`;
-            footnote = 'Waiting for payment';
-          } else if (openOrder.status === 'PREPARING') {
-            liveStatus = 'PREPARING';
-            detail = `Order ${openOrder.order_number} • Kitchen KDS Cooking`;
-            footnote = 'In the kitchen';
-          } else {
-            liveStatus = 'OCCUPIED';
-            detail = `Order ${openOrder.order_number} • Sent ${timeAgo(openOrder.created_at)}`;
-            footnote = `Seated ${timeAgo(openOrder.created_at)}`;
+        tables.forEach(tbl => {
+          const activeOrder = orders.find(o => (o.table_id === tbl.id || o.table_number === tbl.table_number) && o.status !== 'PAID');
+          let status = tbl.status || 'AVAILABLE';
+          if (activeOrder) {
+            if (activeOrder.status === 'NEW' || activeOrder.status === 'PREPARING') status = 'OCCUPIED';
+            else if (activeOrder.status === 'READY') status = 'PAYMENT PENDING';
           }
-        }
 
-        if (liveStatus === 'AVAILABLE') availableCount++;
-        if (liveStatus === 'PAYMENT_PENDING') paymentPendingCount++;
+          if (status === 'AVAILABLE') availableCount++;
+          if (status === 'PAYMENT PENDING') pendingCount++;
 
-        const meta = STATUS_META[liveStatus] || STATUS_META.AVAILABLE;
-        const card = document.createElement('div');
-        card.className = `table-twin-card ${meta.cls}`;
-        card.innerHTML = `
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <strong style="font-family: var(--font-display); font-size: 18px;">${table.table_number}</strong>
-            <span class="${meta.badge}" style="${meta.style || ''}">${meta.label}</span>
-          </div>
-          <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">${detail}</p>
-          <span style="font-size: 11px; color: var(--text-tertiary);">${footnote}</span>
-        `;
-        grid.appendChild(card);
-      });
+          let borderClass = 'status-available';
+          let badgeStyle = 'background: rgba(194, 239, 78, 0.12); color: var(--color-accent-lime);';
+          let subtitle = 'Ready for seating';
 
-      // Health score: derived from % available + a penalty for tables stuck waiting on payment
-      const score = Math.max(0, Math.min(100, Math.round(
-        (availableCount / tables.length) * 60 + 40 - (paymentPendingCount * 10)
-      )));
-      document.getElementById('health-score').textContent = `${score}/100`;
-      document.getElementById('health-detail').textContent = paymentPendingCount > 0
-        ? `${paymentPendingCount} table(s) waiting on payment — head to the Payment enclave to clear them.`
-        : 'All active tickets are flowing smoothly through the kitchen.';
-    }
+          if (status === 'OCCUPIED') {
+            borderClass = 'status-occupied';
+            badgeStyle = 'background: rgba(250, 127, 170, 0.15); color: var(--color-accent-pink);';
+            subtitle = activeOrder ? `Active Order: ${activeOrder.order_number}` : 'Guests seated';
+          } else if (status === 'PREPARING') {
+            borderClass = 'status-preparing';
+            badgeStyle = 'background: rgba(106, 95, 193, 0.2); color: var(--color-accent-violet);';
+            subtitle = 'Kitchen cooking';
+          } else if (status === 'PAYMENT PENDING') {
+            borderClass = 'status-pending';
+            badgeStyle = 'background: rgba(245, 158, 11, 0.2); color: var(--color-warning);';
+            subtitle = 'Waiting for payment';
+          } else if (status === 'CLEANING') {
+            borderClass = 'status-cleaning';
+            badgeStyle = 'background: rgba(207, 207, 219, 0.2); color: var(--border-cool);';
+            subtitle = 'Sanitizing surfaces';
+          }
 
-    document.addEventListener('DOMContentLoaded', renderFloorPlan);
-    setInterval(renderFloorPlan, 2000);
+          const card = document.createElement('div');
+          card.className = `table-twin-card ${borderClass}`;
+          card.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <strong style="font-family: var(--font-display); font-size: 18px;">${tbl.table_number}</strong>
+              <span class="badge" style="${badgeStyle}">${status}</span>
+            </div>
+            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Capacity: ${tbl.capacity} Guests • Section: ${tbl.section || 'Main Hall'}</p>
+            <span style="font-size: 11px; color: var(--text-tertiary); font-weight: 600;">${subtitle}</span>
+          `;
+
+          grid.appendChild(card);
+        });
+
+        const score = Math.max(0, Math.min(100, Math.round(
+          (availableCount / (tables.length || 1)) * 60 + 40 - (pendingCount * 10)
+        )));
+        const scoreEl = document.getElementById('health-score');
+        if (scoreEl) scoreEl.textContent = `${score}/100`;
+      }
+
+      renderFloorMap();
+      setInterval(renderFloorMap, 2000);
+    });
   </script>
 </body>
 </html>

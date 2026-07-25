@@ -67,32 +67,27 @@
       <section class="queue-box" style="text-align: center;">
         <i class="fa-solid fa-clock" style="font-size: 36px; color: var(--color-accent-lime); margin-bottom: 12px;"></i>
         <h2 style="font-family: var(--font-display); font-size: 22px; font-weight: 700;">Virtual Line Status</h2>
-        <p style="font-size: 13px; color: var(--text-secondary);" id="queue-empty-msg">Join the queue to see your live position</p>
+        <p style="font-size: 13px; color: var(--text-secondary);">You are currently in the remote waiting line</p>
 
-        <div id="queue-status-block" style="display: none;">
-          <div class="queue-number" id="queue-position">Position #--</div>
-          <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(194, 239, 78, 0.12); border: 1px solid rgba(194, 239, 78, 0.3); color: var(--color-accent-lime); padding: 8px 16px; border-radius: var(--radius-xl); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.2px; margin-bottom: 24px;">
-            <i class="fa-solid fa-hourglass-half"></i> <span id="queue-wait-time">Est. Wait Time: -- mins</span>
-          </div>
-
-          <div style="background: var(--color-primary); border: 1px solid var(--border-violet); padding: 16px; border-radius: var(--radius-md); text-align: left; font-size: 13px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-              <span style="color: var(--text-secondary);">Diner Name:</span> <strong id="queue-diner-name">--</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-              <span style="color: var(--text-secondary);">Party Size:</span> <strong id="queue-party-size">--</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between;">
-              <span style="color: var(--text-secondary);">Status:</span> <strong id="queue-status-label">WAITING</strong>
-            </div>
-          </div>
-          <button type="button" class="btn-chip" id="btn-leave-queue" style="margin-top: 14px;"><i class="fa-solid fa-xmark"></i> Leave Queue</button>
+        <div class="queue-number" id="queue-position">Position #01</div>
+        <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(194, 239, 78, 0.12); border: 1px solid rgba(194, 239, 78, 0.3); color: var(--color-accent-lime); padding: 8px 16px; border-radius: var(--radius-xl); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.2px; margin-bottom: 24px;">
+          <i class="fa-solid fa-hourglass-half"></i> <span id="queue-wait-time">Est. Wait Time: ~5 mins</span>
         </div>
 
-        <div style="margin-top: 28px; text-align: left;">
-          <h4 style="font-family: var(--font-display); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2px; color: var(--text-secondary); margin-bottom: 10px;">
-            <i class="fa-solid fa-people-line"></i> Full Waiting List (Host Stand View)
-          </h4>
+        <div style="background: var(--color-primary); border: 1px solid var(--border-violet); padding: 16px; border-radius: var(--radius-md); text-align: left; font-size: 13px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span style="color: var(--text-secondary);">Diner Name:</span> <strong id="queue-diner-name">Alex Mercer</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span style="color: var(--text-secondary);">Party Size:</span> <strong id="queue-party-size">4 Guests</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: var(--text-secondary);">Seating Preference:</span> <strong>Main Dining Hall</strong>
+          </div>
+        </div>
+
+        <div style="margin-top: 20px; text-align: left;">
+          <h4 style="font-family: var(--font-display); font-size: 14px; font-weight: 700; margin-bottom: 10px;">Current Host-Stand Waiting List</h4>
           <div id="full-queue-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
         </div>
       </section>
@@ -132,76 +127,67 @@
   <script type="module">
     import { dbEngine } from '../services/supabaseClient.js';
 
-    const MY_ENTRY_KEY = 'rest_os_my_queue_entry';
-    const MINS_PER_PARTY = 5; // rough estimated turnover time used to project wait
-
-    function renderQueue() {
-      const queue = dbEngine.getQueue().filter(q => q.status === 'WAITING');
+    document.addEventListener('DOMContentLoaded', () => {
+      const posEl = document.getElementById('queue-position');
+      const waitEl = document.getElementById('queue-wait-time');
+      const nameEl = document.getElementById('queue-diner-name');
+      const partyEl = document.getElementById('queue-party-size');
       const listEl = document.getElementById('full-queue-list');
-      const emptyMsg = document.getElementById('queue-empty-msg');
-      const statusBlock = document.getElementById('queue-status-block');
+      const form = document.getElementById('queue-form');
 
-      // Full waiting list (host-stand view)
-      if (queue.length === 0) {
-        listEl.innerHTML = `<p style="font-size: 12px; color: var(--text-tertiary);">Queue is empty.</p>`;
-      } else {
-        listEl.innerHTML = queue.map((q, idx) => `
-          <div style="display: flex; justify-content: space-between; align-items: center; background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 13px;">
-            <span>#${idx + 1} &nbsp; <strong>${q.name}</strong> &nbsp; <span style="color: var(--text-secondary);">(${q.party_size} guests)</span></span>
-            <button type="button" class="btn-chip btn-chip-lime btn-seat-entry" data-id="${q.id}" style="padding: 4px 10px; font-size: 11px;">Seat Now</button>
-          </div>
-        `).join('');
+      function updateQueueStatus() {
+        const queue = dbEngine.getQueue();
+        if (queue.length > 0) {
+          const current = queue[queue.length - 1];
+          const pos = queue.length;
+          posEl.textContent = `Position #${pos < 10 ? '0' + pos : pos}`;
+          waitEl.textContent = `Est. Wait Time: ~${pos * 5} mins`;
+          nameEl.textContent = current.name || 'Alex Mercer';
+          partyEl.textContent = `${current.party_size || 4} Guests`;
+        } else {
+          posEl.textContent = 'Queue Empty';
+          waitEl.textContent = 'No wait time';
+          nameEl.textContent = '-';
+          partyEl.textContent = '-';
+        }
 
-        listEl.querySelectorAll('.btn-seat-entry').forEach(btn => {
-          btn.addEventListener('click', () => {
-            dbEngine.removeFromQueue(btn.getAttribute('data-id'));
-            renderQueue();
-          });
+        if (listEl) {
+          if (queue.length === 0) {
+            listEl.innerHTML = `<p style="font-size: 12px; color: var(--text-tertiary);">No guests currently in queue.</p>`;
+          } else {
+            listEl.innerHTML = queue.map((q, idx) => `
+              <div style="display: flex; justify-content: space-between; align-items: center; background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-sm); padding: 8px 12px; font-size: 13px;">
+                <span>#${idx + 1} &nbsp; <strong>${q.name}</strong> &nbsp; <span style="color: var(--text-secondary);">(${q.party_size} guests)</span></span>
+                <button type="button" class="btn-seat-entry" data-id="${q.id}" style="background: var(--color-accent-lime); color: #000; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px; font-weight: 700; cursor: pointer;">Seat</button>
+              </div>
+            `).join('');
+
+            listEl.querySelectorAll('.btn-seat-entry').forEach(btn => {
+              btn.addEventListener('click', () => {
+                dbEngine.removeFromQueue(btn.getAttribute('data-id'));
+                updateQueueStatus();
+              });
+            });
+          }
+        }
+      }
+
+      if (form) {
+        form.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const name = document.getElementById('q-name').value;
+          const size = parseInt(document.getElementById('q-size').value, 10);
+
+          dbEngine.joinQueue({ name, party_size: size });
+          updateQueueStatus();
+          alert(`Success! ${name}, you have been added to the virtual queue.`);
+          form.reset();
         });
       }
 
-      // My personal position card
-      const myEntryId = sessionStorage.getItem(MY_ENTRY_KEY);
-      const myEntry = myEntryId ? queue.find(q => q.id === myEntryId) : null;
-
-      if (myEntry) {
-        const position = dbEngine.getQueuePosition(myEntry.id);
-        emptyMsg.style.display = 'none';
-        statusBlock.style.display = 'block';
-        document.getElementById('queue-position').textContent = `Position #${String(position).padStart(2, '0')}`;
-        document.getElementById('queue-wait-time').textContent = `Est. Wait Time: ~${position * MINS_PER_PARTY} mins`;
-        document.getElementById('queue-diner-name').textContent = myEntry.name;
-        document.getElementById('queue-party-size').textContent = `${myEntry.party_size} Guests`;
-      } else {
-        sessionStorage.removeItem(MY_ENTRY_KEY);
-        emptyMsg.style.display = 'block';
-        statusBlock.style.display = 'none';
-      }
-    }
-
-    document.getElementById('queue-form').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const name = document.getElementById('q-name').value.trim();
-      const partySize = parseInt(document.getElementById('q-size').value, 10);
-      if (!name) return;
-
-      const entry = dbEngine.joinQueue({ name, party_size: partySize });
-      sessionStorage.setItem(MY_ENTRY_KEY, entry.id);
-      document.getElementById('queue-form').reset();
-      renderQueue();
+      updateQueueStatus();
+      setInterval(updateQueueStatus, 2000);
     });
-
-    document.getElementById('btn-leave-queue').addEventListener('click', () => {
-      const myEntryId = sessionStorage.getItem(MY_ENTRY_KEY);
-      if (myEntryId) {
-        dbEngine.removeFromQueue(myEntryId);
-        sessionStorage.removeItem(MY_ENTRY_KEY);
-      }
-      renderQueue();
-    });
-
-    document.addEventListener('DOMContentLoaded', renderQueue);
-    setInterval(renderQueue, 2000);
   </script>
 </body>
 </html>

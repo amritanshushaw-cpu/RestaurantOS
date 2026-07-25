@@ -60,10 +60,17 @@ class DynamicDatabaseEngine {
     if (!localStorage.getItem(STORAGE_KEYS.TABLES)) {
       localStorage.setItem(STORAGE_KEYS.TABLES, JSON.stringify([
         { id: 'tbl-01', table_number: 'Table 01', capacity: 2, status: 'AVAILABLE', section: 'Patio' },
+<<<<<<< HEAD
         { id: 'tbl-02', table_number: 'Table 02', capacity: 4, status: 'AVAILABLE', section: 'Main Hall' },
         { id: 'tbl-03', table_number: 'Table 03', capacity: 4, status: 'AVAILABLE', section: 'Main Hall' },
         { id: 'tbl-04', table_number: 'Table 04', capacity: 6, status: 'AVAILABLE', section: 'Main Hall' },
         { id: 'tbl-05', table_number: 'Table 05', capacity: 2, status: 'AVAILABLE', section: 'Patio' },
+=======
+        { id: 'tbl-02', table_number: 'Table 02', capacity: 4, status: 'OCCUPIED', section: 'Main Hall' },
+        { id: 'tbl-03', table_number: 'Table 03', capacity: 4, status: 'AVAILABLE', section: 'Main Hall' },
+        { id: 'tbl-04', table_number: 'Table 04', capacity: 6, status: 'RESERVED', section: 'VIP' },
+        { id: 'tbl-05', table_number: 'Table 05', capacity: 2, status: 'CLEANING', section: 'Patio' },
+>>>>>>> 2662982 (fix: resolve validation formatting, null reference safety, table status sync, and queue state bugs)
         { id: 'tbl-06', table_number: 'Table 06', capacity: 8, status: 'AVAILABLE', section: 'Main Hall' }
       ]));
     }
@@ -163,6 +170,17 @@ class DynamicDatabaseEngine {
     if (order) {
       order.status = newStatus;
       localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+
+      // Sync Table Status with Order Progression
+      if (order.table_id) {
+        if (newStatus === 'PREPARING' || newStatus === 'NEW') {
+          this.updateTableStatus(order.table_id, 'OCCUPIED');
+        } else if (newStatus === 'READY') {
+          this.updateTableStatus(order.table_id, 'PAYMENT PENDING');
+        } else if (newStatus === 'PAID') {
+          this.updateTableStatus(order.table_id, 'AVAILABLE');
+        }
+      }
     }
     return order;
   }
@@ -190,11 +208,18 @@ class DynamicDatabaseEngine {
     const inventory = this.getInventory();
 
     items.forEach(item => {
-      // Find matching ingredient by name keywords
-      const match = inventory.find(inv => item.name && item.name.toLowerCase().includes(inv.name.split(' ')[0].toLowerCase()));
-      if (match) {
-        match.quantity = Math.max(0, parseFloat((match.quantity - (0.5 * item.quantity)).toFixed(2)));
-      }
+      const nameText = `${item.name || ''} ${item.description || ''}`.toLowerCase();
+      
+      inventory.forEach(inv => {
+        // Extract meaningful keywords (length >= 4) from inventory item name
+        const keywords = inv.name.toLowerCase().split(/\s+/).filter(k => k.length >= 4);
+        const isMatch = keywords.some(keyword => nameText.includes(keyword));
+        
+        if (isMatch) {
+          const qtyToDeduct = 0.5 * (item.quantity || 1);
+          inv.quantity = Math.max(0, parseFloat((inv.quantity - qtyToDeduct).toFixed(2)));
+        }
+      });
     });
 
     localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(inventory));
@@ -231,7 +256,7 @@ class DynamicDatabaseEngine {
 
   updateTableStatus(tableId, status) {
     const tables = this.getTables();
-    const table = tables.find(t => t.id === tableId);
+    const table = tables.find(t => t.id === tableId || t.table_number === tableId);
     if (table) {
       table.status = status;
       localStorage.setItem(STORAGE_KEYS.TABLES, JSON.stringify(tables));
