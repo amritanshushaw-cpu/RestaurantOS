@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RestaurantOS - Point of Sale (POS) Terminal</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <link rel="stylesheet" href="../styles/tokens.css">
+  <link rel="stylesheet" href="../styles/pos.css">
+  <link rel="stylesheet" href="../styles/components.css">
+</head>
+<body>
+  <div class="bg-glow bg-glow-amber"></div>
+
+  <main class="app-container" style="max-width: 1280px;">
+    <!-- POS Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon"><i class="fa-solid fa-cash-register"></i></div>
+        <div class="brand-text">
+          <h1>Restaurant<span>OS</span> <small style="font-size: 14px; color: var(--text-secondary); font-weight: 500;">/ POS Terminal</small></h1>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <select id="table-select" style="background: var(--bg-dark-surface); border: 1px solid var(--bg-dark-border); color: #fff; padding: 10px 14px; border-radius: var(--radius-sm); font-size: 13px; outline: none; font-weight: 600;">
+          <option value="tbl-01">Table 01 (2 Seats)</option>
+          <option value="tbl-02" selected>Table 02 (4 Seats)</option>
+          <option value="tbl-03">Table 03 (4 Seats)</option>
+          <option value="tbl-04">Table 04 (6 Seats)</option>
+          <option value="tbl-05">Table 05 (2 Seats)</option>
+          <option value="tbl-06">Table 06 (8 Seats)</option>
+        </select>
+
+        <a href="../../index.html" class="btn-chip btn-chip-otp" style="text-decoration: none; padding: 10px 16px;">
+          <i class="fa-solid fa-credit-card"></i> Payment Enclave
+        </a>
+        <a href="kds.html" class="btn-chip btn-chip-success" style="text-decoration: none; padding: 10px 16px;">
+          <i class="fa-solid fa-fire"></i> Kitchen KDS
+        </a>
+      </div>
+    </header>
+
+    <!-- POS Main Grid -->
+    <div class="pos-container">
+      <!-- Left Column: Menu Items Grid -->
+      <section>
+        <!-- Category Navigation Bar -->
+        <div class="pos-categories" id="pos-category-bar">
+          <button class="category-pill active" data-cat="ALL">All Items</button>
+          <button class="category-pill" data-cat="cat-01">Starters</button>
+          <button class="category-pill" data-cat="cat-02">Mains & Steaks</button>
+          <button class="category-pill" data-cat="cat-03">Cocktails</button>
+          <button class="category-pill" data-cat="cat-04">Desserts</button>
+        </div>
+
+        <!-- Food Items Grid -->
+        <div class="pos-menu-grid" id="pos-menu-grid">
+          <!-- Food cards populated dynamically by posController.js -->
+        </div>
+      </section>
+
+      <!-- Right Column: Live Order Cart Sidebar -->
+      <aside class="pos-cart-sidebar">
+        <div class="cart-header">
+          <h3 style="font-size: 16px; font-weight: 700;"><i class="fa-solid fa-basket-shopping"></i> Active Order Cart</h3>
+          <span class="badge sandbox-badge" id="active-table-badge">Table 02</span>
+        </div>
+
+        <div class="cart-items-list" id="cart-items-list">
+          <p style="text-align: center; color: var(--text-tertiary); margin-top: 40px; font-size: 13px;">Cart is empty. Click any food item to add.</p>
+        </div>
+
+        <div style="border-top: 1px solid var(--bg-dark-border); padding-top: 16px;">
+          <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px;">
+            <span>Subtotal</span>
+            <strong id="cart-subtotal">$0.00</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 12px;">
+            <span>Tax (8.5%)</span>
+            <strong id="cart-tax">$0.00</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+            <span style="font-weight: 700; font-size: 15px;">Total Amount</span>
+            <span style="font-size: 24px; font-weight: 800; color: var(--accent-amber);" id="cart-total">$0.00</span>
+          </div>
+
+          <button type="button" class="pay-btn" id="btn-dispatch-order" disabled>
+            Send Order to Kitchen <i class="fa-solid fa-paper-plane"></i>
+          </button>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <script type="module" src="../controllers/posController.js"></script>
+</body>
+</html>
