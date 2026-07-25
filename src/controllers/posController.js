@@ -17,12 +17,41 @@ document.addEventListener('DOMContentLoaded', () => {
   const totalEl = document.getElementById('cart-total');
   const btnDispatch = document.getElementById('btn-dispatch-order');
 
+  const addDishModal = document.getElementById('add-dish-modal');
+  const btnOpenAddDish = document.getElementById('btn-open-add-dish');
+  const btnCloseAddDish = document.getElementById('btn-close-add-dish');
+  const addDishForm = document.getElementById('add-dish-form');
+
   let activeCart = [];
   let selectedTable = 'Table 02';
+  let currentCategoryFilter = 'ALL';
 
   if (!menuGrid || !categoryBar) return;
 
-  // Render Dynamic Menu
+  // Dynamically Render Category Filter Pills
+  function renderCategoryPills() {
+    const { categories } = menuService.loadMenu();
+    categoryBar.innerHTML = `<button class="category-pill ${currentCategoryFilter === 'ALL' ? 'active' : ''}" data-cat="ALL">All Items</button>`;
+
+    (categories || []).forEach(cat => {
+      const pill = document.createElement('button');
+      pill.className = `category-pill ${currentCategoryFilter === cat.id ? 'active' : ''}`;
+      pill.setAttribute('data-cat', cat.id);
+      pill.textContent = cat.name;
+      categoryBar.appendChild(pill);
+    });
+
+    categoryBar.querySelectorAll('.category-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        categoryBar.querySelectorAll('.category-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        currentCategoryFilter = pill.getAttribute('data-cat');
+        renderMenuItems(currentCategoryFilter);
+      });
+    });
+  }
+
+  // Render Dynamic Menu Items
   function renderMenuItems(categoryId) {
     const items = menuService.getItemsByCategory(categoryId);
     menuGrid.innerHTML = '';
@@ -36,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const card = document.createElement('div');
       card.className = 'food-card';
       card.innerHTML = `
-        <img src="${item.image_url}" alt="${item.name}" class="food-img">
+        <img src="${item.image_url}" alt="${item.name}" class="food-img" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500';">
         <div class="food-details">
           <div>
             <div class="food-name">${item.name}</div>
@@ -53,15 +82,6 @@ document.addEventListener('DOMContentLoaded', () => {
       menuGrid.appendChild(card);
     });
   }
-
-  // Category Filter Pills
-  categoryBar.querySelectorAll('.category-pill').forEach(pill => {
-    pill.addEventListener('click', () => {
-      categoryBar.querySelectorAll('.category-pill').forEach(p => p.classList.remove('active'));
-      pill.classList.add('active');
-      renderMenuItems(pill.getAttribute('data-cat'));
-    });
-  });
 
   // Table Selector Sync
   if (tableSelect) {
@@ -170,6 +190,39 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Add Dish Modal Interactions
+  if (btnOpenAddDish && addDishModal) {
+    btnOpenAddDish.addEventListener('click', () => {
+      addDishModal.style.display = 'flex';
+    });
+  }
+
+  if (btnCloseAddDish && addDishModal) {
+    btnCloseAddDish.addEventListener('click', () => {
+      addDishModal.style.display = 'none';
+    });
+  }
+
+  if (addDishForm) {
+    addDishForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('dish-name').value;
+      const category_id = document.getElementById('dish-category').value;
+      const price = parseFloat(document.getElementById('dish-price').value);
+      const image_url = document.getElementById('dish-photo').value || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500';
+      const description = document.getElementById('dish-desc').value;
+
+      dbEngine.addMenuItem({ name, category_id, price, image_url, description });
+      addDishModal.style.display = 'none';
+      addDishForm.reset();
+
+      renderCategoryPills();
+      renderMenuItems(currentCategoryFilter);
+      alert(`Success! "${name}" added to menu catalog.`);
+    });
+  }
+
   // Initial Load
+  renderCategoryPills();
   renderMenuItems('ALL');
 });

@@ -10,8 +10,7 @@ const STORAGE_KEYS = {
   ORDERS: 'rest_os_orders',
   QUEUE: 'rest_os_queue',
   TABLES: 'rest_os_tables',
-  PAYMENTS: 'rest_os_payments',
-  QUEUE_SEQ: 'rest_os_queue_seq'
+  PAYMENTS: 'rest_os_payments'
 };
 
 class DynamicDatabaseEngine {
@@ -21,30 +20,64 @@ class DynamicDatabaseEngine {
 
   // Initialize or load state from localStorage
   initDefaultState() {
-    if (!localStorage.getItem(STORAGE_KEYS.CATEGORIES)) {
-      localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify([
-        { id: 'cat-01', name: 'Starters', display_order: 1 },
-        { id: 'cat-02', name: 'Mains & Steaks', display_order: 2 },
-        { id: 'cat-03', name: 'Cocktails', display_order: 3 },
-        { id: 'cat-04', name: 'Desserts', display_order: 4 }
-      ]));
+    const defaultCategories = [
+      { id: 'cat-01', name: 'Starters & Appetizers', display_order: 1 },
+      { id: 'cat-02', name: 'Mains & Steaks', display_order: 2 },
+      { id: 'cat-05', name: 'Indian Specialties', display_order: 3 },
+      { id: 'cat-03', name: 'Drinks & Beverages', display_order: 4 },
+      { id: 'cat-04', name: 'Desserts', display_order: 5 }
+    ];
+
+    const defaultMenuItems = [
+      // Indian Specialties & Mains
+      { id: 'item-ind-01', category_id: 'cat-05', name: 'Butter Chicken (Murgh Makhani)', description: 'Tender tandoori chicken simmered in rich creamy tomato butter gravy', price: 24.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?w=500' },
+      { id: 'item-ind-02', category_id: 'cat-05', name: 'Paneer Butter Masala', description: 'Soft cottage cheese cubes cooked in rich cashew and spiced tomato gravy', price: 20.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=500' },
+      { id: 'item-ind-03', category_id: 'cat-05', name: 'Hyderabadi Dum Biryani', description: 'Fragrant long-grain basmati rice layered with spiced chicken, saffron & mint', price: 22.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500' },
+      { id: 'item-ind-04', category_id: 'cat-05', name: 'Dal Makhani', description: 'Slow-cooked black lentils simmered overnight with butter & cream', price: 18.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500' },
+      { id: 'item-ind-05', category_id: 'cat-05', name: 'Garlic Butter Naan', description: 'Traditional clay oven tandoori bread brushed with fresh garlic butter & cilantro', price: 6.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1626074353765-517a681e40be?w=500' },
+
+      // Indian Starters & Drinks
+      { id: 'item-ind-06', category_id: 'cat-01', name: 'Tandoori Paneer Tikka', description: 'Charcoal-grilled cottage cheese skewers marinated in spiced yogurt & mustard oil', price: 16.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?w=500' },
+      { id: 'item-ind-07', category_id: 'cat-01', name: 'Crispy Samosa Chaat', description: 'Crushed spiced potato samosas topped with chickpeas, tangy tamarind & mint chutney', price: 12.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=500' },
+      { id: 'item-ind-08', category_id: 'cat-03', name: 'Mango Lassi', description: 'Chilled creamy yogurt smoothie blended with Alphonso mango pulp & cardamom', price: 8.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1543339308-43e59d6b73a6?w=500' },
+      { id: 'item-ind-09', category_id: 'cat-04', name: 'Gulab Jamun with Kesar', description: 'Warm soft milk dumplings soaked in rosewater, cardamom & saffron syrup', price: 10.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=500' },
+
+      // Western Favorites
+      { id: 'item-01', category_id: 'cat-01', name: 'Wagyu Beef Sliders', description: 'Truffle aioli, smoked cheddar, brioche bun', price: 24.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
+      { id: 'item-02', category_id: 'cat-02', name: 'Dry-Aged Ribeye 12oz', description: 'Rosemary butter, charred asparagus, jus', price: 58.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1558030006-450675393462?w=500' },
+      { id: 'item-03', category_id: 'cat-03', name: 'Smoked Old Fashioned', description: 'Bourbon, aromatic bitters, orange peel', price: 16.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=500' }
+    ];
+
+    const defaultInventory = [
+      { id: 'inv-01', name: 'Wagyu Beef Patties', quantity: 15, unit: 'kg', threshold: 10, supplier: 'Prime Meats Co.' },
+      { id: 'inv-02', name: 'Truffle Aioli', quantity: 2.5, unit: 'Liters', threshold: 3.0, supplier: 'Artisanal Imports' },
+      { id: 'inv-03', name: 'Dry-Aged Ribeye', quantity: 18, unit: 'kg', threshold: 8, supplier: 'Prime Meats Co.' },
+      { id: 'inv-04', name: 'Bourbon Whiskey', quantity: 14, unit: 'Bottles', threshold: 5, supplier: 'Heritage Spirits' },
+      { id: 'inv-05', name: 'Chicken Breasts & Thighs', quantity: 20, unit: 'kg', threshold: 8, supplier: 'Royal Poultry Co.' },
+      { id: 'inv-06', name: 'Paneer (Cottage Cheese)', quantity: 14, unit: 'kg', threshold: 5, supplier: 'Desi Dairy Farm' },
+      { id: 'inv-07', name: 'Basmati Rice', quantity: 30, unit: 'kg', threshold: 10, supplier: 'Indus Grains' },
+      { id: 'inv-08', name: 'Mango Pulp & Milk', quantity: 12, unit: 'Liters', threshold: 4, supplier: 'Fresh Harvest' }
+    ];
+
+    // Ensure Categories & Menu Items stay updated with Indian Cuisine
+    const currentCategories = JSON.parse(localStorage.getItem(STORAGE_KEYS.CATEGORIES) || '[]');
+    if (currentCategories.length < 5) {
+      localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(defaultCategories));
     }
 
-    if (!localStorage.getItem(STORAGE_KEYS.MENU)) {
-      localStorage.setItem(STORAGE_KEYS.MENU, JSON.stringify([
-        { id: 'item-01', category_id: 'cat-01', name: 'Wagyu Beef Sliders', description: 'Truffle aioli, smoked cheddar', price: 24.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' },
-        { id: 'item-02', category_id: 'cat-02', name: 'Dry-Aged Ribeye 12oz', description: 'Rosemary butter, asparagus', price: 58.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1558030006-450675393462?w=500' },
-        { id: 'item-03', category_id: 'cat-03', name: 'Smoked Old Fashioned', description: 'Bourbon, aromatic bitters', price: 16.00, is_available: true, image_url: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=500' }
-      ]));
+    const currentMenu = JSON.parse(localStorage.getItem(STORAGE_KEYS.MENU) || '[]');
+    const hasIndianItems = currentMenu.some(item => item.id.startsWith('item-ind'));
+    if (!hasIndianItems || currentMenu.length < 8) {
+      localStorage.setItem(STORAGE_KEYS.MENU, JSON.stringify(defaultMenuItems));
     }
 
     if (!localStorage.getItem(STORAGE_KEYS.INVENTORY)) {
-      localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify([
-        { id: 'inv-01', name: 'Wagyu Beef Patties', quantity: 15, unit: 'kg', threshold: 10, supplier: 'Prime Meats Co.' },
-        { id: 'inv-02', name: 'Truffle Aioli', quantity: 2.5, unit: 'Liters', threshold: 3.0, supplier: 'Artisanal Imports' },
-        { id: 'inv-03', name: 'Dry-Aged Ribeye', quantity: 18, unit: 'kg', threshold: 8, supplier: 'Prime Meats Co.' },
-        { id: 'inv-04', name: 'Bourbon Whiskey', quantity: 14, unit: 'Bottles', threshold: 5, supplier: 'Heritage Spirits' }
-      ]));
+      localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(defaultInventory));
+    } else {
+      const currentInv = JSON.parse(localStorage.getItem(STORAGE_KEYS.INVENTORY) || '[]');
+      if (currentInv.length < 6) {
+        localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(defaultInventory));
+      }
     }
 
     if (!localStorage.getItem(STORAGE_KEYS.ORDERS)) {
@@ -60,27 +93,12 @@ class DynamicDatabaseEngine {
     if (!localStorage.getItem(STORAGE_KEYS.TABLES)) {
       localStorage.setItem(STORAGE_KEYS.TABLES, JSON.stringify([
         { id: 'tbl-01', table_number: 'Table 01', capacity: 2, status: 'AVAILABLE', section: 'Patio' },
-<<<<<<< HEAD
-        { id: 'tbl-02', table_number: 'Table 02', capacity: 4, status: 'AVAILABLE', section: 'Main Hall' },
-        { id: 'tbl-03', table_number: 'Table 03', capacity: 4, status: 'AVAILABLE', section: 'Main Hall' },
-        { id: 'tbl-04', table_number: 'Table 04', capacity: 6, status: 'AVAILABLE', section: 'Main Hall' },
-        { id: 'tbl-05', table_number: 'Table 05', capacity: 2, status: 'AVAILABLE', section: 'Patio' },
-=======
         { id: 'tbl-02', table_number: 'Table 02', capacity: 4, status: 'OCCUPIED', section: 'Main Hall' },
         { id: 'tbl-03', table_number: 'Table 03', capacity: 4, status: 'AVAILABLE', section: 'Main Hall' },
         { id: 'tbl-04', table_number: 'Table 04', capacity: 6, status: 'RESERVED', section: 'VIP' },
         { id: 'tbl-05', table_number: 'Table 05', capacity: 2, status: 'CLEANING', section: 'Patio' },
->>>>>>> 2662982 (fix: resolve validation formatting, null reference safety, table status sync, and queue state bugs)
         { id: 'tbl-06', table_number: 'Table 06', capacity: 8, status: 'AVAILABLE', section: 'Main Hall' }
       ]));
-    }
-
-    if (!localStorage.getItem(STORAGE_KEYS.PAYMENTS)) {
-      localStorage.setItem(STORAGE_KEYS.PAYMENTS, JSON.stringify([]));
-    }
-
-    if (!localStorage.getItem(STORAGE_KEYS.QUEUE_SEQ)) {
-      localStorage.setItem(STORAGE_KEYS.QUEUE_SEQ, '0');
     }
   }
 
@@ -103,6 +121,12 @@ class DynamicDatabaseEngine {
     items.push(newItem);
     localStorage.setItem(STORAGE_KEYS.MENU, JSON.stringify(items));
     return newItem;
+  }
+
+  deleteMenuItem(itemId) {
+    let items = JSON.parse(localStorage.getItem(STORAGE_KEYS.MENU) || '[]');
+    items = items.filter(i => i.id !== itemId);
+    localStorage.setItem(STORAGE_KEYS.MENU, JSON.stringify(items));
   }
 
   toggleItemAvailability(itemId) {
@@ -185,7 +209,6 @@ class DynamicDatabaseEngine {
     return order;
   }
 
-  // Orders that still need to be checked out (excludes already-paid/cancelled tickets)
   getUnpaidOrders() {
     return this.getOrders().filter(o => o.status !== 'PAID' && o.status !== 'CANCELLED');
   }
@@ -194,7 +217,6 @@ class DynamicDatabaseEngine {
     return this.getOrders().find(o => o.id === orderId) || null;
   }
 
-  // Mark an order as paid and free up its table
   markOrderPaid(orderId) {
     const order = this.updateOrderStatus(orderId, 'PAID');
     if (order && order.table_id) {
@@ -211,7 +233,6 @@ class DynamicDatabaseEngine {
       const nameText = `${item.name || ''} ${item.description || ''}`.toLowerCase();
       
       inventory.forEach(inv => {
-        // Extract meaningful keywords (length >= 4) from inventory item name
         const keywords = inv.name.toLowerCase().split(/\s+/).filter(k => k.length >= 4);
         const isMatch = keywords.some(keyword => nameText.includes(keyword));
         
@@ -249,6 +270,12 @@ class DynamicDatabaseEngine {
     localStorage.setItem(STORAGE_KEYS.QUEUE, JSON.stringify(queue));
   }
 
+  getQueuePosition(entryId) {
+    const queue = this.getQueue().filter(q => q.status === 'WAITING');
+    const idx = queue.findIndex(q => q.id === entryId);
+    return idx === -1 ? null : idx + 1;
+  }
+
   // --- TABLES ---
   getTables() {
     return JSON.parse(localStorage.getItem(STORAGE_KEYS.TABLES) || '[]');
@@ -264,7 +291,7 @@ class DynamicDatabaseEngine {
     return table;
   }
 
-  // --- PAYMENTS (for real, computed approval-rate analytics) ---
+  // --- PAYMENTS ---
   logPaymentAttempt(success) {
     const payments = JSON.parse(localStorage.getItem(STORAGE_KEYS.PAYMENTS) || '[]');
     payments.push({ success, at: new Date().toISOString() });
@@ -281,7 +308,7 @@ class DynamicDatabaseEngine {
     };
   }
 
-  // --- LIVE ANALYTICS (derived entirely from real order/menu/payment state) ---
+  // --- LIVE ANALYTICS ---
   getAnalyticsSummary() {
     const orders = this.getOrders().filter(o => o.status !== 'CANCELLED');
     const { categories, items } = this.getMenu();
@@ -289,7 +316,6 @@ class DynamicDatabaseEngine {
     const grossRevenue = orders.reduce((sum, o) => sum + parseFloat(o.total || 0), 0);
     const avgCheck = orderCount > 0 ? grossRevenue / orderCount : 0;
 
-    // Revenue by category, derived from each order's line items
     const revenueByCategory = {};
     orders.forEach(order => {
       (order.items || []).forEach(line => {
@@ -317,13 +343,6 @@ class DynamicDatabaseEngine {
       topCategory,
       approvalRate: this.getPaymentStats().approvalRate
     };
-  }
-
-  // --- VIRTUAL QUEUE POSITION HELPERS ---
-  getQueuePosition(entryId) {
-    const queue = this.getQueue().filter(q => q.status === 'WAITING');
-    const idx = queue.findIndex(q => q.id === entryId);
-    return idx === -1 ? null : idx + 1;
   }
 }
 
