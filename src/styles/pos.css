@@ -6,9 +6,12 @@
 
 .pos-container {
   display: grid;
-  grid-template-columns: 1fr 380px;
-  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 350px);
+  gap: 20px;
   min-height: calc(100vh - 140px);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* Category Filter Bar */
@@ -141,10 +144,14 @@
   background: var(--color-ink-deep);
   border: 1px solid var(--border-violet);
   border-radius: var(--radius-xl);
-  padding: 20px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
   backdrop-filter: var(--glass-backdrop);
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .cart-header {
@@ -207,7 +214,7 @@
   color: var(--color-accent-lime);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1080px) {
   .pos-container {
     grid-template-columns: 1fr;
     height: auto;
