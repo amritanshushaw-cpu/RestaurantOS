@@ -31,7 +31,7 @@ export class MenuService {
   }
 
   // Calculate Totals
-  calculateOrderTotals(cartItems, taxRate = 8.5) {
+  calculateOrderTotals(cartItems, taxRate = 5) {
     const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const tax = (subtotal * taxRate) / 100;
     const total = subtotal + tax;

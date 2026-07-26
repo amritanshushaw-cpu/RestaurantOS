@@ -206,8 +206,8 @@ class DynamicDatabaseEngine {
             { id: 'item-ind-05', name: 'Garlic Butter Naan', price: 90.00, quantity: 2 }
           ],
           subtotal: 1460.00,
-          tax: 124.10,
-          total: 1584.10,
+          tax: 73.00,
+          total: 1533.00,
           created_at: new Date(Date.now() - 8 * 60 * 1000).toISOString()
         },
         {
@@ -223,8 +223,8 @@ class DynamicDatabaseEngine {
             { id: 'item-ind-08', name: 'Mango Lassi', price: 140.00, quantity: 2 }
           ],
           subtotal: 1420.00,
-          tax: 120.70,
-          total: 1540.70,
+          tax: 71.00,
+          total: 1491.00,
           created_at: new Date(Date.now() - 2 * 60 * 1000).toISOString()
         }
       ];
