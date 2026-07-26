@@ -182,7 +182,106 @@ class AuthService {
   }
 
   // ---------------------------------------------------------------------
-  // Real Google Sign-In (Supabase OAuth) -- replaces the old fake modal
+  // Real Email & Password Authentication (Supabase GoTrue Backend)
+  // ---------------------------------------------------------------------
+
+  async loginWithEmailPassword(email, password) {
+    const cleanEmail = (email || '').trim();
+    if (!cleanEmail || !password) {
+      this.showToast('Please enter both email and password.');
+      return { ok: false, reason: 'missing_fields' };
+    }
+
+    if (!dbEngine.supabase || !dbEngine.hasValidSupabaseConfig()) {
+      const rawName = cleanEmail.split('@')[0] || 'User';
+      const demoUser = {
+        id: 'user-' + Date.now(),
+        name: rawName,
+        email: cleanEmail,
+        role: 'Customer',
+        auth_provider: 'email',
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(cleanEmail)}`
+      };
+      this.saveUser(demoUser);
+      this.showToast(`Signed in as ${demoUser.name} (${demoUser.email})`);
+      this.closeAuthModal();
+      return { ok: true, user: demoUser };
+    }
+
+    try {
+      const { data, error } = await dbEngine.supabase.auth.signInWithPassword({
+        email: cleanEmail,
+        password
+      });
+
+      if (error || !data?.session) {
+        this.showToast(`Login failed: ${error ? error.message : 'invalid credentials'}`);
+        return { ok: false, reason: error ? error.message : 'auth_failed' };
+      }
+
+      await this.handleSupabaseSession(data.session);
+      return { ok: true, session: data.session };
+    } catch (e) {
+      this.showToast(`Authentication error: ${e.message}`);
+      return { ok: false, reason: e.message };
+    }
+  }
+
+  async signUpWithEmailPassword(email, password, fullName = '', role = 'Customer') {
+    const cleanEmail = (email || '').trim();
+    if (!cleanEmail || !password) {
+      this.showToast('Please enter email and password to sign up.');
+      return { ok: false, reason: 'missing_fields' };
+    }
+
+    if (!dbEngine.supabase || !dbEngine.hasValidSupabaseConfig()) {
+      const rawName = fullName || cleanEmail.split('@')[0];
+      const newUser = {
+        id: 'user-' + Date.now(),
+        name: rawName,
+        email: cleanEmail,
+        role,
+        auth_provider: 'email',
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(cleanEmail)}`
+      };
+      this.saveUser(newUser);
+      this.showToast(`Account created for ${newUser.name}! Signed in.`);
+      this.closeAuthModal();
+      return { ok: true, user: newUser };
+    }
+
+    try {
+      const { data, error } = await dbEngine.supabase.auth.signUp({
+        email: cleanEmail,
+        password,
+        options: {
+          data: {
+            full_name: fullName || cleanEmail.split('@')[0],
+            role
+          }
+        }
+      });
+
+      if (error) {
+        this.showToast(`Sign up failed: ${error.message}`);
+        return { ok: false, reason: error.message };
+      }
+
+      if (data.session) {
+        await this.handleSupabaseSession(data.session);
+      } else {
+        this.showToast(`Account created! Please check your email to confirm registration.`);
+      }
+
+      return { ok: true, data };
+    } catch (e) {
+      this.showToast(`Sign up error: ${e.message}`);
+      return { ok: false, reason: e.message };
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Real Google Sign-In (Supabase OAuth)
   // ---------------------------------------------------------------------
 
   loginWithGoogle() {
