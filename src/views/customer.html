@@ -134,7 +134,11 @@
             <i class="fa-solid fa-magnifying-glass search-icon" aria-hidden="true"></i>
             <input id="cust-search-input" type="search" placeholder="Search Biryani, Sliders, Butter Chicken..." autocomplete="off">
           </label>
-          <div id="cust-category-bar" aria-label="Menu categories"></div>
+          <div class="category-scroll-container">
+            <button type="button" class="cat-slide-btn prev" id="btn-cat-slide-left" aria-label="Slide left">‹</button>
+            <div id="cust-category-bar" aria-label="Menu categories"></div>
+            <button type="button" class="cat-slide-btn next" id="btn-cat-slide-right" aria-label="Slide right">›</button>
+          </div>
         </div>
 
         <div class="menu-cols" id="cust-menu-grid" aria-live="polite"></div>

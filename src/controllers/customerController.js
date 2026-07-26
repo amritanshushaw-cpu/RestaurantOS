@@ -97,6 +97,51 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
   }
 
+  function setupCategoryBarSlider() {
+    if (!categoryBar || categoryBar.dataset.sliderInitialized) return;
+    categoryBar.dataset.sliderInitialized = 'true';
+
+    const btnLeft = document.getElementById('btn-cat-slide-left');
+    const btnRight = document.getElementById('btn-cat-slide-right');
+
+    btnLeft?.addEventListener('click', () => {
+      categoryBar.scrollBy({ left: -260, behavior: 'smooth' });
+    });
+
+    btnRight?.addEventListener('click', () => {
+      categoryBar.scrollBy({ left: 260, behavior: 'smooth' });
+    });
+
+    let isDown = false;
+    let startX = 0;
+    let scrollLeft = 0;
+
+    categoryBar.addEventListener('pointerdown', (e) => {
+      isDown = true;
+      categoryBar.classList.add('active-drag');
+      startX = e.pageX - categoryBar.offsetLeft;
+      scrollLeft = categoryBar.scrollLeft;
+    });
+
+    categoryBar.addEventListener('pointerleave', () => {
+      isDown = false;
+      categoryBar.classList.remove('active-drag');
+    });
+
+    categoryBar.addEventListener('pointerup', () => {
+      isDown = false;
+      categoryBar.classList.remove('active-drag');
+    });
+
+    categoryBar.addEventListener('pointermove', (e) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - categoryBar.offsetLeft;
+      const walk = (x - startX) * 1.5;
+      categoryBar.scrollLeft = scrollLeft - walk;
+    });
+  }
+
   function renderCategories() {
     const categories = getVisualCategories();
     categoryBar.innerHTML = '';
@@ -122,9 +167,12 @@ document.addEventListener('DOMContentLoaded', () => {
         categoryBar.querySelectorAll('.category-pill').forEach((item) => item.classList.remove('active'));
         pill.classList.add('active');
         currentCategory = pill.dataset.cat || 'ALL';
+        pill.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
         renderMenu();
       });
     });
+
+    setupCategoryBarSlider();
   }
 
   function getFilteredItems(category) {
