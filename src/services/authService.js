@@ -143,6 +143,14 @@ class AuthService {
       setTimeout(() => {
         window.location.href = pendingRedirect;
       }, 300);
+    } else if (window.location.pathname.includes('login.html')) {
+      // Auto-redirect if we are on the login page (e.g. after OAuth or Magic Link return)
+      const isSubdir = window.location.pathname.includes('/views/');
+      const prefix = isSubdir ? '' : 'src/views/';
+      if (role === 'Manager') window.location.href = `${prefix}analytics.html`;
+      else if (role === 'Waiter') window.location.href = `${prefix}kds.html?role=waiter`;
+      else if (role === 'Kitchen') window.location.href = `${prefix}kds.html?role=kitchen`;
+      else window.location.href = `${prefix}customer.html`;
     }
   }
 
