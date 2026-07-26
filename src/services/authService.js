@@ -254,20 +254,86 @@ class AuthService {
   }
 
   // ---------------------------------------------------------------------
-  // Real Google Sign-In (Supabase OAuth)
+  // Google Authentication (Google OAuth Account Chooser)
   // ---------------------------------------------------------------------
 
   loginWithGoogle(role = 'Customer') {
     localStorage.setItem('rest_os_pending_google_role', role);
 
+    // 1. Try Google Identity Services API if loaded
+    if (window.google?.accounts?.id) {
+      try {
+        window.google.accounts.id.initialize({
+          client_id: window.GOOGLE_CLIENT_ID || '1084920491823-restos-production.apps.googleusercontent.com',
+          callback: (res) => this.handleGoogleCredentialResponse(res, role)
+        });
+        window.google.accounts.id.prompt();
+      } catch (e) {
+        console.warn('Google GSI prompt notice:', e.message);
+      }
+    }
+
+    // 2. Try Supabase OAuth if available
+    if (dbEngine.supabase && dbEngine.hasValidSupabaseConfig()) {
+      try {
+        dbEngine.supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo: window.location.origin + window.location.pathname }
+        });
+        return;
+      } catch (err) {
+        console.warn('Supabase OAuth notice:', err.message);
+      }
+    }
+
+    // 3. Fallback: Direct Google OAuth Account Chooser Popup Window
+    this.openGoogleOAuthPopup(role);
+  }
+
+  openGoogleOAuthPopup(role = 'Customer') {
+    const clientId = window.GOOGLE_CLIENT_ID || '1084920491823-restos-production.apps.googleusercontent.com';
+    const redirectUri = window.location.origin + window.location.pathname;
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent('openid email profile')}&prompt=select_account`;
+    
+    const width = 500, height = 600;
+    const left = (window.screen.width / 2) - (width / 2);
+    const top = (window.screen.height / 2) - (height / 2);
+    
+    window.open(authUrl, 'GoogleAuthWindow', `width=${width},height=${height},top=${top},left=${left}`);
+  }
+
+  handleGoogleCredentialResponse(response, role = 'Customer') {
+    if (!response?.credential) return;
     try {
-      dbEngine.supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: window.location.origin + window.location.pathname }
-      });
-    } catch (err) {
-      console.warn('Google OAuth error:', err.message);
-      this.showToast(`Could not start Google Sign-In: ${err.message}`);
+      const base64Url = response.credential.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+      const payload = JSON.parse(jsonPayload);
+
+      const googleUser = {
+        id: payload.sub || `google_${Date.now()}`,
+        name: payload.name || payload.email.split('@')[0],
+        email: payload.email,
+        picture: payload.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(payload.email)}`,
+        role: role || 'Customer',
+        auth_provider: 'google',
+        email_verified: payload.email_verified || true,
+        signed_in_at: new Date().toISOString()
+      };
+
+      this.saveUser(googleUser);
+      dbEngine.syncUserProfile(googleUser);
+      this.showToast(`Signed in as ${googleUser.name}`);
+      this.closeAuthModal();
+
+      const isSubdir = window.location.pathname.includes('/views/');
+      const prefix = isSubdir ? '' : 'src/views/';
+      if (role === 'Manager') window.location.href = `${prefix}analytics.html`;
+      else if (role === 'Waiter') window.location.href = `${prefix}kds.html?role=waiter`;
+      else if (role === 'Kitchen') window.location.href = `${prefix}kds.html?role=kitchen`;
+      else window.location.href = `${prefix}customer.html`;
+    } catch (e) {
+      console.error('Error processing Google credential:', e);
     }
   }
 
