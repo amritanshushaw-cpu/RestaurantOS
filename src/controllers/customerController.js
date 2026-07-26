@@ -301,7 +301,12 @@ document.addEventListener('DOMContentLoaded', () => {
     button.addEventListener('click', () => document.getElementById(button.dataset.target)?.scrollIntoView({ behavior: 'smooth' }));
   });
   document.querySelector('.js-account')?.addEventListener('click', () => {
-    document.getElementById('sentry-google-auth-widget')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (!authService.user) {
+      authService.loginWithGoogle();
+    } else {
+      document.getElementById('sentry-google-auth-widget')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      authService.showToast(`Signed in as ${authService.user.name} (${authService.user.role} Role)`);
+    }
   });
   document.querySelector('.js-order-updates')?.addEventListener('click', (event) => {
     const phone = document.getElementById('cust-phone');

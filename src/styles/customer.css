@@ -81,7 +81,6 @@
   backdrop-filter: none;
 }
 .customer-page .customer-sync-hidden { display: none; }
-.customer-page .google-user-details { display: none; }
 .hbar { display: flex; align-items: center; justify-content: space-between; padding: 16px 32px; max-width: 1280px; margin: 0 auto; gap: 16px; }
 .logo { display: flex; align-items: center; gap: 12px; }
 .logo .mark { width: 46px; height: 46px; border-radius: 50%; background: var(--poppy); color: var(--bone); display: flex; align-items: center; justify-content: center; font-family: var(--disp); font-weight: 800; font-size: 24px; border: 2px solid var(--ink); }
@@ -312,11 +311,13 @@ nav.main a:hover::after { width: 100%; }
 #btn-cust-checkout:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
 
 .customer-page .sentry-auth-widget-container { order: 2; margin-left: auto; }
-.customer-page .google-user-profile-badge { background: transparent; border: 0; box-shadow: none; padding: 0; }
-.customer-page .google-user-name { color: var(--ink); }
-.customer-page .google-user-meta, .customer-page .google-user-actions { display: none; }
-.customer-page .google-user-avatar { border-color: var(--jade); }
-.customer-page .btn-google-sign-in { color: var(--ink); background: transparent; border-color: var(--ink); box-shadow: none; }
+.customer-page .google-user-profile-badge { background: var(--bone); border: 1.5px solid var(--ink); box-shadow: var(--shadow); padding: 4px 10px 4px 6px; border-radius: 30px; display: inline-flex; align-items: center; gap: 8px; }
+.customer-page .google-user-name { color: var(--ink); font-family: var(--sans); font-weight: 700; font-size: 13px; }
+.customer-page .google-user-avatar { border-color: var(--jade); width: 30px; height: 30px; border-radius: 50%; }
+.customer-page .role-selector-dropdown { background: var(--butter); color: var(--ink); border: 1.5px solid var(--ink); border-radius: 6px; font-family: var(--mono); font-size: 11px; font-weight: 700; padding: 2px 6px; }
+.customer-page .btn-icon-logout { color: var(--ink); background: transparent; border: none; font-size: 14px; cursor: pointer; padding: 4px 6px; }
+.customer-page .btn-icon-logout:hover { color: var(--poppy); }
+.customer-page .btn-google-sign-in { color: var(--ink); background: var(--bone); border: 1.5px solid var(--ink); box-shadow: var(--shadow); border-radius: 24px; padding: 6px 14px; font-family: var(--mono); font-size: 12px; font-weight: 700; }
 .customer-page .btn-google-sign-in:hover { background: var(--butter); border-color: var(--ink); }
 
 @media (max-width: 980px) {

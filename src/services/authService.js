@@ -103,8 +103,15 @@ class AuthService {
   initGIS() {
     if (typeof window === 'undefined') return;
 
-    // Load GIS library dynamically if not present
-    if (!document.getElementById('google-gsi-script')) {
+    if (window.google?.accounts?.id) {
+      this.setupGoogleOneTap();
+      return;
+    }
+
+    const existingScript = document.querySelector('script[src*="accounts.google.com/gsi/client"]');
+    if (existingScript) {
+      existingScript.addEventListener('load', () => this.setupGoogleOneTap());
+    } else {
       const script = document.createElement('script');
       script.id = 'google-gsi-script';
       script.src = 'https://accounts.google.com/gsi/client';
@@ -112,8 +119,6 @@ class AuthService {
       script.defer = true;
       script.onload = () => this.setupGoogleOneTap();
       document.head.appendChild(script);
-    } else {
-      this.setupGoogleOneTap();
     }
   }
 
@@ -168,16 +173,14 @@ class AuthService {
 
   // Trigger Google Sign-In Flow
   loginWithGoogle() {
-    // If official GIS is loaded and configured, try Google prompt first
-    if (window.google && window.google.accounts && window.google.accounts.id) {
-      window.google.accounts.id.prompt((notification) => {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          this.showGoogleAuthModal();
-        }
-      });
-    } else {
-      this.showGoogleAuthModal();
+    if (window.google?.accounts?.id) {
+      try {
+        window.google.accounts.id.prompt();
+      } catch (err) {
+        console.warn('GIS prompt notice:', err.message);
+      }
     }
+    this.showGoogleAuthModal();
   }
 
   // Interactive Google OAuth Sign-In Modal (for local dev / hackathon demo)
