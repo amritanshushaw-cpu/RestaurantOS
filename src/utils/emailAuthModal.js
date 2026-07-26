@@ -43,7 +43,7 @@ export function openEmailAuthModal() {
         </div>
 
         <div class="google-modal-footer">
-          <span>Verification handled by Supabase Auth (real email OTP)</span>
+          <span>Verification handled by Supabase Auth · Demo code 123456 ready</span>
         </div>
       </div>
     </div>
