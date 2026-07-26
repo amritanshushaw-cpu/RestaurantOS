@@ -78,10 +78,12 @@ function requireRole(...roles) {
 // ── Health Check ──────────────────────────────────────────────────────────────
 app.get('/api/health', async (req, res) => {
   try {
-    const { error } = await supabase.from('restaurants').select('id').limit(1);
+    // Use supabaseAdmin to bypass RLS for a simple connectivity check
+    const { error } = await supabaseAdmin.from('restaurants').select('id').limit(1);
     res.json({
       status: 'ok',
       database: error ? 'error' : 'connected',
+      error_detail: error ? error.message : null,
       timestamp: new Date().toISOString(),
       version: '1.0.0'
     });
