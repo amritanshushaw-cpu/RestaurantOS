@@ -15,7 +15,50 @@ const STORAGE_KEYS = {
 
 class DynamicDatabaseEngine {
   constructor() {
+    this.supabaseUrl = window.SUPABASE_URL || localStorage.getItem('rest_os_supabase_url') || 'https://xyzrestosproject.supabase.co';
+    this.supabaseAnonKey = window.SUPABASE_ANON_KEY || localStorage.getItem('rest_os_supabase_key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5enJlc3Rvc3Byb2plY3QiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTY3MDAwMDAwMCwiZXhwIjoyMDgwMDAwMDAwfQ.demo_key_placeholder';
+    this.supabase = this.initSupabaseClient();
     this.initDefaultState();
+  }
+
+  initSupabaseClient() {
+    if (typeof window !== 'undefined' && window.supabase && typeof window.supabase.createClient === 'function') {
+      try {
+        return window.supabase.createClient(this.supabaseUrl, this.supabaseAnonKey, {
+          auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true
+          }
+        });
+      } catch (err) {
+        console.warn('Supabase client initialization notice:', err.message);
+      }
+    }
+    return null;
+  }
+
+  hasValidSupabaseConfig() {
+    return !!(this.supabaseUrl && !this.supabaseUrl.includes('xyzrestosproject') && this.supabaseAnonKey && !this.supabaseAnonKey.includes('demo_key_placeholder'));
+  }
+
+  async syncUserProfile(user) {
+    if (!user) return;
+    localStorage.setItem('rest_os_user_profile', JSON.stringify(user));
+    if (this.supabase && this.hasValidSupabaseConfig()) {
+      try {
+        await this.supabase.from('profiles').upsert({
+          id: user.id,
+          email: user.email,
+          full_name: user.name,
+          avatar_url: user.picture,
+          role: user.role,
+          updated_at: new Date().toISOString()
+        });
+      } catch (e) {
+        console.warn('Supabase profile sync notice:', e.message);
+      }
+    }
   }
 
   // Initialize or load state from localStorage

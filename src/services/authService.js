@@ -3,6 +3,8 @@
  * Handles Google Identity Services (GIS) OAuth 2.0 & Session Management
  */
 
+import { dbEngine } from './supabaseClient.js';
+
 const AUTH_STORAGE_KEY = 'rest_os_google_user';
 
 export const ROLE_PERMISSIONS = {
@@ -153,7 +155,7 @@ class AuthService {
   }
 
   // Handle Google OAuth Credential Response
-  handleCredentialResponse(response) {
+  async handleCredentialResponse(response) {
     if (!response || !response.credential) return;
     const payload = this.parseJwt(response.credential);
     if (payload) {
@@ -166,6 +168,22 @@ class AuthService {
         auth_provider: 'google',
         signed_in_at: new Date().toISOString()
       };
+
+      if (dbEngine.supabase) {
+        try {
+          const { data, error } = await dbEngine.supabase.auth.signInWithIdToken({
+            provider: 'google',
+            token: response.credential
+          });
+          if (!error && data?.user) {
+            googleUser.id = data.user.id;
+          }
+        } catch (e) {
+          console.warn('Supabase ID token sign-in notice:', e.message);
+        }
+      }
+
+      await dbEngine.syncUserProfile(googleUser);
       this.saveUser(googleUser);
       this.showToast(`Signed in as ${googleUser.name} (${googleUser.email})`);
     }
@@ -173,6 +191,17 @@ class AuthService {
 
   // Trigger Google Sign-In Flow
   loginWithGoogle() {
+    if (dbEngine.supabase && dbEngine.hasValidSupabaseConfig()) {
+      try {
+        dbEngine.supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo: window.location.origin + window.location.pathname }
+        });
+      } catch (err) {
+        console.warn('Supabase OAuth redirect notice:', err.message);
+      }
+    }
+
     if (window.google?.accounts?.id) {
       try {
         window.google.accounts.id.prompt();
@@ -248,7 +277,7 @@ class AuthService {
           </div>
 
           <div class="google-modal-footer">
-            <span>Protected by Google Identity Services OAuth 2.0</span>
+            <span>Connected to Supabase Backend &amp; Google OAuth 2.0</span>
           </div>
         </div>
       </div>
@@ -281,6 +310,7 @@ class AuthService {
           signed_in_at: new Date().toISOString()
         };
 
+        dbEngine.syncUserProfile(googleUser);
         this.saveUser(googleUser);
         this.showToast(`Signed in with Google as ${name}`);
         modal.remove();
@@ -308,6 +338,7 @@ class AuthService {
         signed_in_at: new Date().toISOString()
       };
 
+      dbEngine.syncUserProfile(googleUser);
       this.saveUser(googleUser);
       this.showToast(`Signed in with Google as ${name}`);
       modal.remove();
@@ -318,6 +349,11 @@ class AuthService {
   logout() {
     const user = this.user;
     this.saveUser(null);
+    if (dbEngine.supabase) {
+      try {
+        dbEngine.supabase.auth.signOut();
+      } catch (e) {}
+    }
     if (window.google && window.google.accounts && window.google.accounts.id) {
       try {
         window.google.accounts.id.disableAutoSelect();
