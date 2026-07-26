@@ -220,8 +220,8 @@
         <a href="src/views/queue.html" class="btn-ghost-on-dark">
           <i class="fa-solid fa-people-group"></i> Virtual Queue
         </a>
-        <a href="src/views/pos.html" class="btn-sentry">
-          <i class="fa-solid fa-cash-register"></i> Launch POS
+        <a href="src/views/login.html" class="btn-sentry">
+          <i class="fa-solid fa-user-shield"></i> Real Sign In / Sign Up
         </a>
       </div>
     </div>
@@ -240,44 +240,76 @@
         Eliminate communication bottlenecks between customers, waiters, chefs, and managers. RestaurantOS connects live inventory, table reservations, POS ordering, KDS tickets, 3D payment security, and Gemini AI ops intelligence into one real-time command center.
       </p>
 
-      <!-- 2 Selectable Portal Options Gateway -->
+      <!-- 4 Selectable Portal Modes Gateway -->
       <div class="portal-gateway-container">
         <div class="portal-gateway-header">
-          <div class="portal-pill-badge"><i class="fa-solid fa-right-to-bracket"></i> ENTRY GATEWAY</div>
-          <h2>Select Workspace Portal</h2>
-          <p>Choose your entry space to launch customized interfaces for Customers or Restaurant Staff</p>
+          <div class="portal-pill-badge"><i class="fa-solid fa-right-to-bracket"></i> 4 APPLICATION MODES</div>
+          <h2>Select Workspace Mode</h2>
+          <p>Choose your workspace mode to enter with real Supabase Auth (Email OTP / Google OAuth)</p>
         </div>
 
-        <div class="portal-gateway-grid">
-          <!-- Option 1: Customer Space -->
-          <a href="src/views/customer.html" class="portal-choice-card card-customer-portal">
+        <div class="portal-gateway-grid" style="grid-template-columns: repeat(4, 1fr); gap: 16px;">
+          <!-- Mode 1: Customer Mode -->
+          <a href="src/views/login.html?role=Customer" class="portal-choice-card card-customer-portal">
             <div class="portal-card-top">
-              <span class="portal-badge badge-customer"><i class="fa-solid fa-user"></i> Customer Mode</span>
-              <span class="portal-ui-tag">Custom Dining UI</span>
+              <span class="portal-badge badge-customer"><i class="fa-solid fa-user"></i> Customer</span>
+              <span class="portal-ui-tag">Dining UI</span>
             </div>
             <div class="portal-icon-wrapper customer-glow">
               <i class="fa-solid fa-utensils"></i>
             </div>
-            <h3 class="portal-card-title">Customer Dining Space</h3>
-            <p class="portal-card-desc">Browse gourmet food items, add custom cooking instructions, view live order summary & itemized bill, and pay securely via sandbox enclave.</p>
+            <h3 class="portal-card-title">Customer Mode</h3>
+            <p class="portal-card-desc">Dynamic menu card, 6-digit session ID generation, table booking & live order bill.</p>
             <div class="portal-btn-action btn-cust-action">
-              <span>Open Customer Space</span> <i class="fa-solid fa-arrow-right"></i>
+              <span>Enter Customer</span> <i class="fa-solid fa-arrow-right"></i>
             </div>
           </a>
 
-          <!-- Option 2: Staff Space -->
-          <a href="src/views/pos.html" class="portal-choice-card card-staff-portal">
+          <!-- Mode 2: Waiter Mode -->
+          <a href="src/views/login.html?role=Waiter" class="portal-choice-card card-staff-portal" style="border-color: #ec4899;">
             <div class="portal-card-top">
-              <span class="portal-badge badge-staff"><i class="fa-solid fa-user-shield"></i> Staff & Ops</span>
-              <span class="portal-ui-tag">Operations UI</span>
+              <span class="portal-badge" style="background: rgba(236,72,153,0.15); color: #ec4899;"><i class="fa-solid fa-concierge-bell"></i> Waiter</span>
+              <span class="portal-ui-tag">Waiter UI</span>
+            </div>
+            <div class="portal-icon-wrapper" style="background: rgba(236,72,153,0.15); color: #ec4899;">
+              <i class="fa-solid fa-concierge-bell"></i>
+            </div>
+            <h3 class="portal-card-title">Waiter Mode</h3>
+            <p class="portal-card-desc">Live table booking alerts, order notifications & payment type (Cash/Card/UPI) alerts.</p>
+            <div class="portal-btn-action" style="background: #ec4899; color: #000;">
+              <span>Enter Waiter</span> <i class="fa-solid fa-arrow-right"></i>
+            </div>
+          </a>
+
+          <!-- Mode 3: Kitchen Staff Mode -->
+          <a href="src/views/login.html?role=Kitchen" class="portal-choice-card card-staff-portal" style="border-color: #3b82f6;">
+            <div class="portal-card-top">
+              <span class="portal-badge" style="background: rgba(59,130,246,0.15); color: #3b82f6;"><i class="fa-solid fa-fire"></i> Kitchen</span>
+              <span class="portal-ui-tag">KDS Prep</span>
+            </div>
+            <div class="portal-icon-wrapper" style="background: rgba(59,130,246,0.15); color: #3b82f6;">
+              <i class="fa-solid fa-fire"></i>
+            </div>
+            <h3 class="portal-card-title">Kitchen Mode</h3>
+            <p class="portal-card-desc">Kitchen Display System (KDS), cooking notes, order status & Mark as Served (Delivered: Y).</p>
+            <div class="portal-btn-action" style="background: #3b82f6; color: #fff;">
+              <span>Enter Kitchen</span> <i class="fa-solid fa-arrow-right"></i>
+            </div>
+          </a>
+
+          <!-- Mode 4: Manager Mode -->
+          <a href="src/views/login.html?role=Manager" class="portal-choice-card card-staff-portal">
+            <div class="portal-card-top">
+              <span class="portal-badge badge-staff"><i class="fa-solid fa-user-shield"></i> Manager</span>
+              <span class="portal-ui-tag">Admin UI</span>
             </div>
             <div class="portal-icon-wrapper staff-glow">
-              <i class="fa-solid fa-cash-register"></i>
+              <i class="fa-solid fa-chart-line"></i>
             </div>
-            <h3 class="portal-card-title">Staff Operations Command</h3>
-            <p class="portal-card-desc">Full staff suite: Waiter POS ordering, Kitchen KDS tickets, 3D Digital Twin floor map, AI stockout predictor & sales analytics.</p>
+            <h3 class="portal-card-title">Manager Mode</h3>
+            <p class="portal-card-desc">Post-admin auth data tables (Main Data, Table Vacancy, Customer History) & BI revenue dashboard.</p>
             <div class="portal-btn-action btn-staff-action">
-              <span>Open Staff Operations</span> <i class="fa-solid fa-arrow-right"></i>
+              <span>Enter Manager</span> <i class="fa-solid fa-arrow-right"></i>
             </div>
           </a>
         </div>

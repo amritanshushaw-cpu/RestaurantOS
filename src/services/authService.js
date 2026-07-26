@@ -192,22 +192,6 @@ class AuthService {
       return { ok: false, reason: 'missing_fields' };
     }
 
-    if (!dbEngine.supabase || !dbEngine.hasValidSupabaseConfig()) {
-      const rawName = cleanEmail.split('@')[0] || 'User';
-      const demoUser = {
-        id: 'user-' + Date.now(),
-        name: rawName,
-        email: cleanEmail,
-        role: role || 'Customer',
-        auth_provider: 'email',
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(cleanEmail)}`
-      };
-      this.saveUser(demoUser);
-      this.showToast(`Signed in as ${demoUser.name} [Role: ${demoUser.role}]`);
-      this.closeAuthModal();
-      return { ok: true, user: demoUser };
-    }
-
     try {
       const { data, error } = await dbEngine.supabase.auth.signInWithPassword({
         email: cleanEmail,
@@ -239,22 +223,6 @@ class AuthService {
       return { ok: false, reason: 'missing_fields' };
     }
 
-    if (!dbEngine.supabase || !dbEngine.hasValidSupabaseConfig()) {
-      const rawName = fullName || cleanEmail.split('@')[0];
-      const newUser = {
-        id: 'user-' + Date.now(),
-        name: rawName,
-        email: cleanEmail,
-        role: role || 'Customer',
-        auth_provider: 'email',
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(cleanEmail)}`
-      };
-      this.saveUser(newUser);
-      this.showToast(`Account created for ${newUser.name}! [Role: ${newUser.role}]`);
-      this.closeAuthModal();
-      return { ok: true, user: newUser };
-    }
-
     try {
       const { data, error } = await dbEngine.supabase.auth.signUp({
         email: cleanEmail,
@@ -275,7 +243,7 @@ class AuthService {
       if (data.session) {
         await this.handleSupabaseSession(data.session, role);
       } else {
-        this.showToast(`Account created for [Role: ${role}]! Please check email or sign in.`);
+        this.showToast(`Account created for ${cleanEmail}! Please check email or sign in.`);
       }
 
       return { ok: true, data };
@@ -292,46 +260,26 @@ class AuthService {
   loginWithGoogle(role = 'Customer') {
     localStorage.setItem('rest_os_pending_google_role', role);
 
-    if (!dbEngine.supabase || !dbEngine.hasValidSupabaseConfig()) {
-      const demoGoogleUser = {
-        id: 'user-google-demo',
-        name: 'Alex Mercer',
-        email: 'alex.mercer@gmail.com',
-        role: role || 'Customer',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80'
-      };
-      this.saveUser(demoGoogleUser);
-      this.showToast(`Signed in as Alex Mercer (Google Auth - Role: ${role})`);
-      this.closeAuthModal();
-      return;
-    }
     try {
       dbEngine.supabase.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo: window.location.origin + window.location.pathname }
       });
     } catch (err) {
-      console.warn('Google OAuth redirect notice:', err.message);
-      this.showToast('Could not start Google Sign-In. Check your Supabase Google provider setup.');
+      console.warn('Google OAuth error:', err.message);
+      this.showToast(`Could not start Google Sign-In: ${err.message}`);
     }
   }
 
   // ---------------------------------------------------------------------
-  // Real Email OTP verification (with local demo fallback)
+  // Real Email OTP Verification (Supabase Auth)
   // ---------------------------------------------------------------------
 
-  // Step 1: send a one-time code to the given email via Supabase Auth or demo generator.
   async sendEmailOtp(email) {
     const cleanEmail = (email || '').trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
       this.showToast('Enter a valid email address first.');
       return { ok: false, reason: 'invalid_email' };
-    }
-
-    if (!dbEngine.supabase || !dbEngine.hasValidSupabaseConfig()) {
-      this.pendingOtpEmail = cleanEmail;
-      this.showToast(`Verification code sent to ${cleanEmail} (Use demo code: 123456)`);
-      return { ok: true, isDemo: true };
     }
 
     try {
@@ -340,20 +288,19 @@ class AuthService {
         options: { shouldCreateUser: true }
       });
       if (error) {
-        this.showToast(`Could not send code: ${error.message}`);
+        this.showToast(`Verification error: ${error.message}`);
         return { ok: false, reason: error.message };
       }
       this.pendingOtpEmail = cleanEmail;
       this.showToast(`Verification code sent to ${cleanEmail}`);
       return { ok: true };
     } catch (e) {
-      this.showToast('Could not send verification code. Try again.');
+      this.showToast(`Could not send verification code: ${e.message}`);
       return { ok: false, reason: e.message };
     }
   }
 
-  // Step 2: verify the 6-digit code the user received by email or demo token.
-  async verifyEmailOtp(email, token) {
+  async verifyEmailOtp(email, token, role = 'Customer') {
     const cleanEmail = (email || this.pendingOtpEmail || '').trim();
     const cleanToken = (token || '').trim();
 
@@ -362,22 +309,25 @@ class AuthService {
       return { ok: false, reason: 'missing_token' };
     }
 
-    if (!dbEngine.supabase || !dbEngine.hasValidSupabaseConfig()) {
-      if (cleanToken === '123456' || cleanToken.length === 6) {
-        const rawName = cleanEmail.split('@')[0] || 'guest';
-        const formattedName = rawName
-          .replace(/[._-]/g, ' ')
-          .replace(/\b\w/g, c => c.toUpperCase());
-
-        const demoUser = {
-          id: 'user-' + Date.now(),
-          name: formattedName,
-          email: cleanEmail,
-          role: 'Customer',
-          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(cleanEmail)}`
-        };
-        this.pendingOtpEmail = null;
-        this.saveUser(demoUser);
+    try {
+      const { data, error } = await dbEngine.supabase.auth.verifyOtp({
+        email: cleanEmail,
+        token: cleanToken,
+        type: 'email'
+      });
+      if (error || !data?.session) {
+        this.showToast(`Verification failed: ${error ? error.message : 'invalid code'}`);
+        return { ok: false, reason: error ? error.message : 'invalid_code' };
+      }
+      this.pendingOtpEmail = null;
+      await this.handleSupabaseSession(data.session, role);
+      this.closeAuthModal();
+      return { ok: true };
+    } catch (e) {
+      this.showToast(`Verification failed: ${e.message}`);
+      return { ok: false, reason: e.message };
+    }
+  }
         this.showToast(`Signed in as ${demoUser.name}`);
         this.closeAuthModal();
         return { ok: true, isDemo: true };
