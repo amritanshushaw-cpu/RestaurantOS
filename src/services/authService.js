@@ -185,36 +185,30 @@ class AuthService {
   // Real Email & Password Authentication (Supabase GoTrue Backend)
   // ---------------------------------------------------------------------
 
-  async loginWithEmailPassword(email, password, role = 'Customer') {
+  async loginWithOtp(email, role = 'Customer') {
     const cleanEmail = (email || '').trim();
-    if (!cleanEmail || !password) {
-      this.showToast('Please enter both email and password.');
+    if (!cleanEmail) {
+      this.showToast('Please enter your email address.');
       return { ok: false, reason: 'missing_fields' };
     }
 
     try {
-      const { data, error } = await dbEngine.supabase.auth.signInWithPassword({
+      const { error } = await dbEngine.supabase.auth.signInWithOtp({
         email: cleanEmail,
-        password
+        options: {
+          data: {
+            role: role
+          }
+        }
       });
 
-      if (error || !data?.session) {
-        // If login fails, try sign up automatically (first time user)
-        const { data: signUpData, error: signUpError } = await dbEngine.supabase.auth.signUp({
-          email: cleanEmail,
-          password,
-          options: { data: { full_name: cleanEmail.split('@')[0], role } }
-        });
-        if (signUpError || !signUpData?.session) {
-          this.showToast(`Login failed: ${error ? error.message : 'check your credentials'}`);
-          return { ok: false, reason: error?.message || 'auth_failed' };
-        }
-        await this.handleSupabaseSession(signUpData.session, role);
-        return { ok: true, session: signUpData.session };
+      if (error) {
+        this.showToast(`OTP failed: ${error.message}`);
+        return { ok: false, reason: error.message };
       }
 
-      await this.handleSupabaseSession(data.session, role);
-      return { ok: true, session: data.session };
+      this.showToast('Magic link sent! Please check your email to log in.');
+      return { ok: true };
     } catch (e) {
       this.showToast(`Authentication error: ${e.message}`);
       return { ok: false, reason: e.message };

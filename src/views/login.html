@@ -126,9 +126,8 @@
       <!-- Option 2: Email Sign In -->
       <div style="display: flex; flex-direction: column; gap: 12px;">
         <input type="email" id="signin-email" placeholder="Email address" class="sentry-input-sm" required>
-        <input type="password" id="signin-password" placeholder="Password" class="sentry-input-sm" required>
         <button id="btn-submit-signin" class="btn-sentry" style="width: 100%; padding: 12px; margin-top: 4px;">
-          Sign In <i class="fa-solid fa-right-to-bracket"></i>
+          Send Magic Link <i class="fa-solid fa-envelope"></i>
         </button>
       </div>
     </div>
@@ -155,10 +154,9 @@
         authService.loginWithGoogle(activeRole);
       });
 
-      // Option 2: Email Sign In
+      // Option 2: Email Sign In (OTP / Magic Link)
       document.getElementById('btn-submit-signin')?.addEventListener('click', async () => {
         const email = document.getElementById('signin-email').value.trim();
-        const password = document.getElementById('signin-password').value;
         const btn = document.getElementById('btn-submit-signin');
 
         if (!email) {
@@ -167,14 +165,15 @@
         }
 
         btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Signing in...';
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending link...';
 
-        const res = await authService.loginWithEmailPassword(email, password || 'defaultpass123', activeRole);
-        btn.disabled = false;
-        btn.innerHTML = 'Sign In <i class="fa-solid fa-right-to-bracket"></i>';
-
+        const res = await authService.loginWithOtp(email, activeRole);
+        
         if (res.ok) {
-          redirectForRole(activeRole);
+          btn.innerHTML = 'Link Sent! <i class="fa-solid fa-check"></i>';
+        } else {
+          btn.disabled = false;
+          btn.innerHTML = 'Send Magic Link <i class="fa-solid fa-envelope"></i>';
         }
       });
 
