@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS restaurants (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     currency VARCHAR(10) DEFAULT 'USD',
-    tax_rate DECIMAL(5,2) DEFAULT 8.50,
+    tax_rate DECIMAL(5,2) DEFAULT 5.00,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

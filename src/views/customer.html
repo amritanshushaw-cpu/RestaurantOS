@@ -107,24 +107,24 @@
             <p class="handnote">— curated dishes for your table —</p>
             <div class="specials" aria-label="Featured dishes">
               <div class="sp-row">
-                <span class="sp-name">Butter Chicken Bowl</span><span class="sp-price">₹480</span>
-                <span class="sp-desc">Creamy tomato gravy, tandoori chicken</span>
-                <span class="sp-aller"><span class="allerg">DAIRY</span><span class="allerg">GLUTEN</span></span>
+                <span class="sp-name">Butter Chicken (Murgh Makhani)</span><span class="sp-price">₹480</span>
+                <span class="sp-desc">Tandoori chicken in rich creamy tomato butter gravy</span>
+                <span class="sp-aller"><span class="allerg">INDIAN SPECIAL</span><span class="allerg">DAIRY</span></span>
               </div>
               <div class="sp-row">
-                <span class="sp-name">Tandoori Paneer Tikka</span><span class="sp-price">₹320</span>
-                <span class="sp-desc">Charcoal grilled, mint chutney</span>
-                <span class="sp-aller"><span class="allerg">VEG</span><span class="allerg">DAIRY</span></span>
+                <span class="sp-name">Steamed Truffle Dim Sum</span><span class="sp-price">₹420</span>
+                <span class="sp-desc">Crystal dumplings, edamame &amp; truffle oil</span>
+                <span class="sp-aller"><span class="allerg">CHINESE</span><span class="allerg">VEG</span></span>
               </div>
               <div class="sp-row">
-                <span class="sp-name">Wagyu Beef Sliders</span><span class="sp-price">₹580</span>
-                <span class="sp-desc">Truffle aioli, smoked cheddar</span>
-                <span class="sp-aller"><span class="allerg">GLUTEN</span><span class="allerg">DAIRY</span></span>
+                <span class="sp-name">Dry-Aged Ribeye 12oz</span><span class="sp-price">₹1,280</span>
+                <span class="sp-desc">Rosemary garlic butter &amp; charred asparagus</span>
+                <span class="sp-aller"><span class="allerg">CONTINENTAL</span></span>
               </div>
               <div class="sp-row">
-                <span class="sp-name">Mango Lassi</span><span class="sp-price">₹140</span>
-                <span class="sp-desc">Alphonso mango, cardamom, chilled</span>
-                <span class="sp-aller"><span class="allerg">VEG</span></span>
+                <span class="sp-name">Mango Lassi Alphonso</span><span class="sp-price">₹140</span>
+                <span class="sp-desc">Alphonso mango pulp &amp; chilled cardamom</span>
+                <span class="sp-aller"><span class="allerg">INDIAN SPECIAL</span><span class="allerg">VEG</span></span>
               </div>
             </div>
             <div class="boardnote">
@@ -164,7 +164,11 @@
             <i class="fa-solid fa-magnifying-glass search-icon" aria-hidden="true"></i>
             <input id="cust-search-input" type="search" placeholder="Search Biryani, Sliders, Butter Chicken..." autocomplete="off">
           </label>
-          <div id="cust-category-bar" aria-label="Menu categories"></div>
+          <div class="category-scroll-container">
+            <button type="button" class="cat-slide-btn prev" id="btn-cat-slide-left" aria-label="Slide left">‹</button>
+            <div id="cust-category-bar" aria-label="Menu categories"></div>
+            <button type="button" class="cat-slide-btn next" id="btn-cat-slide-right" aria-label="Slide right">›</button>
+          </div>
         </div>
 
         <div class="menu-cols" id="cust-menu-grid" aria-live="polite"></div>
@@ -330,7 +334,7 @@
     <div class="special-notes"><label for="cust-special-notes">Special cooking instructions</label><textarea id="cust-special-notes" placeholder="Extra spicy, no onions, sauce on the side..." rows="2"></textarea><div id="quick-notes-chips"><button type="button" class="chip-note" data-text="Extra Spicy">Extra Spicy</button><button type="button" class="chip-note" data-text="No Onions">No Onions</button><button type="button" class="chip-note" data-text="Gluten Free">Gluten Free</button><button type="button" class="chip-note" data-text="Sauce on Side">Sauce on Side</button></div></div>
     <div class="bill-summary-card">
       <div class="bill-summary-row"><span>Items subtotal</span><strong id="cust-bill-subtotal">₹0.00</strong></div>
-      <div class="bill-summary-row"><span>Tax &amp; service (8.5%)</span><strong id="cust-bill-tax">₹0.00</strong></div>
+      <div class="bill-summary-row"><span>Tax &amp; service (5%)</span><strong id="cust-bill-tax">₹0.00</strong></div>
       <span class="tip-label">Add chef tip · optional</span>
       <div class="tip-pills-bar"><button class="tip-pill active" type="button" data-tip="0">0%</button><button class="tip-pill" type="button" data-tip="10">10%</button><button class="tip-pill" type="button" data-tip="15">15%</button><button class="tip-pill" type="button" data-tip="20">20%</button></div>
       <div class="order-drawer-total"><span>Total bill</span><span id="cust-bill-total">₹0.00</span></div>
