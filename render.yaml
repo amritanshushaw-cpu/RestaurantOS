@@ -1,0 +1,24 @@
+# render.yaml — One-click deploy config for Render.com free tier
+# Deploys the Node.js API backend automatically
+
+services:
+  - type: web
+    name: restaurantos-api
+    env: node
+    region: singapore    # closest free region to India
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: node index.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: PORT
+        value: 4000
+      - key: SUPABASE_URL
+        sync: false          # you enter this in Render dashboard
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: FRONTEND_URL
+        value: https://restaurant-os-woad.vercel.app
