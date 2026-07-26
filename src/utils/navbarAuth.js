@@ -67,14 +67,27 @@ class NavbarAuth {
   // Enforce page-level guard for current URL
   checkPageGuard() {
     const path = window.location.pathname;
-    const canAccess = authService.canAccessPage(path);
+    const cleanName = path.split('/').pop().split('?')[0] || 'index.html';
 
+    // Allow index.html and login.html
+    if (cleanName === 'index.html' || cleanName === 'login.html' || cleanName === '') {
+      return;
+    }
+
+    // Require authentication for all protected operational pages
+    if (!authService.user) {
+      const isSubdir = path.includes('/views/');
+      const prefix = isSubdir ? '' : 'src/views/';
+      window.location.href = `${prefix}login.html?role=Customer`;
+      return;
+    }
+
+    const canAccess = authService.canAccessPage(path);
     const existingGuard = document.getElementById('rbac-page-guard-overlay');
     if (existingGuard) existingGuard.remove();
 
     if (!canAccess) {
       const activeRole = authService.getActiveRole();
-      const currentFileName = path.split('/').pop() || 'this page';
 
       const guardHtml = `
         <div id="rbac-page-guard-overlay" class="rbac-guard-overlay">
@@ -84,7 +97,7 @@ class NavbarAuth {
             </div>
             <h2 class="rbac-guard-title">Access Restricted to ${activeRole.name} Role</h2>
             <p class="rbac-guard-desc">
-              You are currently signed in as <strong>${authService.user ? authService.user.name : 'Customer'}</strong> (${activeRole.name} Role).
+              You are currently signed in as <strong>${authService.user.name}</strong> (${activeRole.name} Role).
               <br><br>
               <strong>${activeRole.name} permissions:</strong> ${activeRole.description}
             </p>
@@ -93,7 +106,7 @@ class NavbarAuth {
                 <i class="fa-solid fa-arrow-right"></i> Go to ${activeRole.name} Section
               </a>
               <button id="btn-switch-role-manager" class="btn-ghost-on-dark">
-                <i class="fa-solid fa-user-shield"></i> Switch Role to Manager
+                <i class="fa-solid fa-right-from-bracket"></i> Sign Out &amp; Switch Account
               </button>
             </div>
           </div>
@@ -105,7 +118,7 @@ class NavbarAuth {
       const switchBtn = document.getElementById('btn-switch-role-manager');
       if (switchBtn) {
         switchBtn.addEventListener('click', () => {
-          authService.setUserRole('Manager');
+          authService.logout();
         });
       }
     }
@@ -176,25 +189,12 @@ class NavbarAuth {
           </div>
 
           <div class="google-user-actions">
-            <select id="user-role-select" class="role-selector-dropdown" title="Switch Role">
-              <option value="Customer" ${user.role === 'Customer' ? 'selected' : ''}>Customer</option>
-              <option value="Waiter" ${user.role === 'Waiter' ? 'selected' : ''}>Waiter</option>
-              <option value="Kitchen" ${user.role === 'Kitchen' ? 'selected' : ''}>Kitchen</option>
-              <option value="Manager" ${user.role === 'Manager' ? 'selected' : ''}>Manager</option>
-            </select>
             <button id="btn-navbar-logout" class="btn-icon-logout" title="Sign Out">
-              <i class="fa-solid fa-right-from-bracket"></i>
+              <i class="fa-solid fa-right-from-bracket"></i> Sign Out
             </button>
           </div>
         </div>
       `;
-
-      const roleSelect = widget.querySelector('#user-role-select');
-      if (roleSelect) {
-        roleSelect.addEventListener('change', (e) => {
-          authService.setUserRole(e.target.value);
-        });
-      }
 
       const logoutBtn = widget.querySelector('#btn-navbar-logout');
       if (logoutBtn) {
