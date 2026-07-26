@@ -133,11 +133,10 @@ class EntryGatewayModal {
     if (btnCustomer) {
       btnCustomer.addEventListener('click', () => {
         sessionStorage.setItem('rest_os_gateway_dismissed', 'true');
-        authService.setUserRole('Customer');
         modal.classList.add('fade-out');
         setTimeout(() => {
           modal.remove();
-          window.location.href = `${prefix}customer.html`;
+          window.location.href = `${prefix}login.html?role=Customer`;
         }, 200);
       });
     }
@@ -145,11 +144,10 @@ class EntryGatewayModal {
     if (btnWaiter) {
       btnWaiter.addEventListener('click', () => {
         sessionStorage.setItem('rest_os_gateway_dismissed', 'true');
-        authService.setUserRole('Waiter');
         modal.classList.add('fade-out');
         setTimeout(() => {
           modal.remove();
-          window.location.href = `${prefix}kds.html?role=waiter`;
+          window.location.href = `${prefix}login.html?role=Waiter`;
         }, 200);
       });
     }
@@ -157,11 +155,21 @@ class EntryGatewayModal {
     if (btnKitchen) {
       btnKitchen.addEventListener('click', () => {
         sessionStorage.setItem('rest_os_gateway_dismissed', 'true');
-        authService.setUserRole('Kitchen');
         modal.classList.add('fade-out');
         setTimeout(() => {
           modal.remove();
-          window.location.href = `${prefix}kds.html?role=kitchen`;
+          window.location.href = `${prefix}login.html?role=Kitchen`;
+        }, 200);
+      });
+    }
+
+    if (btnStaff) {
+      btnStaff.addEventListener('click', () => {
+        sessionStorage.setItem('rest_os_gateway_dismissed', 'true');
+        modal.classList.add('fade-out');
+        setTimeout(() => {
+          modal.remove();
+          window.location.href = `${prefix}login.html?role=Manager`;
         }, 200);
       });
     }
