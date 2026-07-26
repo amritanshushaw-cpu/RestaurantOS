@@ -7,8 +7,54 @@ import { dbEngine } from '../services/supabaseClient.js';
 document.addEventListener('DOMContentLoaded', () => {
   const ticketsContainer = document.getElementById('kds-tickets-container');
 
+  // Inject Waiter Interface Notifications Feed Panel if not present
+  let waiterFeedContainer = document.getElementById('waiter-notifications-feed');
+  if (!waiterFeedContainer && ticketsContainer) {
+    const feedSection = document.createElement('section');
+    feedSection.style.cssText = 'background: var(--color-ink-deep); border: 1px solid var(--border-violet); border-radius: var(--radius-xl); padding: 20px; margin-bottom: 24px; text-align: left;';
+    feedSection.innerHTML = `
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid var(--border-violet); padding-bottom: 8px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-concierge-bell" style="color: var(--color-accent-pink); font-size: 18px;"></i>
+          <h3 style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin: 0;">Waiter Interface & Live Alerts Feed</h3>
+        </div>
+        <span class="badge sandbox-badge" style="font-size: 11px; background: rgba(236, 72, 153, 0.15); color: #ec4899;">LIVE WAITER MODE</span>
+      </div>
+      <div id="waiter-feed-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 140px; overflow-y: auto; font-size: 13px; color: var(--text-secondary);">
+        <p style="margin: 0; color: var(--text-tertiary);">Listening for table bookings, order dispatches, and payment type alerts...</p>
+      </div>
+    `;
+    ticketsContainer.parentNode.insertBefore(feedSection, ticketsContainer);
+    waiterFeedContainer = document.getElementById('waiter-feed-list');
+  }
+
+  function updateWaiterFeed() {
+    const feedList = document.getElementById('waiter-feed-list');
+    if (!feedList) return;
+
+    const sessions = dbEngine.getSessions();
+    const activeSessions = sessions.filter(s => s.status === 'ACTIVE');
+
+    if (activeSessions.length === 0) {
+      feedList.innerHTML = '<p style="margin: 0; color: var(--text-tertiary);">No active waiter sessions. Table booking notifications will appear here live.</p>';
+      return;
+    }
+
+    feedList.innerHTML = activeSessions.map(s => `
+      <div style="background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-md); padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+        <div>
+          <strong style="color: var(--color-accent-lime); font-family: var(--font-mono);">[NOTIFICATION] Table Booked:</strong> ${s.table_no} &nbsp;·&nbsp;
+          <strong>Session ID:</strong> <span class="mono" style="color: #fff;">${s.session_id}</span> &nbsp;·&nbsp;
+          <strong>Waiter Allotted:</strong> ${s.waiter_id}
+        </div>
+        <span class="badge" style="font-size: 10px; background: rgba(194, 239, 78, 0.15); color: var(--color-accent-lime);">Delivered: ${s.delivered || 'N'}</span>
+      </div>
+    `).join('');
+  }
+
   // Poll & Render Dynamic Tickets
   function refreshKDSTickets() {
+    updateWaiterFeed();
     const allOrders = dbEngine.getOrders();
     const activeOrders = allOrders.filter(o => o.status !== 'PAID' && o.status !== 'CANCELLED');
 
@@ -34,11 +80,11 @@ document.addEventListener('DOMContentLoaded', () => {
       let btnBg = 'var(--accent-amber)';
 
       if (order.status === 'PREPARING') {
-        actionBtnText = 'Mark as Ready';
+        actionBtnText = 'Mark as Ready / Served (Delivered: Y)';
         nextStatus = 'READY';
         btnBg = '#3b82f6';
       } else if (order.status === 'READY') {
-        actionBtnText = 'Complete / Served';
+        actionBtnText = 'Complete / Served (Delivered: Y)';
         nextStatus = 'PAID';
         btnBg = 'var(--color-success)';
       }
@@ -65,8 +111,14 @@ document.addEventListener('DOMContentLoaded', () => {
             <div>
               <strong style="font-size: 16px;">${order.order_number}</strong>
               <span class="badge sandbox-badge" style="margin-left: 8px;">${order.table_number || order.table_id || 'Table 01'}</span>
+              ${order.session_id ? `<span class="badge" style="font-family: var(--font-mono); margin-left: 6px; background: rgba(16, 185, 129, 0.15); color: #10b981;">Sess: ${order.session_id}</span>` : ''}
             </div>
             <span class="badge" style="font-size: 11px; font-weight: 700; background: rgba(194, 239, 78, 0.15); color: var(--color-accent-lime);">${order.status}</span>
+          </div>
+
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">
+            <strong>Waiter Allotted:</strong> ${order.waiter_id || 'WAIT-01'} &nbsp;·&nbsp;
+            <strong>Delivered Status:</strong> <span style="font-weight: 700; color: ${order.delivered === 'Y' ? '#10b981' : '#f59e0b'};">${order.delivered || 'N'}</span>
           </div>
 
           ${cookingNotesHTML}
@@ -81,9 +133,13 @@ document.addEventListener('DOMContentLoaded', () => {
         </button>
       `;
 
-
       card.querySelector('.btn-progress-ticket').addEventListener('click', () => {
-        dbEngine.updateOrderStatus(order.id, nextStatus);
+        if (nextStatus === 'READY' || nextStatus === 'PAID') {
+          // Updates Delivered (Y/N) column in DB from N to Y
+          dbEngine.markOrderServed(order.id);
+        } else {
+          dbEngine.updateOrderStatus(order.id, nextStatus);
+        }
         refreshKDSTickets();
       });
 

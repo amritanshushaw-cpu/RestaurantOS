@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RestaurantOS - Executive Sales Analytics & Gemini AI</title>
+  <title>RestaurantOS - Server Side Admin DB & Live BI Analytics</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -41,7 +41,7 @@
       border: 1px solid var(--border-violet);
       border-radius: var(--radius-xl);
       padding: 28px;
-      margin-top: 24px;
+      margin-bottom: 24px;
     }
 
     @media (max-width: 860px) {
@@ -63,24 +63,24 @@
 
       <div class="sentry-nav-links">
         <a href="../../index.html" class="btn-ghost-on-dark"><i class="fa-solid fa-house"></i> Hub</a>
-        <a href="payment.html" class="btn-ghost-on-dark"><i class="fa-solid fa-credit-card"></i> Payment</a>
+        <a href="customer.html" class="btn-ghost-on-dark"><i class="fa-solid fa-utensils"></i> Customer</a>
         <a href="pos.html" class="btn-ghost-on-dark"><i class="fa-solid fa-cash-register"></i> POS Terminal</a>
         <a href="kds.html" class="btn-ghost-on-dark"><i class="fa-solid fa-fire"></i> KDS Kitchen</a>
-        <a href="analytics.html" class="btn-ghost-on-dark active"><i class="fa-solid fa-chart-line"></i> Analytics</a>
+        <a href="analytics.html" class="btn-ghost-on-dark active"><i class="fa-solid fa-chart-line"></i> Admin BI & DB</a>
         <a href="opscopilot.html" class="btn-ghost-on-dark"><i class="fa-solid fa-robot"></i> OpsCopilot</a>
       </div>
     </div>
   </header>
 
-  <main class="app-container" style="max-width: 1180px; padding-top: 24px;">
+  <main class="app-container" style="max-width: 1240px; padding-top: 24px; padding-bottom: 80px;">
     <!-- Analytics Header -->
     <header class="app-header">
       <div class="brand">
         <div class="brand-icon">
-          <i class="fa-solid fa-chart-line"></i>
+          <i class="fa-solid fa-server"></i>
         </div>
         <div class="brand-text">
-          <h1>Restaurant<span>OS</span> <small style="font-size: 14px; color: var(--text-secondary); font-weight: 500;">/ Sales Analytics & AI</small></h1>
+          <h1>Restaurant<span>OS</span> <small style="font-size: 14px; color: var(--text-secondary); font-weight: 500;">/ Server Side Admin DB & Live BI Analytics</small></h1>
         </div>
       </div>
     </header>
@@ -89,7 +89,7 @@
     <div class="metrics-grid">
       <div class="metric-card">
         <span style="font-size: 11px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.2px;">Gross Revenue Today</span>
-        <div class="metric-value" id="metric-revenue">$0.00</div>
+        <div class="metric-value" id="metric-revenue">₹0.00</div>
       </div>
       <div class="metric-card">
         <span style="font-size: 11px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.2px;">Total Orders Fulfilled</span>
@@ -97,7 +97,7 @@
       </div>
       <div class="metric-card">
         <span style="font-size: 11px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.2px;">Average Table Check</span>
-        <div class="metric-value" style="color: #10b981;" id="metric-avg-check">$0.00</div>
+        <div class="metric-value" style="color: #10b981;" id="metric-avg-check">₹0.00</div>
       </div>
       <div class="metric-card">
         <span style="font-size: 11px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.2px;">Payment Approval Rate</span>
@@ -120,6 +120,120 @@
         <strong id="ai-tip" style="color: var(--text-primary);">Gemini AI Recommendation:</strong> <span id="ai-tip-text">Crunching today's numbers...</span>
       </div>
     </div>
+
+    <!-- Revenue Breakdown Metrics (Daily, Weekly, Monthly, Quarterly, Annual) -->
+    <div style="background: var(--color-ink-deep); border: 1px solid var(--border-violet); border-radius: var(--radius-xl); padding: 24px; margin-bottom: 32px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+        <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--text-primary); margin: 0;">
+          <i class="fa-solid fa-chart-line" style="color: var(--color-accent-lime); margin-right: 8px;"></i> Live BI Revenue Dashboard (Permanent Main Data Connection)
+        </h3>
+        <span class="badge sandbox-badge" style="background: rgba(194, 239, 78, 0.15); color: var(--color-accent-lime);">AUTOMATIC ROLLING AGGREGATES</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;">
+        <div style="background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-md); padding: 14px;">
+          <span style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600;">Daily Revenue</span>
+          <div id="bi-daily-rev" style="font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--color-accent-lime); margin-top: 4px;">₹0.00</div>
+        </div>
+        <div style="background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-md); padding: 14px;">
+          <span style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600;">Weekly Revenue</span>
+          <div id="bi-weekly-rev" style="font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: #fff; margin-top: 4px;">₹0.00</div>
+        </div>
+        <div style="background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-md); padding: 14px;">
+          <span style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600;">Monthly Revenue</span>
+          <div id="bi-monthly-rev" style="font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: #3b82f6; margin-top: 4px;">₹0.00</div>
+        </div>
+        <div style="background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-md); padding: 14px;">
+          <span style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600;">Quarterly Revenue</span>
+          <div id="bi-quarterly-rev" style="font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: #ec4899; margin-top: 4px;">₹0.00</div>
+        </div>
+        <div style="background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-md); padding: 14px;">
+          <span style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600;">Annual Revenue</span>
+          <div id="bi-annual-rev" style="font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--color-warning); margin-top: 4px;">₹0.00</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3 SERVER-SIDE DATABASE TABLES SECTION -->
+    <div style="display: flex; flex-direction: column; gap: 32px;">
+
+      <!-- D-Table 1: Main Data Table -->
+      <div style="background: var(--color-ink-deep); border: 1px solid var(--border-violet); border-radius: var(--radius-xl); padding: 24px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <span class="badge sandbox-badge" style="background: rgba(194, 239, 78, 0.15); color: var(--color-accent-lime); font-size: 10px;">D-TABLE DESIGN-1</span>
+            <h3 style="font-family: var(--font-display); font-size: 20px; font-weight: 700; margin-top: 4px;">Main Data Table</h3>
+          </div>
+          <span style="font-size: 12px; color: var(--text-secondary);">Date | Session ID | Start/End | Customer ID | Table No | Waiter ID | Order ID | Delivered | Revenue</span>
+        </div>
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+            <thead>
+              <tr style="background: var(--color-primary); border-bottom: 1px solid var(--border-violet); color: var(--text-secondary); text-transform: uppercase;">
+                <th style="padding: 10px;">Date</th>
+                <th style="padding: 10px;">Session ID</th>
+                <th style="padding: 10px;">Start Time</th>
+                <th style="padding: 10px;">End Time</th>
+                <th style="padding: 10px;">Customer ID</th>
+                <th style="padding: 10px;">Table No</th>
+                <th style="padding: 10px;">Waiter ID</th>
+                <th style="padding: 10px;">Order ID</th>
+                <th style="padding: 10px;">Delivered</th>
+                <th style="padding: 10px;">Order Amount</th>
+                <th style="padding: 10px;">Session Total</th>
+              </tr>
+            </thead>
+            <tbody id="tbl-main-data-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- D-Table 2: Table Vacancy & D-Table 3: Customer History (2 Column Grid) -->
+      <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px;">
+
+        <!-- D-Table 2: Table Vacancy -->
+        <div style="background: var(--color-ink-deep); border: 1px solid var(--border-violet); border-radius: var(--radius-xl); padding: 20px;">
+          <div style="margin-bottom: 16px;">
+            <span class="badge sandbox-badge" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; font-size: 10px;">D-TABLE 2</span>
+            <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 700; margin-top: 4px;">Table Vacancy Table</h3>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+            <thead>
+              <tr style="background: var(--color-primary); border-bottom: 1px solid var(--border-violet); color: var(--text-secondary); text-transform: uppercase;">
+                <th style="padding: 8px;">Table No</th>
+                <th style="padding: 8px;">Vacant (Y/N)</th>
+                <th style="padding: 8px;">Status</th>
+              </tr>
+            </thead>
+            <tbody id="tbl-table-vacancy-body"></tbody>
+          </table>
+        </div>
+
+        <!-- D-Table 3: Customer History -->
+        <div style="background: var(--color-ink-deep); border: 1px solid var(--border-violet); border-radius: var(--radius-xl); padding: 20px;">
+          <div style="margin-bottom: 16px;">
+            <span class="badge sandbox-badge" style="background: rgba(236, 72, 153, 0.15); color: #ec4899; font-size: 10px;">D-TABLE 3</span>
+            <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 700; margin-top: 4px;">Customer History Table</h3>
+          </div>
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+              <thead>
+                <tr style="background: var(--color-primary); border-bottom: 1px solid var(--border-violet); color: var(--text-secondary); text-transform: uppercase;">
+                  <th style="padding: 8px;">Customer ID</th>
+                  <th style="padding: 8px;">Dates Visited</th>
+                  <th style="padding: 8px;">Bill / Visit</th>
+                  <th style="padding: 8px;">Total Bill</th>
+                  <th style="padding: 8px;">Visits</th>
+                  <th style="padding: 8px;">Feedback (1-Word)</th>
+                </tr>
+              </thead>
+              <tbody id="tbl-customer-history-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
   </main>
 
   <script type="module">
@@ -137,8 +251,66 @@
         ? `${summary.approvalRate}%`
         : 'No data yet';
 
+      // Render BI Revenue Dashboard Metrics
+      const mainRows = dbEngine.getDTableMainData();
+      const firstRow = mainRows[0] || {};
+      document.getElementById('bi-daily-rev').textContent = `₹${(firstRow.daily_revenue || summary.grossRevenue || 0).toFixed(2)}`;
+      document.getElementById('bi-weekly-rev').textContent = `₹${(firstRow.weekly_revenue || (summary.grossRevenue * 7) || 0).toFixed(2)}`;
+      document.getElementById('bi-monthly-rev').textContent = `₹${(firstRow.monthly_revenue || (summary.grossRevenue * 30) || 0).toFixed(2)}`;
+      document.getElementById('bi-quarterly-rev').textContent = `₹${(firstRow.quarterly_revenue || (summary.grossRevenue * 90) || 0).toFixed(2)}`;
+      document.getElementById('bi-annual-rev').textContent = `₹${(firstRow.annual_revenue || (summary.grossRevenue * 365) || 0).toFixed(2)}`;
+
+      // Render D-Table 1: Main Data Table
+      const mainTbody = document.getElementById('tbl-main-data-body');
+      if (mainTbody) {
+        mainTbody.innerHTML = mainRows.map(r => `
+          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <td style="padding: 10px; font-family: var(--font-mono);">${r.date}</td>
+            <td style="padding: 10px; font-family: var(--font-mono); color: var(--color-accent-lime); font-weight: 700;">${r.session_id}</td>
+            <td style="padding: 10px;">${r.session_start_time}</td>
+            <td style="padding: 10px;">${r.session_end_time}</td>
+            <td style="padding: 10px;">${r.customer_id}</td>
+            <td style="padding: 10px;">${r.table_no}</td>
+            <td style="padding: 10px;">${r.waiter_id}</td>
+            <td style="padding: 10px; font-family: var(--font-mono);">${r.order_id}</td>
+            <td style="padding: 10px;"><span style="font-weight: 700; color: ${r.delivered === 'Y' ? '#10b981' : '#f59e0b'};">${r.delivered}</span></td>
+            <td style="padding: 10px; font-family: var(--font-mono);">₹${(r.total_order_amount || 0).toFixed(2)}</td>
+            <td style="padding: 10px; font-family: var(--font-mono); color: var(--color-accent-lime); font-weight: 700;">₹${(r.total_session_amount || 0).toFixed(2)}</td>
+          </tr>
+        `).join('');
+      }
+
+      // Render D-Table 2: Table Vacancy
+      const vacRows = dbEngine.getDTableVacancy();
+      const vacTbody = document.getElementById('tbl-table-vacancy-body');
+      if (vacTbody) {
+        vacTbody.innerHTML = vacRows.map(t => `
+          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <td style="padding: 8px; font-weight: 600;">${t.table_no}</td>
+            <td style="padding: 8px;"><span style="font-weight: 700; color: ${t.vacant === 'Y' ? '#10b981' : '#ef4444'};">${t.vacant}</span></td>
+            <td style="padding: 8px; font-size: 11px;">${t.status}</td>
+          </tr>
+        `).join('');
+      }
+
+      // Render D-Table 3: Customer History
+      const custRows = dbEngine.getDTableCustomerHistory();
+      const custTbody = document.getElementById('tbl-customer-history-body');
+      if (custTbody) {
+        custTbody.innerHTML = custRows.map(c => `
+          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <td style="padding: 8px; font-weight: 600;">${c.customer_id}</td>
+            <td style="padding: 8px; font-size: 11px;">${c.dates_visited}</td>
+            <td style="padding: 8px; font-family: var(--font-mono); font-size: 11px;">${c.bill_per_visit}</td>
+            <td style="padding: 8px; font-family: var(--font-mono); color: var(--color-accent-lime); font-weight: 700;">₹${c.total_bill.toFixed(2)}</td>
+            <td style="padding: 8px;">${c.visit_count}</td>
+            <td style="padding: 8px;"><span class="badge" style="background: rgba(194, 239, 78, 0.15); color: var(--color-accent-lime);">${c.general_one_word_feedback}</span></td>
+          </tr>
+        `).join('');
+      }
+
       if (summary.orderCount === 0) {
-        document.getElementById('ai-summary').innerHTML = `No orders have been placed yet today. Head to the <strong>POS Terminal</strong> to send an order and analytics will populate live.`;
+        document.getElementById('ai-summary').innerHTML = `No orders have been placed yet today. Head to the <strong>POS Terminal</strong> or Customer Space to send orders and analytics will populate live.`;
         document.getElementById('ai-tip-text').textContent = 'Insights will appear once real order data is available.';
         return;
       }
@@ -149,11 +321,10 @@
     }
 
     document.addEventListener('DOMContentLoaded', renderAnalytics);
-    // Keep the dashboard live as new orders/payments come in from other tabs (POS, KDS, Payment)
-    setInterval(renderAnalytics, 4000);
+    setInterval(renderAnalytics, 3000);
   </script>
 
-    <!-- Google Identity Services & Auth Modules -->
+  <!-- Google Identity Services & Auth Modules -->
   <script src="../config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script type="module" src="../services/supabaseClient.js"></script>
@@ -162,4 +333,3 @@
   <script type="module" src="../utils/navbarAuth.js"></script>
 </body>
 </html>
-

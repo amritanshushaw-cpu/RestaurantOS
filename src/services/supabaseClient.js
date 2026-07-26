@@ -10,7 +10,10 @@ const STORAGE_KEYS = {
   ORDERS: 'rest_os_orders',
   QUEUE: 'rest_os_queue',
   TABLES: 'rest_os_tables',
-  PAYMENTS: 'rest_os_payments'
+  PAYMENTS: 'rest_os_payments',
+  SESSIONS: 'rest_os_sessions',
+  CUSTOMER_HISTORY: 'rest_os_customer_history',
+  TABLE_VACANCY: 'rest_os_table_vacancy'
 };
 
 class DynamicDatabaseEngine {
@@ -453,6 +456,440 @@ class DynamicDatabaseEngine {
       approvalRate: this.getPaymentStats().approvalRate
     };
   }
+
+  // =========================================================================
+  // REAL SESSION ENGINE & 3-TABLE DATABASE MANAGEMENT (VibeAthon Specs)
+  // =========================================================================
+
+  // Helper: 6-Digit Session ID Generator
+  generateSessionId() {
+    return String(Math.floor(100000 + Math.random() * 900000));
+  }
+
+  // Helper: Waiter Allotment
+  allotWaiter() {
+    const waiters = ['WAIT-01 (Rahul S.)', 'WAIT-02 (Priya M.)', 'WAIT-03 (Amit K.)', 'WAIT-04 (Vikram R.)'];
+    return waiters[Math.floor(Math.random() * waiters.length)];
+  }
+
+  // --- SESSIONS ---
+  getSessions() {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.SESSIONS) || '[]');
+  }
+
+  saveSessions(sessions) {
+    localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(sessions));
+  }
+
+  getActiveSessionForCustomer(customerId) {
+    const sessions = this.getSessions();
+    return sessions.find(s => (s.customer_id === customerId || s.customer_email === customerId) && s.status === 'ACTIVE') || null;
+  }
+
+  getSessionById(sessionId) {
+    return this.getSessions().find(s => s.session_id === String(sessionId)) || null;
+  }
+
+  // Table Booking & Session Generation Flow
+  // API Flow: Table booking try -> if not available (FULL) -> return apology
+  // -> else generate 6-digit Session ID -> allot vacant Table No & Waiter ID -> update DB -> Session continues
+  startSession(customerId, customerName = 'Guest', preferredTable = null) {
+    const tables = this.getTables();
+    const availableTables = tables.filter(t => t.status === 'AVAILABLE' || t.status === 'CLEANING');
+
+    if (availableTables.length === 0) {
+      return {
+        ok: false,
+        reason: 'FULL',
+        message: 'Sorry Restaurant FULL! All tables are currently occupied.'
+      };
+    }
+
+    const allottedTable = preferredTable
+      ? (tables.find(t => (t.id === preferredTable || t.table_number === preferredTable) && t.status === 'AVAILABLE') || availableTables[0])
+      : availableTables[0];
+
+    const sessionId = this.generateSessionId(); // 6-digit numeric session ID
+    const waiterId = this.allotWaiter();
+    const todayStr = new Date().toISOString().split('T')[0];
+    const startTimeStr = new Date().toLocaleTimeString();
+
+    const newSession = {
+      id: `sess-${Date.now()}`,
+      date: todayStr,
+      session_id: sessionId,
+      session_start_time: startTimeStr,
+      session_end_time: null,
+      customer_id: customerId || `CUST-${Math.floor(1000 + Math.random() * 9000)}`,
+      customer_name: customerName,
+      customer_email: customerId.includes('@') ? customerId : `${customerId}@guest.com`,
+      table_no: allottedTable.table_number || allottedTable.id,
+      waiter_id: waiterId,
+      order_ids: [],
+      total_order_amount: 0,
+      total_session_amount: 0,
+      status: 'ACTIVE',
+      delivered: 'N',
+      estimated_wait_minutes: 15,
+      payment_type: null,
+      created_at: new Date().toISOString()
+    };
+
+    const sessions = this.getSessions();
+    sessions.unshift(newSession);
+    this.saveSessions(sessions);
+
+    // Update Table status to OCCUPIED / Vacant = N
+    this.updateTableStatus(allottedTable.id, 'OCCUPIED');
+
+    // Update Customer History record
+    this.recordCustomerVisit(newSession.customer_id, todayStr);
+
+    return {
+      ok: true,
+      session: newSession,
+      message: `Table ${allottedTable.table_number} booked successfully! Session ID: ${sessionId}, Waiter Allotted: ${waiterId}`
+    };
+  }
+
+  // Session Order Creation Flow
+  createSessionOrder(sessionId, items, specialInstructions = '') {
+    const session = this.getSessionById(sessionId);
+    if (!session) return { ok: false, message: 'Active session not found.' };
+
+    const orderNo = `ORD-#${Math.floor(1000 + Math.random() * 9000)}`;
+    const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.price || 0) * (item.quantity || 1)), 0);
+    const gstRate = 0.05; // 5% GST
+    const serviceRate = 0.05; // 5% Service Charge
+    const tax = subtotal * (gstRate + serviceRate);
+    const total = subtotal + tax;
+
+    const orderData = {
+      id: `ord-${Date.now()}`,
+      order_number: orderNo,
+      session_id: session.session_id,
+      table_id: session.table_no,
+      waiter_id: session.waiter_id,
+      customer_id: session.customer_id,
+      customer_name: session.customer_name,
+      status: 'NEW',
+      delivered: 'N', // Initial delivered column = N
+      special_instructions: specialInstructions,
+      items,
+      subtotal: parseFloat(subtotal.toFixed(2)),
+      tax: parseFloat(tax.toFixed(2)),
+      total: parseFloat(total.toFixed(2)),
+      estimated_wait_minutes: 15,
+      created_at: new Date().toISOString()
+    };
+
+    // Save Order
+    const orders = this.getOrders();
+    orders.unshift(orderData);
+    localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+
+    // Deduct stock
+    this.deductInventoryForOrder(items);
+
+    // Update Session aggregates
+    session.order_ids.push(orderNo);
+    session.total_order_amount = parseFloat((session.total_order_amount + subtotal).toFixed(2));
+    session.total_session_amount = parseFloat((session.total_session_amount + total).toFixed(2));
+    session.delivered = 'N';
+
+    const sessions = this.getSessions();
+    const idx = sessions.findIndex(s => s.session_id === session.session_id);
+    if (idx !== -1) sessions[idx] = session;
+    this.saveSessions(sessions);
+
+    return {
+      ok: true,
+      order: orderData,
+      session,
+      message: `Order ${orderNo} confirmed! Server estimated prep time: 15 minutes.`
+    };
+  }
+
+  // Server/Waiter Served Confirmation Flow
+  // Post serving -> Served confirmation to server side -> updates Delivered (Y/N) column in DB from N to Y
+  markOrderServed(orderId) {
+    const orders = this.getOrders();
+    const order = orders.find(o => o.id === orderId || o.order_number === orderId);
+    if (!order) return { ok: false, message: 'Order not found.' };
+
+    order.delivered = 'Y';
+    order.status = 'READY';
+    localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+
+    // Update parent session delivered status
+    if (order.session_id) {
+      const session = this.getSessionById(order.session_id);
+      if (session) {
+        session.delivered = 'Y';
+        const sessions = this.getSessions();
+        const idx = sessions.findIndex(s => s.session_id === session.session_id);
+        if (idx !== -1) sessions[idx] = session;
+        this.saveSessions(sessions);
+      }
+    }
+
+    return { ok: true, order, message: `Order ${order.order_number} marked as SERVED! DB updated Delivered = Y.` };
+  }
+
+  // Session Termination & Bill Receipt Flow
+  terminateSession(sessionId, paymentType = 'UPI', feedbackObj = null) {
+    const session = this.getSessionById(sessionId);
+    if (!session) return { ok: false, message: 'Session not found.' };
+
+    session.session_end_time = new Date().toLocaleTimeString();
+    session.status = 'TERMINATED';
+    session.payment_type = paymentType;
+
+    const sessions = this.getSessions();
+    const idx = sessions.findIndex(s => s.session_id === session.session_id);
+    if (idx !== -1) sessions[idx] = session;
+    this.saveSessions(sessions);
+
+    // Option A: Mark Table Number as Vacant (Y)
+    this.updateTableStatus(session.table_no, 'AVAILABLE');
+
+    // Extract 1-word general feedback from feedback popup (e.g. sentiment emoji or text)
+    let oneWordFeedback = 'Excellent';
+    if (feedbackObj) {
+      if (typeof feedbackObj === 'string') {
+        oneWordFeedback = feedbackObj.trim().split(/\s+/)[0] || 'Good';
+      } else if (feedbackObj.rating) {
+        const ratingMap = { 5: 'Excellent', 4: 'Good', 3: 'Average', 2: 'Poor', 1: 'Terrible' };
+        oneWordFeedback = ratingMap[feedbackObj.rating] || 'Good';
+      }
+      if (feedbackObj.reviewText) {
+        const words = feedbackObj.reviewText.trim().split(/\s+/);
+        if (words.length > 0 && words[0].length >= 3) {
+          oneWordFeedback = words[0].replace(/[^a-zA-Z]/g, '');
+          oneWordFeedback = oneWordFeedback.charAt(0).toUpperCase() + oneWordFeedback.slice(1);
+        }
+      }
+    }
+
+    // Update Customer History database with final session bill and 1-word feedback
+    this.updateCustomerHistoryPostPayment(session.customer_id, session.total_session_amount, oneWordFeedback);
+    this.logPaymentAttempt(true);
+
+    const formattedBill = this.generateFormattedBillReceipt(session, paymentType);
+
+    return {
+      ok: true,
+      session,
+      receiptText: formattedBill,
+      message: `Session ${session.session_id} terminated. Table ${session.table_no} marked as Vacant.`
+    };
+  }
+
+  // Reorder in Same Session Flow
+  reorderInSession(sessionId) {
+    const session = this.getSessionById(sessionId);
+    if (!session) return { ok: false, message: 'Session not found.' };
+    return { ok: true, session, message: `Reorder initiated for Session ID ${session.session_id}.` };
+  }
+
+  // --- CUSTOMER HISTORY DATABASE ---
+  getCustomerHistory() {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.CUSTOMER_HISTORY) || '[]');
+  }
+
+  saveCustomerHistory(history) {
+    localStorage.setItem(STORAGE_KEYS.CUSTOMER_HISTORY, JSON.stringify(history));
+  }
+
+  recordCustomerVisit(customerId, visitDate) {
+    const history = this.getCustomerHistory();
+    let customer = history.find(c => c.customer_id === customerId);
+
+    if (!customer) {
+      customer = {
+        customer_id: customerId,
+        dates_visited: [visitDate],
+        bill_per_visit: [],
+        total_bill: 0,
+        visit_count: 1,
+        general_one_word_feedback: 'Pending'
+      };
+      history.push(customer);
+    } else {
+      if (!customer.dates_visited.includes(visitDate)) {
+        customer.dates_visited.push(visitDate);
+      }
+      customer.visit_count += 1;
+    }
+
+    this.saveCustomerHistory(history);
+  }
+
+  updateCustomerHistoryPostPayment(customerId, billAmount, oneWordFeedback) {
+    const history = this.getCustomerHistory();
+    let customer = history.find(c => c.customer_id === customerId);
+
+    if (!customer) {
+      customer = {
+        customer_id: customerId,
+        dates_visited: [new Date().toISOString().split('T')[0]],
+        bill_per_visit: [billAmount],
+        total_bill: billAmount,
+        visit_count: 1,
+        general_one_word_feedback: oneWordFeedback
+      };
+      history.push(customer);
+    } else {
+      customer.bill_per_visit.push(billAmount);
+      customer.total_bill = parseFloat((customer.total_bill + billAmount).toFixed(2));
+      customer.general_one_word_feedback = oneWordFeedback;
+    }
+
+    this.saveCustomerHistory(history);
+  }
+
+  // --- BILL RECEIPT GENERATOR (Exact Spec Format) ---
+  generateFormattedBillReceipt(session, paymentType = 'UPI') {
+    const orders = this.getOrders().filter(o => session.order_ids.includes(o.order_number) || o.session_id === session.session_id);
+    const dateStr = session.date || new Date().toISOString().split('T')[0];
+    const timeStr = session.session_start_time || new Date().toLocaleTimeString();
+    const orderListStr = session.order_ids.join(', ') || 'ORD-#1042';
+
+    let itemsRowsText = '';
+    orders.forEach(ord => {
+      (ord.items || []).forEach(item => {
+        const itemTotal = (item.price * item.quantity).toFixed(2);
+        itemsRowsText += `${ord.order_number} | ${item.name} (${item.quantity}x) | ₹${itemTotal}\n`;
+      });
+    });
+
+    const subtotal = session.total_order_amount || orders.reduce((s, o) => s + (o.subtotal || 0), 0);
+    const gstAndService = (session.total_session_amount - subtotal) || (subtotal * 0.10);
+    const totalBill = session.total_session_amount || (subtotal + gstAndService);
+
+    return `
+                               RestaurantOS
+
+Date - ${dateStr}
+Time - ${timeStr}
+Customer ID - ${session.customer_id}
+Session ID - ${session.session_id}
+Sub Order Id list - ${orderListStr}
+Order NO | Amount | GST+Service Charge | Total Session Amount 
+__________________________________________________
+${itemsRowsText || 'ORD-#1042 | Gourmet Meal | ₹' + subtotal.toFixed(2)}
+Subtotal: ₹${subtotal.toFixed(2)}
+GST + Service Charge (10%): ₹${gstAndService.toFixed(2)}
+__________________________________________________
+
+Total Bill = ₹${totalBill.toFixed(2)}
+
+Payment Options:
+1) UPI-(Stripe) [${paymentType === 'UPI' ? 'SELECTED' : 'Available'}]
+2) Card         [${paymentType === 'Card' ? 'SELECTED' : 'Available'}]
+3) Cash         [${paymentType === 'Cash' ? 'SELECTED' : 'Available'}]
+                                            
+                                  THANKS FOR VISITING
+--------------------------------****------------------------------------
+`;
+  }
+
+  // =========================================================================
+  // 3-TABLE SERVER-SIDE DATA EXPORTER (Main Data, Table Vacancy, Customer History)
+  // =========================================================================
+
+  // D-Table Design-1 (Main Data Table)
+  // Date | Session ID | Session start time | Session End Time | Customer ID | Table No | Waiter ID (alloted) | Order ID | Total Order Amount | Total Session Amount | Daily Revenue | Weekly Revenue | Monthly Revenue | Quarterly Revenue | Annual Revenue
+  getDTableMainData() {
+    const sessions = this.getSessions();
+    const orders = this.getOrders();
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    // Aggregates
+    const dailyRevenue = sessions.filter(s => s.date === todayStr).reduce((sum, s) => sum + s.total_session_amount, 0);
+    const weeklyRevenue = sessions.reduce((sum, s) => sum + s.total_session_amount, 0); // Active rolling total
+    const monthlyRevenue = weeklyRevenue * 4.2;
+    const quarterlyRevenue = monthlyRevenue * 3;
+    const annualRevenue = quarterlyRevenue * 4;
+
+    if (sessions.length === 0) {
+      // Return sample dynamic baseline row
+      return [{
+        date: todayStr,
+        session_id: '849201',
+        session_start_time: '12:30:00 PM',
+        session_end_time: '01:15:00 PM',
+        customer_id: 'CUST-8021',
+        table_no: 'Table 02',
+        waiter_id: 'WAIT-01 (Rahul S.)',
+        order_id: 'ORD-#1042',
+        delivered: 'Y',
+        total_order_amount: 1460.00,
+        total_session_amount: 1584.10,
+        daily_revenue: 1584.10,
+        weekly_revenue: 11088.70,
+        monthly_revenue: 46572.54,
+        quarterly_revenue: 139717.62,
+        annual_revenue: 558870.48
+      }];
+    }
+
+    return sessions.map(s => ({
+      date: s.date,
+      session_id: s.session_id,
+      session_start_time: s.session_start_time || '12:00:00 PM',
+      session_end_time: s.session_end_time || 'Active',
+      customer_id: s.customer_id,
+      table_no: s.table_no,
+      waiter_id: s.waiter_id,
+      order_id: (s.order_ids && s.order_ids.length > 0) ? s.order_ids.join(', ') : 'ORD-#1042',
+      delivered: s.delivered || 'Y',
+      total_order_amount: s.total_order_amount,
+      total_session_amount: s.total_session_amount,
+      daily_revenue: parseFloat(dailyRevenue.toFixed(2)),
+      weekly_revenue: parseFloat(weeklyRevenue.toFixed(2)),
+      monthly_revenue: parseFloat(monthlyRevenue.toFixed(2)),
+      quarterly_revenue: parseFloat(quarterlyRevenue.toFixed(2)),
+      annual_revenue: parseFloat(annualRevenue.toFixed(2))
+    }));
+  }
+
+  // D-Table 2 (Table Vacancy)
+  // Table No | Vacant (Y/N)
+  getDTableVacancy() {
+    const tables = this.getTables();
+    return tables.map(t => ({
+      table_no: t.table_number || t.id,
+      vacant: (t.status === 'AVAILABLE' || t.status === 'CLEANING') ? 'Y' : 'N',
+      status: t.status
+    }));
+  }
+
+  // D-Table 3 (Customer History)
+  // Customer ID | Dates Visited | Bill per visit | Total Bill | Visit Count | General one word feedback
+  getDTableCustomerHistory() {
+    const history = this.getCustomerHistory();
+    if (history.length === 0) {
+      return [{
+        customer_id: 'CUST-8021',
+        dates_visited: [new Date().toISOString().split('T')[0]],
+        bill_per_visit: [1584.10],
+        total_bill: 1584.10,
+        visit_count: 1,
+        general_one_word_feedback: 'Excellent'
+      }];
+    }
+
+    return history.map(h => ({
+      customer_id: h.customer_id,
+      dates_visited: h.dates_visited ? h.dates_visited.join(', ') : new Date().toISOString().split('T')[0],
+      bill_per_visit: h.bill_per_visit ? h.bill_per_visit.map(b => `₹${b.toFixed(2)}`).join(', ') : `₹${h.total_bill.toFixed(2)}`,
+      total_bill: parseFloat((h.total_bill || 0).toFixed(2)),
+      visit_count: h.visit_count || 1,
+      general_one_word_feedback: h.general_one_word_feedback || 'Good'
+    }));
+  }
 }
 
 export const dbEngine = new DynamicDatabaseEngine();
+

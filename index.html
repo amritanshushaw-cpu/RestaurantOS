@@ -303,10 +303,53 @@
           </a>
         </div>
       </div>
-    </section>
+      <!-- Restaurant Details, Location, Contact, History & Interactive Section -->
+      <section class="restaurant-details-section" style="background: var(--color-ink-deep); border: 1px solid var(--border-violet); border-radius: var(--radius-xl); padding: 36px; margin: 40px auto; max-width: 960px; text-align: left;">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; border-bottom: 1px solid var(--border-violet); padding-bottom: 16px;">
+          <div>
+            <span class="badge sandbox-badge" style="background: rgba(194, 239, 78, 0.15); color: var(--color-accent-lime); text-transform: uppercase; font-size: 11px;"><i class="fa-solid fa-store"></i> Restaurant Details & Interactive Page</span>
+            <h2 style="font-family: var(--font-display); font-size: 28px; font-weight: 700; color: var(--text-primary); margin-top: 6px;">The RestaurantOS Dining Experience</h2>
+          </div>
+          <a href="src/views/customer.html" class="btn-sentry" style="padding: 10px 20px; font-size: 13px;">
+            <i class="fa-solid fa-utensils"></i> Book Table & View Menu
+          </a>
+        </div>
 
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;">
+          <!-- Card 1: Location & Hours -->
+          <div style="background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-lg); padding: 20px;">
+            <i class="fa-solid fa-location-dot" style="font-size: 24px; color: var(--color-accent-lime); margin-bottom: 12px;"></i>
+            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">Location & Hours</h3>
+            <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 12px;">
+              74 Park Street Culinary Boulevard<br>
+              Kolkata, West Bengal 700016
+            </p>
+            <span style="font-size: 12px; color: var(--color-accent-lime); font-family: var(--font-mono); font-weight: 600;">
+              <i class="fa-regular fa-clock"></i> 11:00 AM – 11:30 PM (Daily)
+            </span>
+          </div>
 
-    </section>
+          <!-- Card 2: Contact Details -->
+          <div style="background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-lg); padding: 20px;">
+            <i class="fa-solid fa-phone" style="font-size: 24px; color: var(--color-accent-pink); margin-bottom: 12px;"></i>
+            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">Contact & Inquiries</h3>
+            <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 8px;">
+              <strong style="color: #fff;">Reservations:</strong> +91 98765 43210<br>
+              <strong style="color: #fff;">Direct Line:</strong> +91 33 2289 0192<br>
+              <strong style="color: #fff;">Email:</strong> contact@restaurantos.com
+            </p>
+          </div>
+
+          <!-- Card 3: History & Story -->
+          <div style="background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-lg); padding: 20px;">
+            <i class="fa-solid fa-book-open" style="font-size: 24px; color: var(--color-warning); margin-bottom: 12px;"></i>
+            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">Our History</h3>
+            <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+              Founded by Team HexCore for VibeAthon 6.0, RestaurantOS bridges heritage Indian flavors and modern steakhouse dining with real-time digital automation.
+            </p>
+          </div>
+        </div>
+      </section>
 
     <!-- Hackathon Features Grid -->
     <section class="features-grid">

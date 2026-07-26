@@ -66,9 +66,39 @@
           </div>
 
           <div class="hero-text">
+            <!-- VibeAthon Table Booking & Real Session ID Banner Bar -->
+            <div id="cust-session-bar" style="background: var(--color-ink-deep); border: 1px solid var(--border-violet); border-radius: var(--radius-xl); padding: 18px 24px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+              <div>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                  <span class="badge sandbox-badge" style="background: rgba(194, 239, 78, 0.15); color: var(--color-accent-lime); font-size: 11px; font-weight: 700; text-transform: uppercase;">
+                    <i class="fa-solid fa-fingerprint"></i> REAL SESSION ENGINE
+                  </span>
+                  <span id="cust-session-status-tag" style="font-size: 12px; color: var(--color-accent-lime); font-family: var(--font-mono); font-weight: 700;">
+                    STATUS: READY TO BOOK TABLE
+                  </span>
+                </div>
+                <div id="cust-session-details" style="font-size: 13px; color: var(--text-secondary);">
+                  Select a table below to generate a 6-digit Session ID & allot Waiter ID.
+                </div>
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <select id="cust-table-booking-select" class="sentry-input-sm" style="background: var(--color-primary); color: #fff; border: 1px solid var(--border-violet); padding: 8px 12px; border-radius: var(--radius-md); font-size: 13px;">
+                  <option value="Table 01">Table 01 (Main Hall)</option>
+                  <option value="Table 02">Table 02 (Main Hall)</option>
+                  <option value="Table 03" selected>Table 03 (Window Seat)</option>
+                  <option value="Table 04">Table 04 (Patio)</option>
+                  <option value="Table 05">Table 05 (VIP Lounge)</option>
+                </select>
+                <button type="button" id="btn-book-table-action" class="btn-sentry" style="padding: 8px 16px; font-size: 13px;">
+                  <i class="fa-solid fa-chair"></i> Book Table & Start Session
+                </button>
+              </div>
+            </div>
+
             <div class="chiprow">
-              <span class="datechip">SIGNED IN · TABLE 02</span>
-              <span class="kicker">WELCOME BACK, GUEST</span>
+              <span class="datechip" id="cust-header-session-chip">NO ACTIVE SESSION</span>
+              <span class="kicker" id="cust-greeting-name-badge">WELCOME BACK, GUEST</span>
             </div>
             <h1 class="disp" id="heroH1" aria-label="Your Order Starts Here">
               <span class="ln l1"><span>Your Order</span></span><br>

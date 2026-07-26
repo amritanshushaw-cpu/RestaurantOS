@@ -349,40 +349,325 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // =========================================================================
+  // VibeAthon SESSION ENGINE & TABLE BOOKING CONTROLS
+  // =========================================================================
+  const bookTableBtn = document.getElementById('btn-book-table-action');
+  const tableBookingSelect = document.getElementById('cust-table-booking-select');
+  const sessionStatusTag = document.getElementById('cust-session-status-tag');
+  const sessionDetailsEl = document.getElementById('cust-session-details');
+  const sessionHeaderChip = document.getElementById('cust-header-session-chip');
+
+  let currentActiveSession = null;
+  let waitTimerInterval = null;
+
+  function refreshActiveSessionUI() {
+    const currentUser = authService.user;
+    const custId = currentUser?.email || currentUser?.id || 'CUST-8021';
+    currentActiveSession = dbEngine.getActiveSessionForCustomer(custId);
+
+    if (currentActiveSession) {
+      if (sessionStatusTag) {
+        sessionStatusTag.textContent = `STATUS: ACTIVE SESSION · ${currentActiveSession.session_id}`;
+        sessionStatusTag.style.color = 'var(--color-accent-lime)';
+      }
+      if (sessionDetailsEl) {
+        sessionDetailsEl.innerHTML = `
+          <strong>Session ID:</strong> <span class="mono">${currentActiveSession.session_id}</span> (6-digit) &nbsp;·&nbsp;
+          <strong>Table:</strong> ${currentActiveSession.table_no} &nbsp;·&nbsp;
+          <strong>Waiter Allotted:</strong> ${currentActiveSession.waiter_id} &nbsp;·&nbsp;
+          <strong>Delivered:</strong> <span id="session-delivered-flag" style="color: ${currentActiveSession.delivered === 'Y' ? '#10b981' : '#f59e0b'}; font-weight: 700;">${currentActiveSession.delivered}</span>
+        `;
+      }
+      if (sessionHeaderChip) {
+        sessionHeaderChip.textContent = `SESSION: ${currentActiveSession.session_id} · ${currentActiveSession.table_no}`;
+      }
+      if (tableSelect) tableSelect.value = currentActiveSession.table_no;
+      selectedTable = currentActiveSession.table_no;
+    } else {
+      if (sessionStatusTag) {
+        sessionStatusTag.textContent = 'STATUS: NO ACTIVE SESSION (READY TO BOOK)';
+        sessionStatusTag.style.color = 'var(--text-secondary)';
+      }
+      if (sessionDetailsEl) {
+        sessionDetailsEl.textContent = 'Select a table below to generate a 6-digit Session ID & allot Waiter ID.';
+      }
+      if (sessionHeaderChip) {
+        sessionHeaderChip.textContent = 'NO ACTIVE SESSION';
+      }
+    }
+  }
+
+  // API Flow: Table booking try -> if not available (FULL) -> returns apology modal -> else generates 6-digit Session ID
+  if (bookTableBtn) {
+    bookTableBtn.addEventListener('click', () => {
+      const currentUser = authService.user;
+      const custId = currentUser?.email || currentUser?.id || 'CUST-8021';
+      const custName = currentUser?.name || 'Customer';
+      const prefTable = tableBookingSelect?.value || 'Table 03';
+
+      const res = dbEngine.startSession(custId, custName, prefTable);
+
+      if (!res.ok) {
+        // Table Full Apology Modal
+        alert(`SORRY RESTAURANT FULL!\n\nAll tables are currently occupied. Please join our Virtual Queue to be notified when a table becomes vacant.`);
+        authService.showToast('Sorry Restaurant FULL! Table booking unavailable.');
+        return;
+      }
+
+      currentActiveSession = res.session;
+      authService.showToast(res.message);
+      refreshActiveSessionUI();
+    });
+  }
+
+  // Poll for Served / Delivered (Y/N) status updates from Server Side / Waiter
+  setInterval(() => {
+    if (!currentActiveSession) return;
+    const session = dbEngine.getSessionById(currentActiveSession.session_id);
+    if (session && session.delivered !== currentActiveSession.delivered) {
+      currentActiveSession = session;
+      const flagEl = document.getElementById('session-delivered-flag');
+      if (flagEl) {
+        flagEl.textContent = session.delivered;
+        flagEl.style.color = session.delivered === 'Y' ? '#10b981' : '#f59e0b';
+      }
+      if (session.delivered === 'Y') {
+        authService.showToast('Order SERVED! Waiter & Kitchen confirmed delivery (DB Delivered = Y).');
+      }
+    }
+  }, 3000);
+
+  // Timer countdown for estimated waiting time
+  function startWaitingTimer(minutes = 15) {
+    let secondsLeft = minutes * 60;
+    if (waitTimerInterval) clearInterval(waitTimerInterval);
+
+    waitTimerInterval = setInterval(() => {
+      secondsLeft -= 1;
+      const mins = Math.floor(secondsLeft / 60);
+      const secs = secondsLeft % 60;
+      const timeStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+      const timerEl = document.getElementById('cust-wait-timer');
+      if (timerEl) timerEl.textContent = timeStr;
+
+      if (secondsLeft <= 0) {
+        clearInterval(waitTimerInterval);
+        if (timerEl) timerEl.textContent = '00:00 (Order Served!)';
+      }
+    }, 1000);
+  }
+
+  // =========================================================================
+  // CHECKOUT & BILL RECEIPT PAYMENT MODAL
+  // =========================================================================
   btnCheckout?.addEventListener('click', () => {
     if (activeCart.length === 0) return;
 
-    btnCheckout.disabled = true;
-    btnCheckout.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Generating order bill...';
-    const totals = menuService.calculateOrderTotals(activeCart);
-    const subtotal = Number(totals.subtotal);
-    const tax = Number(totals.tax);
-    const tipAmount = Number(((subtotal * selectedTipPct) / 100).toFixed(2));
-    const grandTotal = (subtotal + tax + tipAmount).toFixed(2);
     const currentUser = authService.user;
+    const custId = currentUser?.email || currentUser?.id || 'CUST-8021';
+    const custName = currentUser?.name || 'Customer';
 
-    const newOrder = dbEngine.createOrder({
-      table_id: selectedTable,
-      table_number: selectedTable,
-      customer_name: currentUser?.name || 'Customer',
-      customer_email: currentUser?.email || 'guest@restaurantos.demo',
-      items: [...activeCart],
-      subtotal: subtotal.toFixed(2),
-      tax: tax.toFixed(2),
-      tip: tipAmount.toFixed(2),
-      total: grandTotal,
-      special_instructions: specialNotesInput?.value.trim() || '',
-      status: 'NEW'
+    // Ensure an active session exists
+    if (!currentActiveSession) {
+      const startRes = dbEngine.startSession(custId, custName, selectedTable);
+      if (!startRes.ok) {
+        alert(`SORRY RESTAURANT FULL!\n\nAll tables are currently occupied.`);
+        return;
+      }
+      currentActiveSession = startRes.session;
+      refreshActiveSessionUI();
+    }
+
+    // Submit Order to active session
+    const orderRes = dbEngine.createSessionOrder(
+      currentActiveSession.session_id,
+      [...activeCart],
+      specialNotesInput?.value.trim() || ''
+    );
+
+    if (!orderRes.ok) {
+      alert(orderRes.message);
+      return;
+    }
+
+    // Start Server Estimated Waiting Time Timer (15 min)
+    startWaitingTimer(15);
+    authService.showToast(orderRes.message);
+
+    // Render Formatted Bill Receipt Payment Gateway Modal
+    renderBillPaymentModal(currentActiveSession, orderRes.order);
+    activeCart = [];
+    updateBillSummaryUI();
+    closeOrderDrawer();
+  });
+
+  function renderBillPaymentModal(session, order) {
+    const existing = document.getElementById('cust-payment-bill-modal');
+    if (existing) existing.remove();
+
+    const formattedBillText = dbEngine.generateFormattedBillReceipt(session, 'UPI');
+
+    const modalHtml = `
+      <div id="cust-payment-bill-modal" class="entry-gateway-backdrop" style="z-index: 10000;">
+        <div class="entry-modal-card" style="max-width: 680px; width: 95%;">
+          <div class="entry-modal-header" style="text-align: left; border-bottom: 1px solid var(--border-violet); padding-bottom: 16px;">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <div>
+                <span class="badge sandbox-badge" style="background: rgba(194, 239, 78, 0.15); color: var(--color-accent-lime); font-size: 11px;">
+                  <i class="fa-solid fa-file-invoice"></i> SESSION BILL & RECEIPT
+                </span>
+                <h3 style="font-size: 22px; font-weight: 700; margin-top: 4px;">Session ID: ${session.session_id}</h3>
+              </div>
+              <button type="button" id="btn-close-bill-modal" style="background: none; border: none; color: var(--text-secondary); font-size: 24px; cursor: pointer;">×</button>
+            </div>
+          </div>
+
+          <!-- Exact Bill Receipt Output Box -->
+          <div style="background: #0d1117; border: 1px dashed var(--border-violet); border-radius: var(--radius-md); padding: 16px; margin: 16px 0; font-family: var(--font-mono); font-size: 12px; color: #a3e635; white-space: pre-wrap; max-height: 280px; overflow-y: auto;">
+${formattedBillText}
+          </div>
+
+          <!-- Payment Options Selector -->
+          <div style="margin-bottom: 20px;">
+            <label style="font-size: 13px; font-weight: 700; color: var(--text-primary); display: block; margin-bottom: 8px;">Select Payment Option:</label>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+              <button type="button" class="btn-pay-type active" data-type="UPI" style="background: var(--color-primary); border: 2px solid var(--color-accent-lime); color: #fff; padding: 10px; border-radius: var(--radius-md); font-weight: 600; cursor: pointer;">
+                <i class="fa-solid fa-mobile-screen-button"></i> 1) UPI (Stripe)
+              </button>
+              <button type="button" class="btn-pay-type" data-type="Card" style="background: var(--color-primary); border: 1px solid var(--border-violet); color: #fff; padding: 10px; border-radius: var(--radius-md); font-weight: 600; cursor: pointer;">
+                <i class="fa-solid fa-credit-card"></i> 2) Card
+              </button>
+              <button type="button" class="btn-pay-type" data-type="Cash" style="background: var(--color-primary); border: 1px solid var(--border-violet); color: #fff; padding: 10px; border-radius: var(--radius-md); font-weight: 600; cursor: pointer;">
+                <i class="fa-solid fa-money-bill-wave"></i> 3) Cash
+              </button>
+            </div>
+            <p id="pay-type-notice" style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">
+              UPI selected: Soft copy bill & transaction receipt will be generated and shown to waiter post verification.
+            </p>
+          </div>
+
+          <!-- Post Payment Session Action Buttons -->
+          <div style="display: flex; gap: 12px; justify-content: flex-end;">
+            <button type="button" id="btn-session-reorder" class="btn-ghost-sm" style="padding: 10px 16px;">
+              <i class="fa-solid fa-rotate-right"></i> Option B: Reorder (Same Session)
+            </button>
+            <button type="button" id="btn-session-terminate" class="btn-sentry" style="padding: 10px 16px;">
+              <i class="fa-solid fa-flag-checkered"></i> Option A: Terminate Session & Pay
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    const billModal = document.getElementById('cust-payment-bill-modal');
+    let selectedPayType = 'UPI';
+
+    billModal.querySelectorAll('.btn-pay-type').forEach(btn => {
+      btn.addEventListener('click', () => {
+        billModal.querySelectorAll('.btn-pay-type').forEach(b => {
+          b.style.borderColor = 'var(--border-violet)';
+          b.classList.remove('active');
+        });
+        btn.style.borderColor = 'var(--color-accent-lime)';
+        btn.classList.add('active');
+        selectedPayType = btn.dataset.type;
+
+        const noticeEl = document.getElementById('pay-type-notice');
+        if (selectedPayType === 'Cash' || selectedPayType === 'Card') {
+          noticeEl.textContent = `${selectedPayType} selected: Waiter ${session.waiter_id} will be notified to collect payment and provide hard copy bill.`;
+        } else {
+          noticeEl.textContent = 'UPI selected: Soft copy bill & transaction receipt generated for waiter verification.';
+        }
+      });
     });
 
-    setTimeout(() => {
-      window.location.href = `payment.html?orderId=${newOrder.id}&total=${grandTotal}`;
-    }, 600);
-  });
+    document.getElementById('btn-close-bill-modal')?.addEventListener('click', () => billModal.remove());
+
+    // Option B: Reorder in same session
+    document.getElementById('btn-session-reorder')?.addEventListener('click', () => {
+      dbEngine.reorderInSession(session.session_id);
+      authService.showToast(`Reorder mode active for Session ID ${session.session_id}. Choose dishes from menu.`);
+      billModal.remove();
+    });
+
+    // Option A: Terminate Session -> Mark Table Vacant + Customer Feedback Popup
+    document.getElementById('btn-session-terminate')?.addEventListener('click', () => {
+      billModal.remove();
+      renderFeedbackModal(session, selectedPayType);
+    });
+  }
+
+  // Customer Feedback Modal (5 Sentiment Emojis + Max 50 Words Review)
+  function renderFeedbackModal(session, paymentType) {
+    const existing = document.getElementById('cust-feedback-modal');
+    if (existing) existing.remove();
+
+    const feedbackHtml = `
+      <div id="cust-feedback-modal" class="entry-gateway-backdrop" style="z-index: 10001;">
+        <div class="entry-modal-card" style="max-width: 520px; width: 95%; text-align: center;">
+          <div style="font-size: 32px; color: var(--color-accent-lime); margin-bottom: 8px;">
+            <i class="fa-solid fa-heart-circle-check"></i>
+          </div>
+          <h3 style="font-size: 22px; font-weight: 700;">Customer Feedback</h3>
+          <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">
+            Session ${session.session_id} is being terminated. Please rate your dining experience!
+          </p>
+
+          <!-- 5 Sentiment Emojis -->
+          <div id="emoji-rating-bar" style="display: flex; justify-content: center; gap: 16px; font-size: 36px; margin-bottom: 20px; cursor: pointer;">
+            <span class="emoji-opt" data-rating="1" title="Terrible">😡</span>
+            <span class="emoji-opt" data-rating="2" title="Poor">🙁</span>
+            <span class="emoji-opt" data-rating="3" title="Average">😐</span>
+            <span class="emoji-opt" data-rating="4" title="Good">😊</span>
+            <span class="emoji-opt active" data-rating="5" title="Excellent" style="transform: scale(1.2);">😍</span>
+          </div>
+
+          <textarea id="cust-review-text" placeholder="Write a short review (max 50 words)..." rows="3" style="width: 100%; background: var(--color-primary); border: 1px solid var(--border-violet); color: #fff; padding: 12px; border-radius: var(--radius-md); font-size: 13px; margin-bottom: 20px;"></textarea>
+
+          <button type="button" id="btn-submit-feedback-terminate" class="btn-sentry" style="width: 100%; padding: 12px;">
+            Submit Feedback & Terminate Session <i class="fa-solid fa-check"></i>
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', feedbackHtml);
+
+    const fbModal = document.getElementById('cust-feedback-modal');
+    let selectedRating = 5;
+
+    fbModal.querySelectorAll('.emoji-opt').forEach(emoji => {
+      emoji.addEventListener('click', () => {
+        fbModal.querySelectorAll('.emoji-opt').forEach(e => e.style.transform = 'scale(1)');
+        emoji.style.transform = 'scale(1.25)';
+        selectedRating = Number(emoji.dataset.rating) || 5;
+      });
+    });
+
+    document.getElementById('btn-submit-feedback-terminate')?.addEventListener('click', () => {
+      const reviewText = document.getElementById('cust-review-text')?.value || '';
+      const feedbackObj = { rating: selectedRating, reviewText };
+
+      // Calls dbEngine to terminate session, mark table vacant (Y), and update Customer History DB
+      const res = dbEngine.terminateSession(session.session_id, paymentType, feedbackObj);
+      authService.showToast(res.message);
+      currentActiveSession = null;
+      refreshActiveSessionUI();
+      fbModal.remove();
+
+      alert(`Session ${session.session_id} successfully terminated!\nTable ${session.table_no} is now VACANT (Y).\n\nThank you for dining with RestaurantOS!`);
+    });
+  }
 
   menuData = menuService.loadMenu() || { categories: [], items: [] };
   renderCategories();
   renderMenu();
   renderFavoriteButtons();
+  refreshActiveSessionUI();
   updateBillSummaryUI();
 });
+

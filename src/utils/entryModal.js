@@ -46,36 +46,52 @@ class EntryGatewayModal {
             <p class="entry-modal-subtitle">Please choose how you would like to enter the application</p>
           </div>
 
-          <div class="entry-options-grid">
+          <div class="entry-options-grid" style="grid-template-columns: repeat(3, 1fr);">
             <!-- Option 1: Customer Space -->
             <button type="button" id="btn-entry-customer" class="entry-option-card card-cust-option">
               <div class="entry-card-top">
-                <span class="entry-badge badge-lime"><i class="fa-solid fa-user"></i> Customer Mode</span>
-                <span class="entry-tag">Customer UI</span>
+                <span class="entry-badge badge-lime"><i class="fa-solid fa-user"></i> Customer</span>
+                <span class="entry-tag">Dining UI</span>
               </div>
               <div class="entry-option-icon icon-lime">
                 <i class="fa-solid fa-utensils"></i>
               </div>
-              <h3 class="entry-option-title">Sign in as a Customer</h3>
-              <p class="entry-option-desc">Browse gourmet menu items, add custom cooking instructions, view live order summary & itemized bill, and checkout securely.</p>
+              <h3 class="entry-option-title">Customer Sign In</h3>
+              <p class="entry-option-desc">Dynamic menu card, 6-digit session ID generation, table booking & live order bill.</p>
               <div class="entry-action-link btn-lime-action">
-                <span>Continue as Customer</span> <i class="fa-solid fa-arrow-right"></i>
+                <span>Enter Dining</span> <i class="fa-solid fa-arrow-right"></i>
               </div>
             </button>
 
-            <!-- Option 2: Staff Space -->
+            <!-- Option 2: Waiter Space -->
+            <button type="button" id="btn-entry-waiter" class="entry-option-card card-staff-option">
+              <div class="entry-card-top">
+                <span class="entry-badge badge-pink" style="background: rgba(236,72,153,0.15); color: #ec4899;"><i class="fa-solid fa-concierge-bell"></i> Waiter</span>
+                <span class="entry-tag">Waiter UI</span>
+              </div>
+              <div class="entry-option-icon icon-violet" style="background: rgba(236,72,153,0.15); color: #ec4899;">
+                <i class="fa-solid fa-concierge-bell"></i>
+              </div>
+              <h3 class="entry-option-title">Waiter Interface</h3>
+              <p class="entry-option-desc">Live table booking alerts, order notifications & payment type (Cash/Card/UPI) alerts.</p>
+              <div class="entry-action-link btn-violet-action" style="background: #ec4899; color: #000;">
+                <span>Enter Waiter Mode</span> <i class="fa-solid fa-arrow-right"></i>
+              </div>
+            </button>
+
+            <!-- Option 3: Owner / Manager Space -->
             <button type="button" id="btn-entry-staff" class="entry-option-card card-staff-option">
               <div class="entry-card-top">
-                <span class="entry-badge badge-violet"><i class="fa-solid fa-user-shield"></i> Staff Portal</span>
-                <span class="entry-tag">Operations UI</span>
+                <span class="entry-badge badge-violet"><i class="fa-solid fa-user-shield"></i> Owner / Manager</span>
+                <span class="entry-tag">Admin UI</span>
               </div>
               <div class="entry-option-icon icon-violet">
-                <i class="fa-solid fa-cash-register"></i>
+                <i class="fa-solid fa-chart-line"></i>
               </div>
-              <h3 class="entry-option-title">Sign in as a Staff</h3>
-              <p class="entry-option-desc">Access Waitstaff POS Terminal, Kitchen KDS tickets, 3D Digital Twin floor map, AI stockout predictor & sales analytics.</p>
+              <h3 class="entry-option-title">Admin & BI Analytics</h3>
+              <p class="entry-option-desc">Post-admin auth data tables (Main Data, Table Vacancy, Customer History) & BI revenue dashboard.</p>
               <div class="entry-action-link btn-violet-action">
-                <span>Continue as Staff</span> <i class="fa-solid fa-arrow-right"></i>
+                <span>Enter Admin BI</span> <i class="fa-solid fa-arrow-right"></i>
               </div>
             </button>
           </div>
@@ -109,16 +125,28 @@ class EntryGatewayModal {
     }
 
 
-    if (btnStaff) {
-      btnStaff.addEventListener('click', () => {
+    const btnWaiter = document.getElementById('btn-entry-waiter');
+
+    if (btnWaiter) {
+      btnWaiter.addEventListener('click', () => {
         sessionStorage.setItem('rest_os_gateway_dismissed', 'true');
-        if (!authService.user || authService.user.role === 'Customer') {
-          authService.setUserRole('Manager');
-        }
+        authService.setUserRole('Waiter');
         modal.classList.add('fade-out');
         setTimeout(() => {
           modal.remove();
-          window.location.href = `${prefix}pos.html`;
+          window.location.href = `${prefix}kds.html?role=waiter`;
+        }, 200);
+      });
+    }
+
+    if (btnStaff) {
+      btnStaff.addEventListener('click', () => {
+        sessionStorage.setItem('rest_os_gateway_dismissed', 'true');
+        authService.setUserRole('Manager');
+        modal.classList.add('fade-out');
+        setTimeout(() => {
+          modal.remove();
+          window.location.href = `${prefix}analytics.html`;
         }, 300);
       });
     }
