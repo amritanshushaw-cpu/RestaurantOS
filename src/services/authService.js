@@ -299,31 +299,31 @@ class AuthService {
         Kitchen: 'Chef Marco', Manager: 'Director Vance'
       };
       const user = {
-        id: 'google-demo-' + Date.now(),
+        id: 'demo-' + Date.now(),
         name: demoNames[role] || `${role} Guest`,
-        email: `${role.toLowerCase()}@restaurantos.demo`,
+        email: `${role.toLowerCase()}@restaurantos.com`,
         role: role,
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(role)}`
       };
       this.saveUser(user);
-      this.showToast(`Signed in as ${user.name} (${role} Mode). Redirecting…`);
+      this.showToast(`Demo Mode: Signed in as ${user.name}`);
       setTimeout(() => { window.location.href = finalTarget; }, 350);
       return;
     }
 
     try {
-      const redirectTo = new URL(finalTarget, window.location.origin).href;
-
       const { error } = await dbEngine.supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo }
+        options: {
+          // ALWAYS redirect to canonical root to prevent Vercel 308 cleanUrl redirects from dropping the #access_token hash
+          redirectTo: window.location.origin + '/'
+        }
       });
-
       if (error) {
-        this.showToast(`Google login failed: ${error.message}`);
+        this.showToast(`Google Sign-In failed: ${error.message}`);
       }
     } catch (e) {
-      this.showToast(`Google login error: ${e.message}`);
+      this.showToast(`Authentication error: ${e.message}`);
     }
   }
 
