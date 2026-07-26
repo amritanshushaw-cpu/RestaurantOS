@@ -354,78 +354,58 @@
         </div>
       </section>
 
-    <!-- Hackathon Features Grid -->
+    <!-- Scoped Module Features by Role Mode -->
     <section class="features-grid">
-      <!-- 1. Digital Twin Floor Plan -->
-      <div class="feature-card">
+      <!-- Mode 1: Customer Modules -->
+      <div class="feature-card" style="border-color: rgba(194, 239, 78, 0.4);">
         <div>
-          <div class="feature-icon">
-            <i class="fa-solid fa-map-location-dot"></i>
+          <div class="feature-icon" style="color: var(--color-accent-lime);">
+            <i class="fa-solid fa-utensils"></i>
           </div>
-          <h3 class="ft-title">Digital Twin Floor Plan Map</h3>
-          <p class="ft-desc">Real-time interactive restaurant floor map. Track table occupancy, active meal times, seating capacity, and bottleneck health scores (86/100).</p>
+          <span class="badge" style="background: rgba(194, 239, 78, 0.15); color: var(--color-accent-lime); font-size: 10px; margin-bottom: 8px;">CUSTOMER MODE</span>
+          <h3 class="ft-title">Menu & Virtual Queue</h3>
+          <p class="ft-desc">Dynamic menu card, 6-digit session ID generation, special cooking notes, live itemized bill, and Virtual Queue waiting list.</p>
         </div>
-        <a href="src/views/digital_twin.html" class="ft-link">View Live Floor Map →</a>
+        <a href="src/views/login.html?role=Customer" class="ft-link">Sign In to Customer Mode →</a>
       </div>
 
-      <!-- 2. OpsCopilot AI -->
-      <div class="feature-card">
+      <!-- Mode 2: Waiter Modules -->
+      <div class="feature-card" style="border-color: rgba(236, 72, 153, 0.4);">
         <div>
-          <div class="feature-icon">
-            <i class="fa-solid fa-wand-magic-sparkles"></i>
+          <div class="feature-icon" style="color: var(--color-accent-pink);">
+            <i class="fa-solid fa-concierge-bell"></i>
           </div>
-          <h3 class="ft-title">OpsCopilot AI Manager Assistant</h3>
-          <p class="ft-desc">Context-aware Gemini AI assistant connected to live inventory, menu items, peak hour demand, and stockout risk alerts.</p>
+          <span class="badge" style="background: rgba(236, 72, 153, 0.15); color: #ec4899; font-size: 10px; margin-bottom: 8px;">WAITER MODE</span>
+          <h3 class="ft-title">Tables & Order Delivery</h3>
+          <p class="ft-desc">Table allocation alerts, waiter ID assignment, order dispatch terminal, and cash/card/UPI payment alerts.</p>
         </div>
-        <a href="src/views/opscopilot.html" class="ft-link">Ask OpsCopilot AI →</a>
+        <a href="src/views/login.html?role=Waiter" class="ft-link" style="color: #ec4899;">Sign In to Waiter Mode →</a>
       </div>
 
-      <!-- 3. Smart Inventory & Stockout Predictor -->
-      <div class="feature-card">
+      <!-- Mode 3: Kitchen Staff Modules -->
+      <div class="feature-card" style="border-color: rgba(59, 130, 246, 0.4);">
         <div>
-          <div class="feature-icon">
-            <i class="fa-solid fa-boxes-stacked"></i>
-          </div>
-          <h3 class="ft-title">AI Inventory Predictor</h3>
-          <p class="ft-desc">Automatic ingredient deduction when orders are placed. Generates stockout warnings and auto-calculates reorder quantities before dinner rush.</p>
-        </div>
-        <a href="src/views/inventory.html" class="ft-link">View Inventory Dashboard →</a>
-      </div>
-
-      <!-- 4. POS Terminal -->
-      <div class="feature-card">
-        <div>
-          <div class="feature-icon">
-            <i class="fa-solid fa-cash-register"></i>
-          </div>
-          <h3 class="ft-title">Point of Sale (POS) Terminal</h3>
-          <p class="ft-desc">High-speed waitstaff ordering interface with table selector, category pill filters, cart quantity modifiers, and instant KDS order dispatch.</p>
-        </div>
-        <a href="src/views/pos.html" class="ft-link">Open POS Terminal →</a>
-      </div>
-
-      <!-- 5. Kitchen Display System -->
-      <div class="feature-card">
-        <div>
-          <div class="feature-icon">
+          <div class="feature-icon" style="color: #3b82f6;">
             <i class="fa-solid fa-fire"></i>
           </div>
-          <h3 class="ft-title">Kitchen Display System (KDS)</h3>
-          <p class="ft-desc">Live ticket display for kitchen chefs. Color-coded progression badges (`NEW` → `PREPARING` → `READY`) with order timers.</p>
+          <span class="badge" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; font-size: 10px; margin-bottom: 8px;">KITCHEN MODE</span>
+          <h3 class="ft-title">KDS & Kitchen Inventory</h3>
+          <p class="ft-desc">Kitchen Display System (KDS) prep tickets, chef notes, cooking timers, ingredient usage, and Mark as Served (Delivered: Y).</p>
         </div>
-        <a href="src/views/kds.html" class="ft-link">Open Kitchen KDS →</a>
+        <a href="src/views/login.html?role=Kitchen" class="ft-link" style="color: #3b82f6;">Sign In to Kitchen Mode →</a>
       </div>
 
-      <!-- 6. 3D Payment Security Enclave -->
-      <div class="feature-card">
+      <!-- Mode 4: Manager / Admin Modules -->
+      <div class="feature-card" style="border-color: rgba(139, 92, 246, 0.4);">
         <div>
-          <div class="feature-icon">
-            <i class="fa-solid fa-shield-halved"></i>
+          <div class="feature-icon" style="color: var(--color-accent-violet);">
+            <i class="fa-solid fa-chart-line"></i>
           </div>
-          <h3 class="ft-title">3D Payment Security Enclave</h3>
-          <p class="ft-desc">Risk-free sandbox payment gateway with 3D card flip visualizer, Luhn checksum validation, 3DS OTP passcode (`123456`), and receipts.</p>
+          <span class="badge" style="background: rgba(139, 92, 246, 0.15); color: var(--color-accent-violet); font-size: 10px; margin-bottom: 8px;">MANAGER MODE</span>
+          <h3 class="ft-title">Analytics & Operations</h3>
+          <p class="ft-desc">3 Server Data Tables (Main Data, Table Vacancy, Customer History), BI revenue metrics, inventory predictor, Digital Twin, and OpsCopilot AI.</p>
         </div>
-        <a href="src/views/payment.html" class="ft-link">Test Payment Enclave →</a>
+        <a href="src/views/login.html?role=Manager" class="ft-link" style="color: var(--color-accent-violet);">Sign In to Manager Mode →</a>
       </div>
     </section>
 
