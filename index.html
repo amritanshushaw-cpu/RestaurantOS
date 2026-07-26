@@ -205,6 +205,9 @@
       </a>
 
       <div class="sentry-nav-links">
+        <a href="src/views/customer.html" class="btn-ghost-on-dark" style="color: var(--color-accent-lime);">
+          <i class="fa-solid fa-utensils"></i> Customer Space
+        </a>
         <a href="src/views/digital_twin.html" class="btn-ghost-on-dark">
           <i class="fa-solid fa-cubes"></i> Digital Twin
         </a>
@@ -237,26 +240,72 @@
         Eliminate communication bottlenecks between customers, waiters, chefs, and managers. RestaurantOS connects live inventory, table reservations, POS ordering, KDS tickets, 3D payment security, and Gemini AI ops intelligence into one real-time command center.
       </p>
 
+      <!-- 2 Selectable Portal Options Gateway -->
+      <div class="portal-gateway-container">
+        <div class="portal-gateway-header">
+          <div class="portal-pill-badge"><i class="fa-solid fa-right-to-bracket"></i> ENTRY GATEWAY</div>
+          <h2>Select Workspace Portal</h2>
+          <p>Choose your entry space to launch customized interfaces for Customers or Restaurant Staff</p>
+        </div>
+
+        <div class="portal-gateway-grid">
+          <!-- Option 1: Customer Space -->
+          <a href="src/views/customer.html" class="portal-choice-card card-customer-portal">
+            <div class="portal-card-top">
+              <span class="portal-badge badge-customer"><i class="fa-solid fa-user"></i> Customer Mode</span>
+              <span class="portal-ui-tag">Custom Dining UI</span>
+            </div>
+            <div class="portal-icon-wrapper customer-glow">
+              <i class="fa-solid fa-utensils"></i>
+            </div>
+            <h3 class="portal-card-title">Customer Dining Space</h3>
+            <p class="portal-card-desc">Browse gourmet food items, add custom cooking instructions, view live order summary & itemized bill, and pay securely via sandbox enclave.</p>
+            <div class="portal-btn-action btn-cust-action">
+              <span>Open Customer Space</span> <i class="fa-solid fa-arrow-right"></i>
+            </div>
+          </a>
+
+          <!-- Option 2: Staff Space -->
+          <a href="src/views/pos.html" class="portal-choice-card card-staff-portal">
+            <div class="portal-card-top">
+              <span class="portal-badge badge-staff"><i class="fa-solid fa-user-shield"></i> Staff & Ops</span>
+              <span class="portal-ui-tag">Operations UI</span>
+            </div>
+            <div class="portal-icon-wrapper staff-glow">
+              <i class="fa-solid fa-cash-register"></i>
+            </div>
+            <h3 class="portal-card-title">Staff Operations Command</h3>
+            <p class="portal-card-desc">Full staff suite: Waiter POS ordering, Kitchen KDS tickets, 3D Digital Twin floor map, AI stockout predictor & sales analytics.</p>
+            <div class="portal-btn-action btn-staff-action">
+              <span>Open Staff Operations</span> <i class="fa-solid fa-arrow-right"></i>
+            </div>
+          </a>
+        </div>
+      </div>
+
       <!-- Hackathon Demo Credentials Fast Launcher -->
       <div class="demo-accounts-bar">
         <div class="demo-title">
-          <i class="fa-solid fa-key"></i> Fast Role Switcher (Hackathon Demo Accounts)
+          <i class="fa-solid fa-key"></i> Quick Role Switcher (Hackathon Demo Accounts)
         </div>
         <div class="demo-buttons">
-          <a href="src/views/payment.html" class="demo-btn">
-            <i class="fa-solid fa-user" style="color: var(--color-accent-lime);"></i> Customer (<code>customer@restaurantos.demo</code>)
+          <a href="src/views/customer.html" class="demo-btn">
+            <i class="fa-solid fa-user" style="color: var(--color-accent-lime);"></i> Customer Portal (<code>customer@restaurantos.demo</code>)
           </a>
           <a href="src/views/pos.html" class="demo-btn">
-            <i class="fa-solid fa-concierge-bell" style="color: var(--color-accent-pink);"></i> Waiter (<code>waiter@restaurantos.demo</code>)
+            <i class="fa-solid fa-concierge-bell" style="color: var(--color-accent-pink);"></i> Waiter POS (<code>waiter@restaurantos.demo</code>)
           </a>
           <a href="src/views/kds.html" class="demo-btn">
-            <i class="fa-solid fa-fire" style="color: var(--color-warning);"></i> Kitchen (<code>kitchen@restaurantos.demo</code>)
+            <i class="fa-solid fa-fire" style="color: var(--color-warning);"></i> Kitchen KDS (<code>kitchen@restaurantos.demo</code>)
           </a>
           <a href="src/views/analytics.html" class="demo-btn">
             <i class="fa-solid fa-user-tie" style="color: var(--color-accent-violet);"></i> Manager (<code>manager@restaurantos.demo</code>)
           </a>
         </div>
       </div>
+    </section>
+
+
     </section>
 
     <!-- Hackathon Features Grid -->
@@ -355,6 +404,6 @@
   <script type="module" src="src/services/supabaseClient.js"></script>
   <script type="module" src="src/services/authService.js"></script>
   <script type="module" src="src/utils/navbarAuth.js"></script>
+  <script type="module" src="src/utils/entryModal.js"></script>
 </body>
 </html>
-

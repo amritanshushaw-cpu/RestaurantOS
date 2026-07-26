@@ -129,9 +129,10 @@
     async function renderAnalytics() {
       const summary = dbEngine.getAnalyticsSummary();
 
-      document.getElementById('metric-revenue').textContent = `$${summary.grossRevenue.toFixed(2)}`;
+      document.getElementById('metric-revenue').textContent = `₹${summary.grossRevenue.toFixed(2)}`;
       document.getElementById('metric-orders').textContent = `${summary.orderCount} Orders`;
-      document.getElementById('metric-avg-check').textContent = `$${summary.avgCheck.toFixed(2)}`;
+      document.getElementById('metric-avg-check').textContent = `₹${summary.avgCheck.toFixed(2)}`;
+
       document.getElementById('metric-approval').textContent = summary.orderCount > 0 || dbEngine.getPaymentStats().attempts > 0
         ? `${summary.approvalRate}%`
         : 'No data yet';
@@ -152,7 +153,7 @@
     setInterval(renderAnalytics, 4000);
   </script>
 
-  <!-- Google Identity Services & Auth Modules -->
+    <!-- Google Identity Services & Auth Modules -->
   <script src="../config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script type="module" src="../services/supabaseClient.js"></script>
@@ -161,3 +162,4 @@
   <script type="module" src="../utils/navbarAuth.js"></script>
 </body>
 </html>
+

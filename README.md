@@ -44,7 +44,14 @@ Built without heavy bloated frameworks, RestaurantOS runs on pure, modern **HTML
 * **Executive Sales Analytics**: Displays daily gross revenue, check averages, and payment approval metrics.
 * **Smart Revenue Tips**: Gemini AI analyzes peak dining hours and suggests promotional menu bundles.
 
+### 5. 🔑 Google Authentication & User Profile Manager (OAuth 2.0)
+* **Google Identity Services (GIS) Integration**: Seamless Google OAuth 2.0 Sign-In across all pages and views.
+* **Google Profile & Avatar Sync**: Displays user's Google display name, email, avatar image, and verified badge in the navigation bar.
+* **Role-Based Access Control (RBAC)**: Switch between **Customer**, **Waiter**, **Kitchen**, and **Manager** roles dynamically.
+* **Session Persistence**: Maintains Google user session state in `localStorage` across page navigations.
+
 ---
+
 
 ## 🏗️ System Architecture & Workflow
 
@@ -123,7 +130,7 @@ This project is optimized for 1-click deployment on **Vercel**:
 
 | Name | Role |
 |---|---|
-| **Saptak Sarathi Chakroborty** | Full-Stack Architect & Backend Engine |
+| **Saptak Sarathi Chakraborty** | Full-Stack Architect & Backend Engine |
 | **Shrinivas Ghosh** | System Design & Database Infrastructure |
 | **Amritanshu Shaw** | UI/UX Systems & Payment Enclave Specialist |
 | **Ritam Karmakar** | Frontend Engineering & KDS Workflow |

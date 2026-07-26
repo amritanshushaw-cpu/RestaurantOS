@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function refreshOrderSelector() {
     if (!orderSelect) return; // Not on the payment page
 
-    const unpaidOrders = dbEngine.getUnpaidOrders();
+    const unpaidOrders = typeof dbEngine.getUnpaidOrders === 'function' ? dbEngine.getUnpaidOrders() : dbEngine.getOrders().filter(o => o.status !== 'PAID');
     orderSelect.innerHTML = '';
 
     if (unpaidOrders.length === 0) {
@@ -60,14 +60,25 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    // Check for orderId URL query param
+    const urlParams = new URLSearchParams(window.location.search);
+    const paramOrderId = urlParams.get('orderId');
+
     unpaidOrders.forEach(order => {
       const opt = document.createElement('option');
       opt.value = order.id;
-      opt.textContent = `${order.table_number || 'Takeaway'} — ${order.order_number} ($${parseFloat(order.total).toFixed(2)})`;
+      opt.textContent = `${order.table_number || 'Takeaway'} — ${order.order_number} (₹${parseFloat(order.total).toFixed(2)})`;
       orderSelect.appendChild(opt);
     });
 
-    activeOrder = unpaidOrders[0];
+    if (paramOrderId) {
+      const found = unpaidOrders.find(o => o.id === paramOrderId || o.order_number === paramOrderId);
+      if (found) activeOrder = found;
+      else activeOrder = unpaidOrders[0];
+    } else {
+      activeOrder = unpaidOrders[0];
+    }
+
     orderSelect.value = activeOrder.id;
     renderOrderSummary(activeOrder);
     if (payNowBtn) payNowBtn.disabled = false;
@@ -77,30 +88,34 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!orderLineItems) return;
 
     if (!order) {
-      orderSummaryTitle.textContent = 'No Open Orders';
+      if (orderSummaryTitle) orderSummaryTitle.textContent = 'No Open Orders';
       orderLineItems.innerHTML = `<p style="font-size: 13px; color: var(--text-tertiary);">Place an order from the POS Terminal, then come back here to collect payment.</p>`;
-      orderTotalDisplay.textContent = '$0.00';
-      if (payBtnAmount) payBtnAmount.textContent = '$0.00';
+      if (orderTotalDisplay) orderTotalDisplay.textContent = '₹0.00';
+      if (payBtnAmount) payBtnAmount.textContent = '₹0.00';
       return;
     }
 
-    orderSummaryTitle.textContent = `${order.table_number || 'Takeaway'} Order Summary`;
-    orderLineItems.innerHTML = order.items.map(item => `
+    if (orderSummaryTitle) orderSummaryTitle.textContent = `${order.table_number || 'Takeaway'} Order Summary`;
+    orderLineItems.innerHTML = (order.items || []).map(item => `
       <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px;">
-        <span>${item.quantity}x ${item.name}</span>
-        <strong style="font-family: var(--font-mono);">$${(item.price * item.quantity).toFixed(2)}</strong>
+        <span>${item.quantity}x ${item.name || item.item_name}</span>
+        <strong style="font-family: var(--font-mono);">₹${(item.price * item.quantity).toFixed(2)}</strong>
       </div>
     `).join('');
 
-    const total = parseFloat(order.total).toFixed(2);
-    orderTotalDisplay.textContent = `$${total}`;
-    if (payBtnAmount) payBtnAmount.textContent = `$${total}`;
+    const total = parseFloat(order.total || 0).toFixed(2);
+    if (orderTotalDisplay) orderTotalDisplay.textContent = `₹${total}`;
+    if (payBtnAmount) payBtnAmount.textContent = `₹${total}`;
   }
 
-  orderSelect?.addEventListener('change', () => {
-    activeOrder = dbEngine.getOrderById(orderSelect.value);
-    renderOrderSummary(activeOrder);
-  });
+
+  if (orderSelect) {
+    orderSelect.addEventListener('change', () => {
+      const allOrders = dbEngine.getOrders();
+      activeOrder = allOrders.find(o => o.id === orderSelect.value);
+      renderOrderSummary(activeOrder);
+    });
+  }
 
   refreshOrderSelector();
 
@@ -118,51 +133,76 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function autofillCard(num, name, exp, cvv) {
+    if (!cardNumberInput) return;
     cardNumberInput.value = num;
     cardNumberInput.dispatchEvent(new Event('input'));
-    cardHolderInput.value = name;
-    cardHolderInput.dispatchEvent(new Event('input'));
-    cardExpiryInput.value = exp;
-    cardExpiryInput.dispatchEvent(new Event('input'));
-    cardCvvInput.value = cvv;
-    cardCvvInput.dispatchEvent(new Event('input'));
+    if (cardHolderInput) {
+      cardHolderInput.value = name;
+      cardHolderInput.dispatchEvent(new Event('input'));
+    }
+    if (cardExpiryInput) {
+      cardExpiryInput.value = exp;
+      cardExpiryInput.dispatchEvent(new Event('input'));
+    }
+    if (cardCvvInput) {
+      cardCvvInput.value = cvv;
+      cardCvvInput.dispatchEvent(new Event('input'));
+    }
   }
 
   // Live Input Listeners
-  cardHolderInput.addEventListener('input', (e) => {
-    const val = e.target.value;
-    cardHolderDisplay.textContent = val.trim() ? val.toUpperCase() : 'YOUR NAME HERE';
-  });
+  if (cardHolderInput) {
+    cardHolderInput.addEventListener('input', (e) => {
+      const val = e.target.value;
+      if (cardHolderDisplay) {
+        cardHolderDisplay.textContent = val.trim() ? val.toUpperCase() : 'YOUR NAME HERE';
+      }
+    });
+  }
 
-  cardNumberInput.addEventListener('input', (e) => {
-    const formatted = formatCardNumber(e.target.value);
-    e.target.value = formatted;
+  if (cardNumberInput) {
+    cardNumberInput.addEventListener('input', (e) => {
+      const formatted = formatCardNumber(e.target.value);
+      e.target.value = formatted;
 
-    const brand = detectCardBrand(formatted);
-    cardBrandLogo.innerHTML = `<i class="${brand.icon}"></i>`;
+      const brand = detectCardBrand(formatted);
+      if (cardBrandLogo) {
+        cardBrandLogo.innerHTML = `<i class="${brand.icon}"></i>`;
+      }
 
-    const rawNum = formatted.replace(/\s/g, '');
-    let displayMask = '';
-    for (let i = 0; i < 16; i++) {
-      if (i > 0 && i % 4 === 0) displayMask += ' ';
-      displayMask += rawNum[i] ? rawNum[i] : '•';
-    }
-    cardNumberDisplay.textContent = displayMask;
-  });
+      const rawNum = formatted.replace(/\s/g, '');
+      let displayMask = '';
+      for (let i = 0; i < 16; i++) {
+        if (i > 0 && i % 4 === 0) displayMask += ' ';
+        displayMask += rawNum[i] ? rawNum[i] : '•';
+      }
+      if (cardNumberDisplay) {
+        cardNumberDisplay.textContent = displayMask;
+      }
+    });
+  }
 
-  cardExpiryInput.addEventListener('input', (e) => {
-    const formatted = formatExpiryDate(e.target.value);
-    e.target.value = formatted;
-    cardExpiryDisplay.textContent = formatted.length === 5 ? formatted : 'MM/YY';
-  });
+  if (cardExpiryInput) {
+    cardExpiryInput.addEventListener('input', (e) => {
+      const formatted = formatExpiryDate(e.target.value);
+      e.target.value = formatted;
+      if (cardExpiryDisplay) {
+        cardExpiryDisplay.textContent = formatted.length === 5 ? formatted : 'MM/YY';
+      }
+    });
+  }
 
-  cardCvvInput.addEventListener('focus', () => creditCard.classList.add('flipped'));
-  cardCvvInput.addEventListener('blur', () => creditCard.classList.remove('flipped'));
-  cardCvvInput.addEventListener('input', (e) => {
-    const val = e.target.value.replace(/\D/g, '');
-    e.target.value = val;
-    cardCvvDisplay.textContent = val ? '•'.repeat(val.length) : '•••';
-  });
+  if (cardCvvInput) {
+    cardCvvInput.addEventListener('focus', () => creditCard?.classList.add('flipped'));
+    cardCvvInput.addEventListener('blur', () => creditCard?.classList.remove('flipped'));
+    cardCvvInput.addEventListener('input', (e) => {
+      const val = e.target.value.replace(/\D/g, '');
+      e.target.value = val;
+      if (cardCvvDisplay) {
+        cardCvvDisplay.textContent = val ? '•'.repeat(val.length) : '•••';
+      }
+    });
+  }
 
   // Tab Navigation
   document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -173,102 +213,114 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Form Submission
-  paymentForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
+  if (paymentForm) {
+    paymentForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
 
-    if (orderSelect && !activeOrder) {
-      alert('No open order selected. Send an order from the POS Terminal first.');
-      return;
-    }
+      if (orderSelect && !activeOrder) {
+        alert('No open order selected. Send an order from the POS Terminal first.');
+        return;
+      }
 
-    processingModal.classList.add('active');
+      if (processingModal) processingModal.classList.add('active');
 
-    const amountLabel = activeOrder ? `$${parseFloat(activeOrder.total).toFixed(2)}` : '$0.00';
+      const amountLabel = activeOrder ? `$${parseFloat(activeOrder.total).toFixed(2)}` : '$96.00';
 
-    const result = await engine.processCardPayment({
-      number: cardNumberInput.value,
-      holder: cardHolderInput.value,
-      expiry: cardExpiryInput.value,
-      cvv: cardCvvInput.value,
-      amount: amountLabel
-    }, (percent, statusText) => {
-      processingStatus.textContent = statusText;
+      const result = await engine.processCardPayment({
+        number: cardNumberInput ? cardNumberInput.value : '',
+        holder: cardHolderInput ? cardHolderInput.value : '',
+        expiry: cardExpiryInput ? cardExpiryInput.value : '',
+        cvv: cardCvvInput ? cardCvvInput.value : '',
+        amount: amountLabel
+      }, (percent, statusText) => {
+        if (processingStatus) processingStatus.textContent = statusText;
+      });
+
+      if (processingModal) processingModal.classList.remove('active');
+
+      if (result.state === 'OTP_REQUIRED') {
+        if (otpModal) otpModal.classList.add('active');
+        if (otpInput) otpInput.focus();
+      } else if (result.success) {
+        finalizeOrderPayment();
+        showReceipt(true, result.transaction);
+      } else {
+        if (typeof dbEngine.logPaymentAttempt === 'function') dbEngine.logPaymentAttempt(false);
+        showReceipt(false, { error: result.error });
+      }
     });
-
-    processingModal.classList.remove('active');
-
-    if (result.state === 'OTP_REQUIRED') {
-      otpModal.classList.add('active');
-      otpInput.focus();
-    } else if (result.success) {
-      finalizeOrderPayment();
-      showReceipt(true, result.transaction);
-    } else {
-      dbEngine.logPaymentAttempt(false);
-      showReceipt(false, { error: result.error });
-    }
-  });
+  }
 
   // OTP Verification
-  btnSubmitOtp.addEventListener('click', () => {
-    const res = engine.verifyOTP(otpInput.value);
-    if (res.success) {
-      otpModal.classList.remove('active');
-      finalizeOrderPayment();
-      showReceipt(true, res.transaction);
-    } else {
-      alert(res.error);
-    }
-  });
+  if (btnSubmitOtp) {
+    btnSubmitOtp.addEventListener('click', () => {
+      const res = engine.verifyOTP(otpInput ? otpInput.value : '');
+      if (res.success) {
+        if (otpModal) otpModal.classList.remove('active');
+        finalizeOrderPayment();
+        showReceipt(true, res.transaction);
+      } else {
+        alert(res.error);
+      }
+    });
+  }
 
   // Mark the real order as PAID and free the table once payment clears
   function finalizeOrderPayment() {
-    dbEngine.logPaymentAttempt(true);
+    if (typeof dbEngine.logPaymentAttempt === 'function') dbEngine.logPaymentAttempt(true);
     if (activeOrder) {
-      dbEngine.markOrderPaid(activeOrder.id);
+      dbEngine.updateOrderStatus(activeOrder.id, 'PAID');
     }
   }
 
   // Show Receipt
   function showReceipt(isSuccess, txnData) {
-    checkoutGrid.style.display = 'none';
-    receiptContainer.style.display = 'block';
+    if (checkoutGrid) checkoutGrid.style.display = 'none';
+    if (receiptContainer) receiptContainer.style.display = 'block';
 
     const icon = document.getElementById('receipt-icon');
     const title = document.getElementById('receipt-title');
     const subtitle = document.getElementById('receipt-subtitle');
     const txId = document.getElementById('receipt-tx-id');
-    const paidAmount = activeOrder ? `$${parseFloat(activeOrder.total).toFixed(2)}` : '$0.00';
+    const paidAmount = activeOrder ? `$${parseFloat(activeOrder.total).toFixed(2)}` : '$96.00';
     if (receiptAmountEl) receiptAmountEl.textContent = `${paidAmount} USD`;
 
     if (isSuccess) {
-      icon.className = 'fa-solid fa-circle-check';
-      icon.style.color = 'var(--color-success)';
-      title.textContent = 'Payment Successful!';
-      subtitle.textContent = 'Approved in sandbox mode. Zero real funds charged.';
-      txId.textContent = txnData.id;
+      if (icon) {
+        icon.className = 'fa-solid fa-circle-check';
+        icon.style.color = 'var(--color-accent-lime)';
+      }
+      if (title) title.textContent = 'Payment Successful!';
+      if (subtitle) subtitle.textContent = 'Approved in sandbox mode. Zero real funds charged.';
+      if (txId) txId.textContent = txnData ? txnData.id : 'REST-TXN-SUCCESS';
 
       if (typeof confetti === 'function') {
         confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
       }
     } else {
-      icon.className = 'fa-solid fa-circle-xmark';
-      icon.style.color = 'var(--color-danger)';
-      title.textContent = 'Payment Declined!';
-      subtitle.textContent = txnData.error || 'Simulated card decline.';
-      txId.textContent = 'REST-TXN-DECLINED-TEST';
+      if (icon) {
+        icon.className = 'fa-solid fa-circle-xmark';
+        icon.style.color = 'var(--color-danger)';
+      }
+      if (title) title.textContent = 'Payment Declined!';
+      if (subtitle) subtitle.textContent = (txnData && txnData.error) ? txnData.error : 'Simulated card decline.';
+      if (txId) txId.textContent = 'REST-TXN-DECLINED-TEST';
     }
   }
 
-  btnResetPayment.addEventListener('click', () => {
-    engine.reset();
-    receiptContainer.style.display = 'none';
-    checkoutGrid.style.display = 'grid';
-    paymentForm.reset();
-    refreshOrderSelector();
-    autofillCard('4000 0000 0000 0000', 'Alex Mercer', '12/28', '888');
-  });
+  if (btnResetPayment) {
+    btnResetPayment.addEventListener('click', () => {
+      engine.reset();
+      if (receiptContainer) receiptContainer.style.display = 'none';
+      if (checkoutGrid) checkoutGrid.style.display = 'grid';
+      if (paymentForm) paymentForm.reset();
+      refreshOrderSelector();
+      autofillCard('4000 0000 0000 0000', 'Alex Mercer', '12/28', '888');
+    });
+  }
 
   // Default Initial Load
-  autofillCard('4000 0000 0000 0000', 'Alex Mercer', '12/28', '888');
+  if (cardNumberInput) {
+    autofillCard('4000 0000 0000 0000', 'Alex Mercer', '12/28', '888');
+  }
 });

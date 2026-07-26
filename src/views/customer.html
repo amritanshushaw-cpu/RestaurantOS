@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RestaurantOS — Customer Space</title>
+  <meta name="description" content="Signed-in RestaurantOS customer space for browsing the live menu, choosing a table, and tracking orders.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="../styles/tokens.css">
+  <link rel="stylesheet" href="../styles/components.css">
+  <link rel="stylesheet" href="../styles/pos.css">
+  <link rel="stylesheet" href="../styles/customer.css">
+</head>
+<body class="customer-page">
+  <div class="grain" aria-hidden="true"></div>
+
+  <header class="sentry-navbar customer-site-header">
+    <div class="hbar sentry-navbar-inner">
+      <div class="logo">
+        <div class="mark" aria-hidden="true">R</div>
+        <div>
+          <div class="name">RestaurantOS</div>
+          <div class="est">CUSTOMER SPACE · SIGNED IN</div>
+        </div>
+      </div>
+
+      <nav class="main" aria-label="Customer space navigation">
+        <a href="#menu">Menu</a>
+        <a href="#regulars">Top Picks</a>
+        <a href="#regulars">Pairings</a>
+        <a href="#order">Order Status</a>
+        <a href="#catering">Rewards</a>
+        <a href="#footer">Account</a>
+      </nav>
+      <div class="sentry-nav-links" aria-hidden="true" hidden></div>
+
+      <div class="hright">
+        <span class="status"><span class="dot" aria-hidden="true"></span>OPEN · LIVE</span>
+        <div id="sentry-google-auth-widget" class="sentry-auth-widget-container" aria-label="Signed-in customer account"></div>
+        <button class="btn js-view-order" type="button">View Order</button>
+        <img id="cust-profile-avatar" class="customer-avatar customer-sync-hidden" src="" alt="Signed-in customer profile">
+        <span id="cust-greeting-name" class="customer-greeting customer-sync-hidden">Guest</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" id="hero">
+      <div class="wrap">
+        <div class="hero-grid">
+          <div class="mosaic" id="mosaic" aria-hidden="true">
+            <div class="tile"><img src="https://kombai-assets-dev.b-cdn.net/generated_assets/9_landing_page_for_a_hand_painted_lunch_counter_diner/assets/tiles/tile-01.png" alt=""></div>
+            <div class="tile"><img src="https://kombai-assets-dev.b-cdn.net/generated_assets/9_landing_page_for_a_hand_painted_lunch_counter_diner/assets/tiles/tile-02.png" alt=""></div>
+            <div class="tile"><img src="https://kombai-assets-dev.b-cdn.net/generated_assets/9_landing_page_for_a_hand_painted_lunch_counter_diner/assets/tiles/tile-03.png" alt=""></div>
+            <div class="tile"><img src="https://kombai-assets-dev.b-cdn.net/generated_assets/9_landing_page_for_a_hand_painted_lunch_counter_diner/assets/tiles/tile-04.png" alt=""></div>
+            <div class="tile"><img src="https://kombai-assets-dev.b-cdn.net/generated_assets/9_landing_page_for_a_hand_painted_lunch_counter_diner/assets/tiles/tile-05.png" alt=""></div>
+            <div class="tile"><img src="https://kombai-assets-dev.b-cdn.net/generated_assets/9_landing_page_for_a_hand_painted_lunch_counter_diner/assets/tiles/tile-06.png" alt=""></div>
+            <div class="tile gap"><span>№ 7 — READY</span></div>
+            <div class="tile"><img src="https://kombai-assets-dev.b-cdn.net/generated_assets/9_landing_page_for_a_hand_painted_lunch_counter_diner/assets/tiles/tile-08.png" alt=""></div>
+            <div class="tile"><img src="https://kombai-assets-dev.b-cdn.net/generated_assets/9_landing_page_for_a_hand_painted_lunch_counter_diner/assets/tiles/tile-09.png" alt=""></div>
+            <div class="tile"><img src="https://kombai-assets-dev.b-cdn.net/generated_assets/9_landing_page_for_a_hand_painted_lunch_counter_diner/assets/tiles/tile-10.png" alt=""></div>
+            <div class="tile"><img src="https://kombai-assets-dev.b-cdn.net/generated_assets/9_landing_page_for_a_hand_painted_lunch_counter_diner/assets/tiles/tile-11.png" alt=""></div>
+            <div class="tile"><img src="https://kombai-assets-dev.b-cdn.net/generated_assets/9_landing_page_for_a_hand_painted_lunch_counter_diner/assets/tiles/tile-12.png" alt=""></div>
+          </div>
+
+          <div class="hero-text">
+            <div class="chiprow">
+              <span class="datechip">SIGNED IN · TABLE 02</span>
+              <span class="kicker">WELCOME BACK, GUEST</span>
+            </div>
+            <h1 class="disp" id="heroH1" aria-label="Your Order Starts Here">
+              <span class="ln l1"><span>Your Order</span></span><br>
+              <span class="ln l2 ghost" data-text="Starts Here"><span>Starts Here</span></span>
+            </h1>
+            <p class="handnote">— curated dishes for your table —</p>
+            <div class="specials" aria-label="Featured dishes">
+              <div class="sp-row">
+                <span class="sp-name">Butter Chicken Bowl</span><span class="sp-price">₹480</span>
+                <span class="sp-desc">Creamy tomato gravy, tandoori chicken</span>
+                <span class="sp-aller"><span class="allerg">DAIRY</span><span class="allerg">GLUTEN</span></span>
+              </div>
+              <div class="sp-row">
+                <span class="sp-name">Tandoori Paneer Tikka</span><span class="sp-price">₹320</span>
+                <span class="sp-desc">Charcoal grilled, mint chutney</span>
+                <span class="sp-aller"><span class="allerg">VEG</span><span class="allerg">DAIRY</span></span>
+              </div>
+              <div class="sp-row">
+                <span class="sp-name">Wagyu Beef Sliders</span><span class="sp-price">₹580</span>
+                <span class="sp-desc">Truffle aioli, smoked cheddar</span>
+                <span class="sp-aller"><span class="allerg">GLUTEN</span><span class="allerg">DAIRY</span></span>
+              </div>
+              <div class="sp-row">
+                <span class="sp-name">Mango Lassi</span><span class="sp-price">₹140</span>
+                <span class="sp-desc">Alphonso mango, cardamom, chilled</span>
+                <span class="sp-aller"><span class="allerg">VEG</span></span>
+              </div>
+            </div>
+            <div class="boardnote">
+              <span>★ LIVE ORDER UPDATES</span>
+              <span>TAX INCLUDED ON EVERY ORDER</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee-inner" id="marquee">
+        <span>★ browse the menu ★</span><b>LIVE ORDER STATUS</b>
+        <span>★ pickup ready in 15 ★</span><b>TAX INCLUDED ON EVERY TICKET</b>
+        <span>★ chef pairing suggestions ★</span><b>TABLE-SIDE SERVICE</b>
+        <span>★ browse the menu ★</span><b>LIVE ORDER STATUS</b>
+        <span>★ pickup ready in 15 ★</span><b>TAX INCLUDED ON EVERY TICKET</b>
+        <span>★ chef pairing suggestions ★</span><b>TABLE-SIDE SERVICE</b>
+      </div>
+    </div>
+
+    <section class="sec" id="menu" data-menu>
+      <div class="wrap">
+        <div class="sechead">
+          <div>
+            <span class="kicker">— THE LIVE CUSTOMER MENU —</span>
+            <h2 class="anim-skew" data-anim>Choose Your Order</h2>
+          </div>
+          <div class="legend" aria-label="Dietary legend">
+            <span>GF · GLUTEN FREE</span><span>V · VEGAN</span><span>N · NUTS</span><span>D · DAIRY</span>
+          </div>
+        </div>
+
+        <div class="customer-menu-tools" aria-label="Menu controls">
+          <label class="customer-menu-search" for="cust-search-input">
+            <i class="fa-solid fa-magnifying-glass search-icon" aria-hidden="true"></i>
+            <input id="cust-search-input" type="search" placeholder="Search Biryani, Sliders, Butter Chicken..." autocomplete="off">
+          </label>
+          <div id="cust-category-bar" aria-label="Menu categories"></div>
+        </div>
+
+        <div class="menu-cols" id="cust-menu-grid" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="sec regulars" id="regulars">
+      <div class="wrap">
+        <div class="sechead">
+          <div>
+            <span class="kicker">— ORDERED BY CUSTOMERS LIKE YOU —</span>
+            <h2 class="anim-blur" data-anim>Customer Favorites</h2>
+            <p class="reg-sub">The dishes guests add first, with pairings ready when you are.</p>
+          </div>
+        </div>
+        <div class="reg-list" id="regList">
+          <div class="reg-item" data-img="https://images.pexels.com/photos/35672929/pexels-photo-35672929.jpeg?auto=compress&cs=tinysrgb&w=700&q=80" data-favorite-item="Butter Chicken (Murgh Makhani)">
+            <span class="reg-num">№ 01</span>
+            <div class="reg-mid"><span class="ttl">Butter Chicken</span><div class="desc">Velvety tomato gravy, tandoori chicken, warm spice.</div><div><span class="a">DAIRY</span><span class="a">GLUTEN</span></div></div>
+            <div class="reg-right"><span class="reg-price">₹480</span><button class="reg-add" type="button">ADD</button></div>
+          </div>
+          <div class="reg-item" data-img="https://images.pexels.com/photos/3936163/pexels-photo-3936163.jpeg?auto=compress&cs=tinysrgb&w=700&q=80" data-favorite-item="Hyderabadi Dum Biryani">
+            <span class="reg-num">№ 02</span>
+            <div class="reg-mid"><span class="ttl">Hyderabadi Biryani</span><div class="desc">Saffron basmati, spiced chicken, mint and steam.</div><div><span class="a">DAIRY</span></div></div>
+            <div class="reg-right"><span class="reg-price">₹450</span><button class="reg-add" type="button">ADD</button></div>
+          </div>
+          <div class="reg-item" data-img="https://images.unsplash.com/photo-1594851001301-de3cb3c8ca6c?auto=format&w=700&q=80&fit=crop" data-favorite-item="Wagyu Beef Sliders">
+            <span class="reg-num">№ 03</span>
+            <div class="reg-mid"><span class="ttl">Wagyu Sliders</span><div class="desc">Truffle aioli, smoked cheddar, brioche bun.</div><div><span class="a">GLUTEN</span><span class="a">DAIRY</span></div></div>
+            <div class="reg-right"><span class="reg-price">₹580</span><button class="reg-add" type="button">ADD</button></div>
+          </div>
+          <div class="reg-item" data-img="https://images.pexels.com/photos/35434452/pexels-photo-35434452.jpeg?auto=compress&cs=tinysrgb&w=700&q=80" data-favorite-item="Mango Lassi">
+            <span class="reg-num">№ 04</span>
+            <div class="reg-mid"><span class="ttl">Mango Lassi</span><div class="desc">Chilled Alphonso mango, cardamom, creamy finish.</div><div><span class="a">VEGAN</span></div></div>
+            <div class="reg-right"><span class="reg-price">₹140</span><button class="reg-add" type="button">ADD</button></div>
+          </div>
+          <div class="reg-item" data-img="https://images.unsplash.com/photo-1765073665687-b8150aacd064?auto=format&w=700&q=80&fit=crop" data-favorite-item="Gulab Jamun with Kesar">
+            <span class="reg-num">№ 05</span>
+            <div class="reg-mid"><span class="ttl">Gulab Jamun</span><div class="desc">Warm milk dumplings, rosewater, saffron syrup.</div><div><span class="a">DAIRY</span></div></div>
+            <div class="reg-right"><span class="reg-price">₹160</span><button class="reg-add" type="button">ADD</button></div>
+          </div>
+        </div>
+        <div class="reg-thumbs" aria-hidden="true">
+          <img src="https://images.pexels.com/photos/35672929/pexels-photo-35672929.jpeg?auto=compress&cs=tinysrgb&w=700&q=80" alt="">
+          <img src="https://images.pexels.com/photos/3936163/pexels-photo-3936163.jpeg?auto=compress&cs=tinysrgb&w=700&q=80" alt="">
+          <img src="https://images.unsplash.com/photo-1594851001301-de3cb3c8ca6c?auto=format&w=700&q=80&fit=crop" alt="">
+          <img src="https://images.pexels.com/photos/35434452/pexels-photo-35434452.jpeg?auto=compress&cs=tinysrgb&w=700&q=80" alt="">
+          <img src="https://images.unsplash.com/photo-1765073665687-b8150aacd064?auto=format&w=700&q=80&fit=crop" alt="">
+        </div>
+      </div>
+      <div class="preview" id="preview" aria-hidden="true"><img src="" alt=""></div>
+    </section>
+
+    <section class="sec" id="order">
+      <div class="wrap">
+        <div class="sechead">
+          <div>
+            <span class="kicker">— READY WHEN YOU ARE —</span>
+            <h2 class="anim-track" data-anim>Start Your Order</h2>
+            <p class="reg-sub" style="color:var(--jade-deep)">Choose a table or pickup time. Pay securely. Watch your order move from kitchen to ready.</p>
+          </div>
+        </div>
+        <div class="order-grid">
+          <div>
+            <ol class="steps">
+              <li class="step"><span class="n" data-num>1</span><div class="stx"><h4>Browse dishes and build your order.</h4><p>Tap any item — it joins your signed-in cart at the bottom of the screen.</p></div></li>
+              <li class="step"><span class="n" data-num>2</span><div class="stx"><h4>Choose pickup or your table.</h4><p>Select a time, add notes, and pay with tax already included.</p></div></li>
+              <li class="step"><span class="n" data-num>3</span><div class="stx"><h4>Follow live kitchen status.</h4><p>Get an SMS when your order is confirmed, ready, or on its way.</p></div></li>
+            </ol>
+            <div class="smsrow">
+              <label class="tel"><span class="mono" style="color:var(--poppy);font-weight:700" aria-hidden="true">☏</span><input id="cust-phone" type="tel" placeholder="+91 98765 43210" aria-label="Phone number for order updates"></label>
+              <button class="btn js-order-updates" type="button">Enable Updates →</button>
+              <span class="smsnote">SMS · ORDER STATUS · 1 MSG PER UPDATE</span>
+            </div>
+          </div>
+          <div style="position:relative">
+            <div class="receipt" id="receipt">
+              <div class="rk">LIVE CUSTOMER TICKET</div>
+              <div class="rid">Order #R-4127</div>
+              <div class="lines">
+                <div class="rl"><span>1 × Butter Chicken</span><span class="v">480</span></div>
+                <div class="rl"><span>1 × Garlic Butter Naan</span><span class="v">90</span></div>
+                <div class="rl"><span>1 × Mango Lassi</span><span class="v">140</span></div>
+                <div class="rl"><span>1 × Gulab Jamun</span><span class="v">160</span></div>
+              </div>
+              <div class="total"><span class="tl">TOTAL · TAX IN</span><span class="tv">₹944.00</span></div>
+              <div class="ready"><span class="mono" aria-hidden="true">⏱</span><span>Ready at <strong style="color:var(--butter)">8:42 PM</strong></span><span class="pk">TABLE 02</span></div>
+            </div>
+            <span class="ding">live!</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec" id="catering" style="padding-bottom:120px">
+      <div class="wrap">
+        <div class="bento" id="bento">
+          <div class="cell big" style="--ci:0">
+            <div><span class="kicker">— YOUR CUSTOMER BENEFITS —</span><div class="ttl ghost" data-text="Made For You" style="margin-top:8px">Made For You</div></div>
+            <div class="cstats">
+              <div class="s"><div class="l">PAIRINGS</div><div class="v">AI ready</div></div>
+              <div class="s"><div class="l">STATUS</div><div class="v">Live kitchen</div></div>
+              <div class="s"><div class="l">REWARDS</div><div class="v">Every visit</div></div>
+            </div>
+            <button class="btn ghostbtn cquote js-account" type="button" style="background:var(--bone);color:var(--ink)">Open My Account →</button>
+          </div>
+          <div class="cell griddle" style="--ci:1">
+            <img src="https://images.pexels.com/photos/3936163/pexels-photo-3936163.jpeg?auto=compress&cs=tinysrgb&w=900&q=80" alt="Dish being prepared in the kitchen" loading="lazy">
+            <span class="live"><i aria-hidden="true"></i>LIVE</span>
+            <div class="gl"><div class="k">LIVE KITCHEN STATUS</div><div class="t">cooked<br>to order.</div></div>
+          </div>
+          <div class="cell office" style="--ci:2">
+            <img src="https://images.pexels.com/photos/35434452/pexels-photo-35434452.jpeg?auto=compress&cs=tinysrgb&w=300&q=80" alt="Dessert ready for a group order" loading="lazy">
+            <div><div class="k">— GROUP FAVORITE —</div><div class="t">Shareable orders for the table.</div><p>Group carts · shared picks · from ₹999 / order (tax in)</p></div>
+            <span class="pr">₹999+</span>
+          </div>
+          <div class="cell delivery" style="--ci:3">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2" aria-hidden="true"><rect x="1" y="5" width="13" height="11" rx="1"></rect><path d="M14 8h5l3 3v5h-8"></path><circle cx="6" cy="18" r="2"></circle><circle cx="18" cy="18" r="2"></circle></svg>
+            <div class="k" style="margin-top:8px">DELIVERY</div><div class="t">within 8 km.</div>
+          </div>
+          <div class="cell sms" style="--ci:4">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="var(--butter)" stroke-width="2" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8 9 9 0 0 1-4-1l-4 1 1-3.5A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5z"></path></svg>
+            <div class="k" style="margin-top:8px">SMS NOTIFICATIONS</div><div class="t">every order update</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="footer">
+    <div class="fstripe" id="fstripe"></div>
+    <div class="wrap">
+      <div class="fgrid">
+        <div><div class="fname" id="fname">RestaurantOS</div><p class="ftag">Your signed-in table for thoughtful dishes, live kitchen updates, and a smoother way to order every time.</p></div>
+        <div class="fcol"><h5>SUPPORT</h5><p>Customer Space<br>Live order help<br>Secure checkout</p></div>
+        <div class="fcol"><h5>HOURS</h5><p>Mon–Fri · 6a — 11p<br>Sat–Sun · 7a — 11p<br>Open for signed-in guests</p></div>
+      </div>
+    </div>
+    <div class="fine">© RESTAURANTOS · CUSTOMER SPACE · MENU &amp; STATUS UPDATED LIVE</div>
+  </footer>
+
+  <div class="dock up" id="dock" aria-label="Current order dock">
+    <button class="bag js-view-order" type="button" aria-label="Open current order">
+      <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 7h12l-1 13H7L6 7z"></path><path d="M9 7a3 3 0 0 1 6 0"></path></svg><span class="cnt" id="cust-dock-count">0</span></span>
+      <span class="lbl">YOUR ORDER</span>
+    </button>
+    <div class="div"></div>
+    <div class="cats" aria-label="Quick menu navigation">
+      <button type="button" class="js-dock-nav" data-target="menu" title="Starters" aria-label="Jump to menu"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="13" rx="8" ry="9"></ellipse><circle cx="12" cy="13" r="3"></circle></svg></button>
+      <button type="button" class="on js-dock-nav" data-target="regulars" title="Customer favorites" aria-label="Jump to customer favorites"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="8" rx="8" ry="3"></ellipse><path d="M4 8v5c0 1.7 3.6 3 8 3s8-1.3 8-3V8"></path></svg></button>
+      <button type="button" class="js-dock-nav" data-target="order" title="Order status" aria-label="Jump to order status"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8z"></path><path d="M17 9h2a2 2 0 0 1 0 4h-2"></path></svg></button>
+      <button type="button" class="js-dock-nav" data-target="catering" title="Customer benefits" aria-label="Jump to customer benefits"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 14a9 9 0 0 1 18 0z"></path><path d="M3 14h18"></path></svg></button>
+    </div>
+    <div class="div"></div>
+    <div class="tot"><div class="k">TAX IN</div><div class="v" id="cust-dock-total">₹0</div></div>
+    <button class="order js-view-order" type="button">View Order →</button>
+  </div>
+
+  <aside class="order-drawer" id="cust-order-drawer" hidden aria-labelledby="cust-order-drawer-title">
+    <div class="order-drawer-header"><h2 id="cust-order-drawer-title">Your Order</h2><button class="order-drawer-close" id="cust-order-drawer-close" type="button" aria-label="Close order">×</button></div>
+    <div class="order-drawer-meta"><label for="cust-table-select">Table / pickup</label><select id="cust-table-select"><option value="Table 01">Table 01 · Patio</option><option value="Table 02" selected>Table 02 · Main Hall</option><option value="Table 03">Table 03 · Main Hall</option><option value="Table 04">Table 04 · VIP Booth</option><option value="Table 05">Table 05 · Patio</option><option value="Table 06">Table 06 · Main Hall</option></select><span class="mono" id="cust-table-badge">Table 02</span></div>
+    <div class="cart-items-list" id="cust-cart-list"><p class="empty-state">Your order is empty. Choose any dish to add it here.</p></div>
+    <div class="special-notes"><label for="cust-special-notes">Special cooking instructions</label><textarea id="cust-special-notes" placeholder="Extra spicy, no onions, sauce on the side..." rows="2"></textarea><div id="quick-notes-chips"><button type="button" class="chip-note" data-text="Extra Spicy">Extra Spicy</button><button type="button" class="chip-note" data-text="No Onions">No Onions</button><button type="button" class="chip-note" data-text="Gluten Free">Gluten Free</button><button type="button" class="chip-note" data-text="Sauce on Side">Sauce on Side</button></div></div>
+    <div class="bill-summary-card">
+      <div class="bill-summary-row"><span>Items subtotal</span><strong id="cust-bill-subtotal">₹0.00</strong></div>
+      <div class="bill-summary-row"><span>Tax &amp; service (8.5%)</span><strong id="cust-bill-tax">₹0.00</strong></div>
+      <span class="tip-label">Add chef tip · optional</span>
+      <div class="tip-pills-bar"><button class="tip-pill active" type="button" data-tip="0">0%</button><button class="tip-pill" type="button" data-tip="10">10%</button><button class="tip-pill" type="button" data-tip="15">15%</button><button class="tip-pill" type="button" data-tip="20">20%</button></div>
+      <div class="order-drawer-total"><span>Total bill</span><span id="cust-bill-total">₹0.00</span></div>
+    </div>
+    <button type="button" class="btn" id="btn-cust-checkout" disabled>Proceed to secure checkout <i class="fa-solid fa-lock" aria-hidden="true"></i></button>
+  </aside>
+
+  <script src="../utils/customerMotion.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script type="module" src="../services/supabaseClient.js"></script>
+  <script type="module" src="../services/authService.js"></script>
+  <script type="module" src="../utils/navbarAuth.js"></script>
+  <script type="module" src="../controllers/customerController.js"></script>
+</body>
+</html>
