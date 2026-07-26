@@ -30,7 +30,7 @@ class EntryGatewayModal {
     const forceGateway = urlParams.get('gateway') === '1';
 
     if (isLanding) {
-      if (forceGateway || (!authService.user && !sessionStorage.getItem('rest_os_gateway_dismissed'))) {
+      if (forceGateway) {
         this.renderModal();
       }
     }
