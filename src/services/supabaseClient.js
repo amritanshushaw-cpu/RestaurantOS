@@ -51,7 +51,7 @@ class DynamicDatabaseEngine {
   // so the app can clearly communicate "backend not configured" instead of
   // silently falling back to something that looks connected but isn't.
   hasValidSupabaseConfig() {
-    return !!(this.supabaseUrl && /^https:\/\/.+\.supabase\.co$/.test(this.supabaseUrl) && this.supabaseAnonKey && this.supabaseAnonKey.length > 20);
+    return !!(this.supabaseUrl && /^https:\/\/.+\.supabase\.co$/.test(this.supabaseUrl) && this.supabaseAnonKey && this.supabaseAnonKey.length > 20 && !this.supabaseUrl.includes('xyzrestaurantos'));
   }
 
   // Generalized profile sync -- matches the real `profiles` table defined
