@@ -177,10 +177,15 @@
         }
       });
 
+      if (authService.user) {
+        redirectForRole(authService.user.role);
+        return;
+      }
+
       function redirectForRole(role) {
         if (role === 'Manager') window.location.href = 'analytics.html';
-        else if (role === 'Waiter') window.location.href = 'kds.html?role=waiter';
-        else if (role === 'Kitchen') window.location.href = 'kds.html?role=kitchen';
+        else if (role === 'Waiter') window.location.href = 'pos.html';
+        else if (role === 'Kitchen') window.location.href = 'kds.html';
         else window.location.href = 'customer.html';
       }
     });

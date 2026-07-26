@@ -1,9 +1,10 @@
 /**
  * RestaurantOS - Workspace Selection Space & Role Signing Window Gateway
  * Flow:
- * 1. Sign In click -> Opens Workspace Selection Space (Customer, Waiter, Kitchen, Manager cards).
- * 2. Mode Card Chosen -> Opens Signing Window Modal (Google OAuth / Email OTP / Quick Enter).
- * 3. Authentication -> Assigns role & redirects directly to that mode's specific UI.
+ * 1. Sign In click or Gateway parameter -> Opens Workspace Selection Space (Customer, Waiter, Kitchen, Manager cards).
+ * 2. Mode Card Chosen:
+ *    - If already signed in: sets role & opens specific workspace UI directly.
+ *    - If signed out: opens Signing Window Modal (Google OAuth / Email OTP / Quick Enter), authenticates & opens specific workspace UI directly.
  */
 
 import { authService } from '../services/authService.js';
@@ -25,9 +26,13 @@ class EntryGatewayModal {
   checkAndShowModal() {
     const path = window.location.pathname;
     const isLanding = path.endsWith('index.html') || path.endsWith('/') || path === '';
+    const urlParams = new URLSearchParams(window.location.search);
+    const forceGateway = urlParams.get('gateway') === '1';
 
-    if (isLanding && !sessionStorage.getItem('rest_os_gateway_dismissed')) {
-      this.renderModal();
+    if (isLanding) {
+      if (forceGateway || (!authService.user && !sessionStorage.getItem('rest_os_gateway_dismissed'))) {
+        this.renderModal();
+      }
     }
   }
 
@@ -37,6 +42,7 @@ class EntryGatewayModal {
 
     const isSubdir = window.location.pathname.includes('/views/');
     const prefix = isSubdir ? '' : 'src/views/';
+    const currentUser = authService.user;
 
     const modalHtml = `
       <div id="entry-gateway-modal" class="entry-gateway-backdrop" style="display:flex;">
@@ -45,8 +51,12 @@ class EntryGatewayModal {
             <div class="entry-brand-logo">
               <i class="fa-solid fa-utensils"></i>
             </div>
-            <h2 class="entry-modal-title">Choose Your Workspace Mode</h2>
-            <p class="entry-modal-subtitle">Select a mode to enter with real Supabase Auth (Google OAuth / Email OTP)</p>
+            <h2 class="entry-modal-title">Select Workspace Mode</h2>
+            <p class="entry-modal-subtitle">
+              ${currentUser 
+                ? `Signed in as <strong style="color:var(--color-accent-lime);">${currentUser.name}</strong> (${currentUser.role} Mode) · Pick a mode to enter its workspace`
+                : 'Choose your workspace mode to enter with real Supabase Auth (Email OTP / Google OAuth)'}
+            </p>
           </div>
 
           <div class="entry-options-grid">
@@ -137,7 +147,16 @@ class EntryGatewayModal {
     const handleSelectRole = (role, targetPage) => {
       sessionStorage.setItem('rest_os_gateway_dismissed', 'true');
       modal.remove();
-      this.openSigningWindow(role, targetPage);
+
+      if (authService.user) {
+        authService.setUserRole(role);
+        authService.showToast(`Entering ${role} Workspace Mode…`);
+        setTimeout(() => {
+          window.location.href = targetPage;
+        }, 200);
+      } else {
+        this.openSigningWindow(role, targetPage);
+      }
     };
 
     btnCustomer?.addEventListener('click', () => handleSelectRole('Customer', `${prefix}customer.html`));

@@ -78,8 +78,8 @@ class NavbarAuth {
     // Require authentication for all protected operational pages
     if (!authService.user) {
       const isSubdir = path.includes('/views/');
-      const prefix = isSubdir ? '' : 'src/views/';
-      window.location.href = `${prefix}login.html?role=Customer`;
+      const landingUrl = isSubdir ? '../../index.html?gateway=1' : 'index.html?gateway=1';
+      window.location.href = landingUrl;
       return;
     }
 

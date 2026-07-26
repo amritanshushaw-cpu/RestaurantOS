@@ -85,17 +85,30 @@ class AuthService {
     });
   }
 
+  getRoleRedirectUrl(role = 'Customer') {
+    const isSubdir = window.location.pathname.includes('/views/');
+    const prefix = isSubdir ? '' : 'src/views/';
+    switch (role) {
+      case 'Waiter': return `${prefix}pos.html`;
+      case 'Kitchen': return `${prefix}kds.html`;
+      case 'Manager': return `${prefix}analytics.html`;
+      case 'Customer': default: return `${prefix}customer.html`;
+    }
+  }
+
   // Turn a real Supabase session into the same user shape the rest of the
   // app already expects (id/name/email/picture/role/auth_provider).
-  async handleSupabaseSession(session) {
+  async handleSupabaseSession(session, overrideRole = null) {
     const authUser = session.user;
     const meta = authUser.user_metadata || {};
     const provider = authUser.app_metadata?.provider || 'email';
 
-    // Look up the role from the real profiles table (created automatically
-    // by the on_auth_user_created trigger in src/db/auth_schema.sql). Falls
-    // back to the previously chosen role, then Customer.
-    let role = this.user?.role || 'Customer';
+    const pendingRole = localStorage.getItem('rest_os_pending_google_role');
+    const pendingRedirect = localStorage.getItem('rest_os_pending_redirect');
+
+    let role = overrideRole || pendingRole || this.user?.role || 'Customer';
+    if (pendingRole) localStorage.removeItem('rest_os_pending_google_role');
+
     try {
       const { data, error } = await dbEngine.supabase
         .from('profiles')
@@ -122,8 +135,15 @@ class AuthService {
 
     await dbEngine.syncUserProfile(sessionUser);
     this.saveUser(sessionUser);
-    this.showToast(`Signed in as ${sessionUser.name} (${sessionUser.email})`);
+    this.showToast(`Signed in as ${sessionUser.name} (${sessionUser.role} Mode)`);
     this.closeAuthModal();
+
+    if (pendingRedirect) {
+      localStorage.removeItem('rest_os_pending_redirect');
+      setTimeout(() => {
+        window.location.href = pendingRedirect;
+      }, 300);
+    }
   }
 
   // ---------------------------------------------------------------------
@@ -257,10 +277,12 @@ class AuthService {
   // ---------------------------------------------------------------------
 
   async loginWithGoogle(role = 'Customer', targetUrl = null) {
+    const finalTarget = targetUrl || this.getRoleRedirectUrl(role);
+
     // Save the intended role and target redirect in localStorage so we can
     // assign them after OAuth redirect back
     localStorage.setItem('rest_os_pending_google_role', role);
-    if (targetUrl) localStorage.setItem('rest_os_pending_redirect', targetUrl);
+    localStorage.setItem('rest_os_pending_redirect', finalTarget);
 
     // If Supabase is not configured, fall back to demo sign-in and redirect
     if (!dbEngine.supabase || !dbEngine.hasValidSupabaseConfig()) {
@@ -276,17 +298,13 @@ class AuthService {
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(role)}`
       };
       this.saveUser(user);
-      this.showToast(`Demo sign-in as ${user.name} (${role} Mode). Redirecting…`);
-      if (targetUrl) {
-        setTimeout(() => { window.location.href = targetUrl; }, 350);
-      }
+      this.showToast(`Signed in as ${user.name} (${role} Mode). Redirecting…`);
+      setTimeout(() => { window.location.href = finalTarget; }, 350);
       return;
     }
 
     try {
-      const redirectTo = targetUrl
-        ? new URL(targetUrl, window.location.origin).href
-        : window.location.origin + window.location.pathname;
+      const redirectTo = new URL(finalTarget, window.location.origin).href;
 
       const { error } = await dbEngine.supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -337,9 +355,13 @@ class AuthService {
     }
   }
 
-  async verifyEmailOtp(email, token, role = 'Customer') {
+  async verifyEmailOtp(email, token, role = 'Customer', targetUrl = null) {
     const cleanEmail = (email || this.pendingOtpEmail || '').trim();
     const cleanToken = (token || '').trim();
+    const finalTarget = targetUrl || this.getRoleRedirectUrl(role);
+
+    localStorage.setItem('rest_os_pending_google_role', role);
+    localStorage.setItem('rest_os_pending_redirect', finalTarget);
 
     if (!cleanToken) {
       this.showToast('Please enter the 6-digit verification code.');
@@ -360,8 +382,9 @@ class AuthService {
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(cleanEmail)}`
       };
       this.saveUser(user);
-      this.showToast(`Demo verified as ${user.name} (${role} Mode)`);
+      this.showToast(`Demo verified as ${user.name} (${role} Mode). Redirecting…`);
       this.pendingOtpEmail = null;
+      setTimeout(() => { window.location.href = finalTarget; }, 350);
       return { ok: true };
     }
 
