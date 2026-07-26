@@ -256,16 +256,41 @@ class AuthService {
   // Google Authentication (Freeze-Proof Direct Account Authentication)
   // ---------------------------------------------------------------------
 
-  async loginWithGoogle(role = 'Customer') {
-    // Save the intended role in localStorage so we can assign it after OAuth redirect back
+  async loginWithGoogle(role = 'Customer', targetUrl = null) {
+    // Save the intended role and target redirect in localStorage so we can
+    // assign them after OAuth redirect back
     localStorage.setItem('rest_os_pending_google_role', role);
+    if (targetUrl) localStorage.setItem('rest_os_pending_redirect', targetUrl);
+
+    // If Supabase is not configured, fall back to demo sign-in and redirect
+    if (!dbEngine.supabase || !dbEngine.hasValidSupabaseConfig()) {
+      const demoNames = {
+        Customer: 'Alex Mercer', Waiter: 'Sam (Waitstaff)',
+        Kitchen: 'Chef Marco', Manager: 'Director Vance'
+      };
+      const user = {
+        id: 'google-demo-' + Date.now(),
+        name: demoNames[role] || `${role} Guest`,
+        email: `${role.toLowerCase()}@restaurantos.demo`,
+        role: role,
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(role)}`
+      };
+      this.saveUser(user);
+      this.showToast(`Demo sign-in as ${user.name} (${role} Mode). Redirecting…`);
+      if (targetUrl) {
+        setTimeout(() => { window.location.href = targetUrl; }, 350);
+      }
+      return;
+    }
 
     try {
+      const redirectTo = targetUrl
+        ? new URL(targetUrl, window.location.origin).href
+        : window.location.origin + window.location.pathname;
+
       const { error } = await dbEngine.supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: {
-          redirectTo: window.location.origin + window.location.pathname
-        }
+        options: { redirectTo }
       });
 
       if (error) {
@@ -285,6 +310,13 @@ class AuthService {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
       this.showToast('Enter a valid email address first.');
       return { ok: false, reason: 'invalid_email' };
+    }
+
+    // Demo fallback when Supabase isn't configured
+    if (!dbEngine.supabase || !dbEngine.hasValidSupabaseConfig()) {
+      this.pendingOtpEmail = cleanEmail;
+      this.showToast(`Demo mode — use code 123456 for ${cleanEmail}`);
+      return { ok: true };
     }
 
     try {
@@ -312,6 +344,25 @@ class AuthService {
     if (!cleanToken) {
       this.showToast('Please enter the 6-digit verification code.');
       return { ok: false, reason: 'missing_token' };
+    }
+
+    // Demo fallback when Supabase isn't configured
+    if (!dbEngine.supabase || !dbEngine.hasValidSupabaseConfig()) {
+      if (cleanToken !== '123456') {
+        this.showToast('Invalid demo code. Use 123456.');
+        return { ok: false, reason: 'invalid_code' };
+      }
+      const user = {
+        id: 'email-demo-' + Date.now(),
+        name: cleanEmail.split('@')[0],
+        email: cleanEmail,
+        role: role,
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(cleanEmail)}`
+      };
+      this.saveUser(user);
+      this.showToast(`Demo verified as ${user.name} (${role} Mode)`);
+      this.pendingOtpEmail = null;
+      return { ok: true };
     }
 
     try {

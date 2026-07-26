@@ -356,7 +356,11 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.querySelector('.js-account')?.addEventListener('click', () => {
     if (!authService.user) {
-      authService.loginWithGoogle();
+      if (window.entryGatewayModal) {
+        window.entryGatewayModal.renderModal(true);
+      } else {
+        authService.loginWithGoogle('Customer', window.location.href);
+      }
     } else {
       document.getElementById('sentry-google-auth-widget')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       authService.showToast(`Signed in as ${authService.user.name} (${authService.user.role} Role)`);
