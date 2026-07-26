@@ -1,0 +1,828 @@
+diff --git a/src/app.js b/src/app.js
+index 0fe1e65..442fcff 100644
+--- a/src/app.js
++++ b/src/app.js
+@@ -5,6 +5,7 @@
+ 
+ import { detectCardBrand, formatCardNumber, formatExpiryDate } from './utils/validation.js';
+ import { PaymentEngine } from './services/paymentEngine.js';
++import { dbEngine } from './services/supabaseClient.js';
+ 
+ document.addEventListener('DOMContentLoaded', () => {
+   const engine = new PaymentEngine();
+@@ -34,6 +35,75 @@ document.addEventListener('DOMContentLoaded', () => {
+   const receiptContainer = document.getElementById('receipt-container');
+   const btnResetPayment = document.getElementById('btn-reset-payment');
+ 
++  // --- Live Order / Billing Wiring (payment.html only) ---
++  const orderSelect = document.getElementById('order-select');
++  const orderSummaryTitle = document.getElementById('order-summary-title');
++  const orderLineItems = document.getElementById('order-line-items');
++  const orderTotalDisplay = document.getElementById('order-total-display');
++  const payBtnAmount = document.getElementById('pay-btn-amount');
++  const payNowBtn = document.getElementById('pay-now-btn');
++  const receiptAmountEl = document.getElementById('receipt-amount');
++
++  let activeOrder = null;
++
++  function refreshOrderSelector() {
++    if (!orderSelect) return; // Not on the payment page
++
++    const unpaidOrders = dbEngine.getUnpaidOrders();
++    orderSelect.innerHTML = '';
++
++    if (unpaidOrders.length === 0) {
++      orderSelect.innerHTML = `<option value="">No open orders — send one from POS Terminal first</option>`;
++      activeOrder = null;
++      renderOrderSummary(null);
++      if (payNowBtn) payNowBtn.disabled = true;
++      return;
++    }
++
++    unpaidOrders.forEach(order => {
++      const opt = document.createElement('option');
++      opt.value = order.id;
++      opt.textContent = `${order.table_number || 'Takeaway'} — ${order.order_number} ($${parseFloat(order.total).toFixed(2)})`;
++      orderSelect.appendChild(opt);
++    });
++
++    activeOrder = unpaidOrders[0];
++    orderSelect.value = activeOrder.id;
++    renderOrderSummary(activeOrder);
++    if (payNowBtn) payNowBtn.disabled = false;
++  }
++
++  function renderOrderSummary(order) {
++    if (!orderLineItems) return;
++
++    if (!order) {
++      orderSummaryTitle.textContent = 'No Open Orders';
++      orderLineItems.innerHTML = `<p style="font-size: 13px; color: var(--text-tertiary);">Place an order from the POS Terminal, then come back here to collect payment.</p>`;
++      orderTotalDisplay.textContent = '$0.00';
++      if (payBtnAmount) payBtnAmount.textContent = '$0.00';
++      return;
++    }
++
++    orderSummaryTitle.textContent = `${order.table_number || 'Takeaway'} Order Summary`;
++    orderLineItems.innerHTML = order.items.map(item => `
++      <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px;">
++        <span>${item.quantity}x ${item.name}</span>
++        <strong style="font-family: var(--font-mono);">$${(item.price * item.quantity).toFixed(2)}</strong>
++      </div>
++    `).join('');
++
++    const total = parseFloat(order.total).toFixed(2);
++    orderTotalDisplay.textContent = `$${total}`;
++    if (payBtnAmount) payBtnAmount.textContent = `$${total}`;
++  }
++
++  orderSelect?.addEventListener('change', () => {
++    activeOrder = dbEngine.getOrderById(orderSelect.value);
++    renderOrderSummary(activeOrder);
++  });
++
++  refreshOrderSelector();
++
+   // Test Fill Presets
+   document.getElementById('btn-fill-success')?.addEventListener('click', () => {
+     autofillCard('4000 0000 0000 0000', 'Alex Mercer', '12/28', '888');
+@@ -106,14 +176,21 @@ document.addEventListener('DOMContentLoaded', () => {
+   paymentForm.addEventListener('submit', async (e) => {
+     e.preventDefault();
+ 
++    if (orderSelect && !activeOrder) {
++      alert('No open order selected. Send an order from the POS Terminal first.');
++      return;
++    }
++
+     processingModal.classList.add('active');
+ 
++    const amountLabel = activeOrder ? `$${parseFloat(activeOrder.total).toFixed(2)}` : '$0.00';
++
+     const result = await engine.processCardPayment({
+       number: cardNumberInput.value,
+       holder: cardHolderInput.value,
+       expiry: cardExpiryInput.value,
+       cvv: cardCvvInput.value,
+-      amount: '$96.00'
++      amount: amountLabel
+     }, (percent, statusText) => {
+       processingStatus.textContent = statusText;
+     });
+@@ -124,8 +201,10 @@ document.addEventListener('DOMContentLoaded', () => {
+       otpModal.classList.add('active');
+       otpInput.focus();
+     } else if (result.success) {
++      finalizeOrderPayment();
+       showReceipt(true, result.transaction);
+     } else {
++      dbEngine.logPaymentAttempt(false);
+       showReceipt(false, { error: result.error });
+     }
+   });
+@@ -135,12 +214,21 @@ document.addEventListener('DOMContentLoaded', () => {
+     const res = engine.verifyOTP(otpInput.value);
+     if (res.success) {
+       otpModal.classList.remove('active');
++      finalizeOrderPayment();
+       showReceipt(true, res.transaction);
+     } else {
+       alert(res.error);
+     }
+   });
+ 
++  // Mark the real order as PAID and free the table once payment clears
++  function finalizeOrderPayment() {
++    dbEngine.logPaymentAttempt(true);
++    if (activeOrder) {
++      dbEngine.markOrderPaid(activeOrder.id);
++    }
++  }
++
+   // Show Receipt
+   function showReceipt(isSuccess, txnData) {
+     checkoutGrid.style.display = 'none';
+@@ -150,6 +238,8 @@ document.addEventListener('DOMContentLoaded', () => {
+     const title = document.getElementById('receipt-title');
+     const subtitle = document.getElementById('receipt-subtitle');
+     const txId = document.getElementById('receipt-tx-id');
++    const paidAmount = activeOrder ? `$${parseFloat(activeOrder.total).toFixed(2)}` : '$0.00';
++    if (receiptAmountEl) receiptAmountEl.textContent = `${paidAmount} USD`;
+ 
+     if (isSuccess) {
+       icon.className = 'fa-solid fa-circle-check';
+@@ -175,6 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
+     receiptContainer.style.display = 'none';
+     checkoutGrid.style.display = 'grid';
+     paymentForm.reset();
++    refreshOrderSelector();
+     autofillCard('4000 0000 0000 0000', 'Alex Mercer', '12/28', '888');
+   });
+ 
+diff --git a/src/services/supabaseClient.js b/src/services/supabaseClient.js
+index b8841ba..7561136 100644
+--- a/src/services/supabaseClient.js
++++ b/src/services/supabaseClient.js
+@@ -9,7 +9,9 @@ const STORAGE_KEYS = {
+   INVENTORY: 'rest_os_inventory',
+   ORDERS: 'rest_os_orders',
+   QUEUE: 'rest_os_queue',
+-  TABLES: 'rest_os_tables'
++  TABLES: 'rest_os_tables',
++  PAYMENTS: 'rest_os_payments',
++  QUEUE_SEQ: 'rest_os_queue_seq'
+ };
+ 
+ class DynamicDatabaseEngine {
+@@ -57,12 +59,22 @@ class DynamicDatabaseEngine {
+ 
+     if (!localStorage.getItem(STORAGE_KEYS.TABLES)) {
+       localStorage.setItem(STORAGE_KEYS.TABLES, JSON.stringify([
+-        { id: 'tbl-01', table_number: 'Table 01', capacity: 2, status: 'AVAILABLE' },
+-        { id: 'tbl-02', table_number: 'Table 02', capacity: 4, status: 'OCCUPIED' },
+-        { id: 'tbl-03', table_number: 'Table 03', capacity: 4, status: 'AVAILABLE' },
+-        { id: 'tbl-04', table_number: 'Table 04', capacity: 6, status: 'RESERVED' }
++        { id: 'tbl-01', table_number: 'Table 01', capacity: 2, status: 'AVAILABLE', section: 'Patio' },
++        { id: 'tbl-02', table_number: 'Table 02', capacity: 4, status: 'AVAILABLE', section: 'Main Hall' },
++        { id: 'tbl-03', table_number: 'Table 03', capacity: 4, status: 'AVAILABLE', section: 'Main Hall' },
++        { id: 'tbl-04', table_number: 'Table 04', capacity: 6, status: 'AVAILABLE', section: 'Main Hall' },
++        { id: 'tbl-05', table_number: 'Table 05', capacity: 2, status: 'AVAILABLE', section: 'Patio' },
++        { id: 'tbl-06', table_number: 'Table 06', capacity: 8, status: 'AVAILABLE', section: 'Main Hall' }
+       ]));
+     }
++
++    if (!localStorage.getItem(STORAGE_KEYS.PAYMENTS)) {
++      localStorage.setItem(STORAGE_KEYS.PAYMENTS, JSON.stringify([]));
++    }
++
++    if (!localStorage.getItem(STORAGE_KEYS.QUEUE_SEQ)) {
++      localStorage.setItem(STORAGE_KEYS.QUEUE_SEQ, '0');
++    }
+   }
+ 
+   // --- MENU CRUD ---
+@@ -155,6 +167,24 @@ class DynamicDatabaseEngine {
+     return order;
+   }
+ 
++  // Orders that still need to be checked out (excludes already-paid/cancelled tickets)
++  getUnpaidOrders() {
++    return this.getOrders().filter(o => o.status !== 'PAID' && o.status !== 'CANCELLED');
++  }
++
++  getOrderById(orderId) {
++    return this.getOrders().find(o => o.id === orderId) || null;
++  }
++
++  // Mark an order as paid and free up its table
++  markOrderPaid(orderId) {
++    const order = this.updateOrderStatus(orderId, 'PAID');
++    if (order && order.table_id) {
++      this.updateTableStatus(order.table_id, 'CLEANING');
++    }
++    return order;
++  }
++
+   deductInventoryForOrder(items) {
+     if (!items || !Array.isArray(items)) return;
+     const inventory = this.getInventory();
+@@ -208,6 +238,68 @@ class DynamicDatabaseEngine {
+     }
+     return table;
+   }
++
++  // --- PAYMENTS (for real, computed approval-rate analytics) ---
++  logPaymentAttempt(success) {
++    const payments = JSON.parse(localStorage.getItem(STORAGE_KEYS.PAYMENTS) || '[]');
++    payments.push({ success, at: new Date().toISOString() });
++    localStorage.setItem(STORAGE_KEYS.PAYMENTS, JSON.stringify(payments));
++  }
++
++  getPaymentStats() {
++    const payments = JSON.parse(localStorage.getItem(STORAGE_KEYS.PAYMENTS) || '[]');
++    if (payments.length === 0) return { attempts: 0, approvalRate: 100 };
++    const successCount = payments.filter(p => p.success).length;
++    return {
++      attempts: payments.length,
++      approvalRate: parseFloat(((successCount / payments.length) * 100).toFixed(1))
++    };
++  }
++
++  // --- LIVE ANALYTICS (derived entirely from real order/menu/payment state) ---
++  getAnalyticsSummary() {
++    const orders = this.getOrders().filter(o => o.status !== 'CANCELLED');
++    const { categories, items } = this.getMenu();
++    const orderCount = orders.length;
++    const grossRevenue = orders.reduce((sum, o) => sum + parseFloat(o.total || 0), 0);
++    const avgCheck = orderCount > 0 ? grossRevenue / orderCount : 0;
++
++    // Revenue by category, derived from each order's line items
++    const revenueByCategory = {};
++    orders.forEach(order => {
++      (order.items || []).forEach(line => {
++        const menuItem = items.find(i => i.id === line.id || i.name === line.name);
++        const catId = menuItem ? menuItem.category_id : null;
++        const cat = categories.find(c => c.id === catId);
++        const catName = cat ? cat.name : 'Uncategorized';
++        revenueByCategory[catName] = (revenueByCategory[catName] || 0) + (line.price * line.quantity);
++      });
++    });
++
++    let topCategory = categories[0] ? categories[0].name : 'Menu';
++    let topCategoryRevenue = 0;
++    Object.entries(revenueByCategory).forEach(([name, revenue]) => {
++      if (revenue > topCategoryRevenue) {
++        topCategory = name;
++        topCategoryRevenue = revenue;
++      }
++    });
++
++    return {
++      grossRevenue: parseFloat(grossRevenue.toFixed(2)),
++      orderCount,
++      avgCheck: parseFloat(avgCheck.toFixed(2)),
++      topCategory,
++      approvalRate: this.getPaymentStats().approvalRate
++    };
++  }
++
++  // --- VIRTUAL QUEUE POSITION HELPERS ---
++  getQueuePosition(entryId) {
++    const queue = this.getQueue().filter(q => q.status === 'WAITING');
++    const idx = queue.findIndex(q => q.id === entryId);
++    return idx === -1 ? null : idx + 1;
++  }
+ }
+ 
+ export const dbEngine = new DynamicDatabaseEngine();
+diff --git a/src/views/analytics.html b/src/views/analytics.html
+index 4071103..17f83b2 100644
+--- a/src/views/analytics.html
++++ b/src/views/analytics.html
+@@ -89,19 +89,19 @@
+     <div class="metrics-grid">
+       <div class="metric-card">
+         <span style="font-size: 11px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.2px;">Gross Revenue Today</span>
+-        <div class="metric-value">$1,842.50</div>
++        <div class="metric-value" id="metric-revenue">$0.00</div>
+       </div>
+       <div class="metric-card">
+         <span style="font-size: 11px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.2px;">Total Orders Fulfilled</span>
+-        <div class="metric-value" style="color: #fff;">42 Orders</div>
++        <div class="metric-value" style="color: #fff;" id="metric-orders">0 Orders</div>
+       </div>
+       <div class="metric-card">
+         <span style="font-size: 11px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.2px;">Average Table Check</span>
+-        <div class="metric-value" style="color: #10b981;">$43.86</div>
++        <div class="metric-value" style="color: #10b981;" id="metric-avg-check">$0.00</div>
+       </div>
+       <div class="metric-card">
+         <span style="font-size: 11px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.2px;">Payment Approval Rate</span>
+-        <div class="metric-value" style="color: var(--color-accent-violet);">98.4%</div>
++        <div class="metric-value" style="color: var(--color-accent-violet);" id="metric-approval">—</div>
+       </div>
+     </div>
+ 
+@@ -113,22 +113,43 @@
+         <span class="badge sandbox-badge" style="margin-left: auto;">Gemini 2.5 Active</span>
+       </div>
+       <p style="font-size: 15px; line-height: 1.6; color: var(--text-primary); margin-bottom: 16px;" id="ai-summary">
+-        Today's gross revenue reached <strong>$1,842.50</strong>, led by strong customer demand in <strong>Signature Starters & Steaks</strong>.
++        Analyzing live order data...
+       </p>
+       <div style="background: var(--color-primary); padding: 16px; border-radius: var(--radius-md); border-left: 4px solid var(--color-accent-lime); font-size: 13px; color: var(--text-secondary);">
+         <i class="fa-solid fa-lightbulb" style="color: var(--color-accent-lime); margin-right: 6px;"></i>
+-        <strong id="ai-tip" style="color: var(--text-primary);">Gemini AI Recommendation:</strong> Run a 10% promotional beverage bundle on Wagyu Sliders & Artisanal Cocktails during dinner rush (7 PM - 9 PM) to boost ticket sizes by an estimated 14%.
++        <strong id="ai-tip" style="color: var(--text-primary);">Gemini AI Recommendation:</strong> <span id="ai-tip-text">Crunching today's numbers...</span>
+       </div>
+     </div>
+   </main>
+ 
+   <script type="module">
+     import { geminiService } from '../services/geminiService.js';
+-    document.addEventListener('DOMContentLoaded', async () => {
+-      const insight = await geminiService.generateDailyRevenueInsight(1842.50, 'Mains & Steaks');
++    import { dbEngine } from '../services/supabaseClient.js';
++
++    async function renderAnalytics() {
++      const summary = dbEngine.getAnalyticsSummary();
++
++      document.getElementById('metric-revenue').textContent = `$${summary.grossRevenue.toFixed(2)}`;
++      document.getElementById('metric-orders').textContent = `${summary.orderCount} Orders`;
++      document.getElementById('metric-avg-check').textContent = `$${summary.avgCheck.toFixed(2)}`;
++      document.getElementById('metric-approval').textContent = summary.orderCount > 0 || dbEngine.getPaymentStats().attempts > 0
++        ? `${summary.approvalRate}%`
++        : 'No data yet';
++
++      if (summary.orderCount === 0) {
++        document.getElementById('ai-summary').innerHTML = `No orders have been placed yet today. Head to the <strong>POS Terminal</strong> to send an order and analytics will populate live.`;
++        document.getElementById('ai-tip-text').textContent = 'Insights will appear once real order data is available.';
++        return;
++      }
++
++      const insight = await geminiService.generateDailyRevenueInsight(summary.grossRevenue, summary.topCategory);
+       document.getElementById('ai-summary').innerHTML = insight.summary;
+-      document.getElementById('ai-tip').textContent = insight.aiTip;
+-    });
++      document.getElementById('ai-tip-text').textContent = insight.aiTip.replace('Gemini AI Recommendation: ', '');
++    }
++
++    document.addEventListener('DOMContentLoaded', renderAnalytics);
++    // Keep the dashboard live as new orders/payments come in from other tabs (POS, KDS, Payment)
++    setInterval(renderAnalytics, 4000);
+   </script>
+ </body>
+ </html>
+diff --git a/src/views/digital_twin.html b/src/views/digital_twin.html
+index 026dd25..efcdcdf 100644
+--- a/src/views/digital_twin.html
++++ b/src/views/digital_twin.html
+@@ -103,77 +103,99 @@
+           <i class="fa-solid fa-heart-pulse"></i> Operational Bottleneck Detection Engine
+         </div>
+         <h2 style="font-family: var(--font-display); font-size: 24px; font-weight: 700; margin-bottom: 6px;">Restaurant Operational Health Score</h2>
+-        <p style="font-size: 14px; color: var(--text-secondary);">Kitchen prep efficiency is optimal. Minor 6 min delay detected at Table 04 during payment billing.</p>
++        <p style="font-size: 14px; color: var(--text-secondary);" id="health-detail">Loading live floor status...</p>
+       </div>
+-      <div class="score-circle">86/100</div>
++      <div class="score-circle" id="health-score">--/100</div>
+     </div>
+ 
+     <!-- Digital Twin Floor Plan Map -->
+     <h3 style="font-family: var(--font-display); font-size: 20px; font-weight: 700; margin-bottom: 20px;">
+-      <i class="fa-solid fa-map-location-dot" style="color: var(--color-accent-lime);"></i> Live Floor Plan (6 Active Dining Tables)
++      <i class="fa-solid fa-map-location-dot" style="color: var(--color-accent-lime);"></i> <span id="floorplan-heading">Live Floor Plan</span>
+     </h3>
+ 
+-    <div class="floorplan-grid">
+-      <!-- Table 01 -->
+-      <div class="table-twin-card status-available">
+-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+-          <strong style="font-family: var(--font-display); font-size: 18px;">Table 01</strong>
+-          <span class="badge sandbox-badge">AVAILABLE</span>
+-        </div>
+-        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Capacity: 2 Guests • Section: Patio</p>
+-        <span style="font-size: 11px; color: var(--text-tertiary);">Ready for seating</span>
+-      </div>
+-
+-      <!-- Table 02 -->
+-      <div class="table-twin-card status-occupied">
+-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+-          <strong style="font-family: var(--font-display); font-size: 18px;">Table 02</strong>
+-          <span class="badge" style="background: rgba(250, 127, 170, 0.15); color: var(--color-accent-pink);">OCCUPIED</span>
+-        </div>
+-        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Party of 4 • Order #ORD-4921</p>
+-        <span style="font-size: 11px; color: var(--color-accent-pink); font-weight: 600;">Seated 34 mins ago</span>
+-      </div>
+-
+-      <!-- Table 03 -->
+-      <div class="table-twin-card status-preparing">
+-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+-          <strong style="font-family: var(--font-display); font-size: 18px;">Table 03</strong>
+-          <span class="badge" style="background: rgba(106, 95, 193, 0.2); color: var(--color-accent-violet);">PREPARING</span>
+-        </div>
+-        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Party of 3 • Kitchen KDS Cooking</p>
+-        <span style="font-size: 11px; color: var(--color-accent-violet); font-weight: 600;">Est. Ready: 6 mins</span>
+-      </div>
++    <div class="floorplan-grid" id="floorplan-grid"></div>
++  </main>
+ 
+-      <!-- Table 04 -->
+-      <div class="table-twin-card status-pending">
+-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+-          <strong style="font-family: var(--font-display); font-size: 18px;">Table 04</strong>
+-          <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--color-warning);">PAYMENT PENDING</span>
+-        </div>
+-        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Party of 6 • Bill Printed ($139.00)</p>
+-        <span style="font-size: 11px; color: var(--color-warning); font-weight: 600;">Waiting for payment</span>
+-      </div>
++  <script type="module">
++    import { dbEngine } from '../services/supabaseClient.js';
++
++    const STATUS_META = {
++      AVAILABLE:  { cls: 'status-available', badge: 'badge sandbox-badge', label: 'AVAILABLE' },
++      OCCUPIED:   { cls: 'status-occupied', badge: '', style: 'background: rgba(250, 127, 170, 0.15); color: var(--color-accent-pink);', label: 'OCCUPIED' },
++      PREPARING:  { cls: 'status-preparing', badge: '', style: 'background: rgba(106, 95, 193, 0.2); color: var(--color-accent-violet);', label: 'PREPARING' },
++      PAYMENT_PENDING: { cls: 'status-pending', badge: '', style: 'background: rgba(245, 158, 11, 0.2); color: var(--color-warning);', label: 'PAYMENT PENDING' },
++      CLEANING:   { cls: 'status-cleaning', badge: '', style: 'background: rgba(207, 207, 219, 0.2); color: var(--border-cool);', label: 'CLEANING' },
++      RESERVED:   { cls: 'status-pending', badge: '', style: 'background: rgba(245, 158, 11, 0.2); color: var(--color-warning);', label: 'RESERVED' }
++    };
++
++    function timeAgo(iso) {
++      const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
++      return mins <= 1 ? 'just now' : `${mins} mins ago`;
++    }
+ 
+-      <!-- Table 05 -->
+-      <div class="table-twin-card status-cleaning">
+-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+-          <strong style="font-family: var(--font-display); font-size: 18px;">Table 05</strong>
+-          <span class="badge" style="background: rgba(207, 207, 219, 0.2); color: var(--border-cool);">CLEANING</span>
+-        </div>
+-        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Busser assigned • Table reset</p>
+-        <span style="font-size: 11px; color: var(--border-cool);">Sanitizing surfaces</span>
+-      </div>
++    function renderFloorPlan() {
++      const tables = dbEngine.getTables();
++      const orders = dbEngine.getOrders();
++      const grid = document.getElementById('floorplan-grid');
++
++      document.getElementById('floorplan-heading').textContent = `Live Floor Plan (${tables.length} Active Dining Tables)`;
++      grid.innerHTML = '';
++
++      let availableCount = 0;
++      let paymentPendingCount = 0;
++
++      tables.forEach(table => {
++        // Derive live status from the most recent open order on this table, if any
++        const openOrder = orders.find(o => o.table_id === table.id && o.status !== 'PAID' && o.status !== 'CANCELLED');
++        let liveStatus = table.status;
++        let detail = `Capacity: ${table.capacity} Guests • Section: ${table.section || 'Main Hall'}`;
++        let footnote = liveStatus === 'AVAILABLE' ? 'Ready for seating' : '';
++
++        if (openOrder) {
++          if (openOrder.status === 'READY') {
++            liveStatus = 'PAYMENT_PENDING';
++            detail = `Order ${openOrder.order_number} • Bill Ready ($${parseFloat(openOrder.total).toFixed(2)})`;
++            footnote = 'Waiting for payment';
++          } else if (openOrder.status === 'PREPARING') {
++            liveStatus = 'PREPARING';
++            detail = `Order ${openOrder.order_number} • Kitchen KDS Cooking`;
++            footnote = 'In the kitchen';
++          } else {
++            liveStatus = 'OCCUPIED';
++            detail = `Order ${openOrder.order_number} • Sent ${timeAgo(openOrder.created_at)}`;
++            footnote = `Seated ${timeAgo(openOrder.created_at)}`;
++          }
++        }
++
++        if (liveStatus === 'AVAILABLE') availableCount++;
++        if (liveStatus === 'PAYMENT_PENDING') paymentPendingCount++;
++
++        const meta = STATUS_META[liveStatus] || STATUS_META.AVAILABLE;
++        const card = document.createElement('div');
++        card.className = `table-twin-card ${meta.cls}`;
++        card.innerHTML = `
++          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
++            <strong style="font-family: var(--font-display); font-size: 18px;">${table.table_number}</strong>
++            <span class="${meta.badge}" style="${meta.style || ''}">${meta.label}</span>
++          </div>
++          <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">${detail}</p>
++          <span style="font-size: 11px; color: var(--text-tertiary);">${footnote}</span>
++        `;
++        grid.appendChild(card);
++      });
++
++      // Health score: derived from % available + a penalty for tables stuck waiting on payment
++      const score = Math.max(0, Math.min(100, Math.round(
++        (availableCount / tables.length) * 60 + 40 - (paymentPendingCount * 10)
++      )));
++      document.getElementById('health-score').textContent = `${score}/100`;
++      document.getElementById('health-detail').textContent = paymentPendingCount > 0
++        ? `${paymentPendingCount} table(s) waiting on payment — head to the Payment enclave to clear them.`
++        : 'All active tickets are flowing smoothly through the kitchen.';
++    }
+ 
+-      <!-- Table 06 -->
+-      <div class="table-twin-card status-available">
+-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+-          <strong style="font-family: var(--font-display); font-size: 18px;">Table 06</strong>
+-          <span class="badge sandbox-badge">AVAILABLE</span>
+-        </div>
+-        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Capacity: 8 Guests • Main Hall</p>
+-        <span style="font-size: 11px; color: var(--text-tertiary);">Ready for large group</span>
+-      </div>
+-    </div>
+-  </main>
++    document.addEventListener('DOMContentLoaded', renderFloorPlan);
++    setInterval(renderFloorPlan, 2000);
++  </script>
+ </body>
+ </html>
+diff --git a/src/views/opscopilot.html b/src/views/opscopilot.html
+index 7321a1d..3111882 100644
+--- a/src/views/opscopilot.html
++++ b/src/views/opscopilot.html
+@@ -117,8 +117,8 @@
+       </div>
+ 
+       <div class="chat-history" id="chat-history">
+-        <div class="chat-bubble bubble-copilot">
+-          <strong>OpsCopilot:</strong> Hello Manager! I am analyzing today's operational data. Wagyu Beef Sliders are your top seller. Chicken stock is estimated to run out by 8:30 PM. How can I assist your dinner service?
++        <div class="chat-bubble bubble-copilot" id="copilot-greeting">
++          <strong>OpsCopilot:</strong> Hello Manager! Analyzing today's operational data...
+         </div>
+       </div>
+ 
+@@ -141,8 +141,47 @@
+ 
+   <script type="module">
+     import { geminiService } from '../services/geminiService.js';
++    import { dbEngine } from '../services/supabaseClient.js';
++
++    // Build a generalized snapshot of live restaurant state — no hardcoded numbers or item names
++    function getLiveContext() {
++      const inventory = dbEngine.getInventory();
++      const lowStock = inventory
++        .filter(i => i.quantity <= i.threshold)
++        .sort((a, b) => (a.quantity / (a.threshold || 1)) - (b.quantity / (b.threshold || 1)));
++
++      const summary = dbEngine.getAnalyticsSummary();
++      const { items } = dbEngine.getMenu();
++      const orders = dbEngine.getOrders();
++
++      // Top seller derived from actual quantities sold across all orders
++      const soldQty = {};
++      orders.forEach(o => (o.items || []).forEach(line => {
++        soldQty[line.name] = (soldQty[line.name] || 0) + line.quantity;
++      }));
++      let topSeller = null, topSellerQty = 0;
++      Object.entries(soldQty).forEach(([name, qty]) => {
++        if (qty > topSellerQty) { topSeller = name; topSellerQty = qty; }
++      });
++
++      return { inventory, lowStock, summary, items, topSeller, topSellerQty };
++    }
++
++    function renderGreeting() {
++      const ctx = getLiveContext();
++      const greeting = document.getElementById('copilot-greeting');
++      const topSellerLine = ctx.topSeller
++        ? `${ctx.topSeller} is your top seller so far today.`
++        : `No orders yet today — I'll surface trends as they come in.`;
++      const stockLine = ctx.lowStock.length > 0
++        ? `Heads up: ${ctx.lowStock[0].name} is running low (${ctx.lowStock[0].quantity} ${ctx.lowStock[0].unit} left).`
++        : `All ingredients are above their restock threshold right now.`;
++      greeting.innerHTML = `<strong>OpsCopilot:</strong> Hello Manager! ${topSellerLine} ${stockLine} How can I assist your dinner service?`;
++    }
+ 
+     document.addEventListener('DOMContentLoaded', () => {
++      renderGreeting();
++
+       const history = document.getElementById('chat-history');
+       const form = document.getElementById('copilot-form');
+       const input = document.getElementById('copilot-input');
+@@ -168,17 +207,31 @@
+         input.value = '';
+         history.scrollTop = history.scrollHeight;
+ 
+-        // Simulated AI Response
+-        setTimeout(() => {
++        const lowerText = text.toLowerCase();
++        const ctx = getLiveContext();
++
++        setTimeout(async () => {
+           const aiB = document.createElement('div');
+           aiB.className = 'chat-bubble bubble-copilot';
+-          
+-          if (text.includes('prepare') || text.includes('tonight')) {
+-            aiB.innerHTML = `<strong>OpsCopilot:</strong> Based on 50+ historical Friday orders and 4 active reservations, prepare 15kg Wagyu beef, 8kg Ribeye steaks, and restock 12 bottles of Smoked Bourbon. Expected peak: 7:30 PM - 9:00 PM.`;
+-          } else if (text.includes('sell out')) {
+-            aiB.innerHTML = `<strong>OpsCopilot:</strong> High risk of stockout for: 1. Wagyu Beef Sliders (8 units remaining), 2. Truffle Fries (5 units remaining). Recommended action: Restock before 7:00 PM.`;
++
++          if (lowerText.includes('prepare') || lowerText.includes('tonight')) {
++            if (ctx.topSeller) {
++              const pairing = await geminiService.getPairingRecommendation(ctx.topSeller);
++              aiB.innerHTML = `<strong>OpsCopilot:</strong> Based on today's ${ctx.summary.orderCount} order(s), ${ctx.topSeller} (${ctx.topSellerQty} sold) is leading demand. Consider prepping extra stock and pairing it with ${pairing.side} and ${pairing.beverage}.`;
++            } else {
++              aiB.innerHTML = `<strong>OpsCopilot:</strong> No orders have come in yet today, so I don't have a demand signal. Once the POS Terminal sends tickets, I'll recommend prep priorities.`;
++            }
++          } else if (lowerText.includes('sell out') || lowerText.includes('stock')) {
++            if (ctx.lowStock.length > 0) {
++              const list = ctx.lowStock.slice(0, 3).map((i, idx) => `${idx + 1}. ${i.name} (${i.quantity} ${i.unit} left, threshold ${i.threshold})`).join(', ');
++              aiB.innerHTML = `<strong>OpsCopilot:</strong> High risk of stockout for: ${list}. Recommended action: restock before the dinner rush.`;
++            } else {
++              aiB.innerHTML = `<strong>OpsCopilot:</strong> Good news — every ingredient is currently above its restock threshold. No stockout risk detected.`;
++            }
++          } else if (lowerText.includes('waste')) {
++            aiB.innerHTML = `<strong>OpsCopilot:</strong> To reduce waste, prep perishables in smaller batches matched to today's ${ctx.summary.orderCount}-order pace, and rotate ${ctx.inventory[0]?.name || 'high-turnover ingredients'} using first-in-first-out storage.`;
+           } else {
+-            aiB.innerHTML = `<strong>OpsCopilot:</strong> Live Data Insight: Average check is $43.86 across 42 orders today. Kitchen prep time is optimal at 14 minutes per order.`;
++            aiB.innerHTML = `<strong>OpsCopilot:</strong> Live Data Insight: Average check is $${ctx.summary.avgCheck.toFixed(2)} across ${ctx.summary.orderCount} order(s) today, with gross revenue of $${ctx.summary.grossRevenue.toFixed(2)}.`;
+           }
+ 
+           history.appendChild(aiB);
+diff --git a/src/views/payment.html b/src/views/payment.html
+index 069394a..72fa88d 100644
+--- a/src/views/payment.html
++++ b/src/views/payment.html
+@@ -97,20 +97,18 @@
+         </div>
+ 
+         <div class="order-summary-box">
+-          <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 16px;"><i class="fa-solid fa-receipt" style="color: var(--color-accent-lime);"></i> Table #08 Order Summary</h3>
+-          <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px;">
+-            <span>2x Wagyu Gourmet Burger</span> <strong style="font-family: var(--font-mono);">$48.00</strong>
+-          </div>
+-          <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px;">
+-            <span>1x Truffle Fries & Aioli</span> <strong style="font-family: var(--font-mono);">$16.00</strong>
+-          </div>
+-          <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px;">
+-            <span>2x Signature Craft Cocktails</span> <strong style="font-family: var(--font-mono);">$32.00</strong>
++          <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 16px;"><i class="fa-solid fa-receipt" style="color: var(--color-accent-lime);"></i> <span id="order-summary-title">Select an Order to Pay</span></h3>
++
++          <div class="form-group" style="margin-bottom: 16px;">
++            <label for="order-select">Open Table / Order</label>
++            <select id="order-select" style="width: 100%; padding: 10px 14px; background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-sm); color: #fff; font-family: var(--font-sans); outline: none;"></select>
+           </div>
++
++          <div id="order-line-items"></div>
+           <div style="height: 1px; background: var(--border-violet); margin: 14px 0;"></div>
+           <div style="display: flex; justify-content: space-between; align-items: center;">
+             <span style="font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 0.2px;">Total Amount</span>
+-            <span style="font-size: 24px; font-weight: 700; color: var(--color-accent-lime); font-family: var(--font-mono);">$96.00</span>
++            <span style="font-size: 24px; font-weight: 700; color: var(--color-accent-lime); font-family: var(--font-mono);" id="order-total-display">$0.00</span>
+           </div>
+         </div>
+       </section>
+@@ -158,7 +156,7 @@
+           </div>
+ 
+           <button type="submit" class="pay-btn" id="pay-now-btn">
+-            Pay $96.00 Now <i class="fa-solid fa-arrow-right"></i>
++            Pay <span id="pay-btn-amount">$0.00</span> Now <i class="fa-solid fa-arrow-right"></i>
+           </button>
+         </form>
+       </section>
+@@ -194,7 +192,7 @@
+             <span>Transaction ID:</span> <strong id="receipt-tx-id" style="font-family: var(--font-mono);">REST-TXN-12345678-TEST</strong>
+           </div>
+           <div style="display: flex; justify-content: space-between;">
+-            <span>Amount Paid:</span> <strong style="color: var(--color-accent-lime); font-family: var(--font-mono);">$96.00 USD</strong>
++            <span>Amount Paid:</span> <strong id="receipt-amount" style="color: var(--color-accent-lime); font-family: var(--font-mono);">$0.00 USD</strong>
+           </div>
+         </div>
+ 
+diff --git a/src/views/queue.html b/src/views/queue.html
+index c950d28..18a88ef 100644
+--- a/src/views/queue.html
++++ b/src/views/queue.html
+@@ -67,23 +67,33 @@
+       <section class="queue-box" style="text-align: center;">
+         <i class="fa-solid fa-clock" style="font-size: 36px; color: var(--color-accent-lime); margin-bottom: 12px;"></i>
+         <h2 style="font-family: var(--font-display); font-size: 22px; font-weight: 700;">Virtual Line Status</h2>
+-        <p style="font-size: 13px; color: var(--text-secondary);">You are currently in the remote waiting line</p>
++        <p style="font-size: 13px; color: var(--text-secondary);" id="queue-empty-msg">Join the queue to see your live position</p>
+ 
+-        <div class="queue-number" id="queue-position">Position #03</div>
+-        <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(194, 239, 78, 0.12); border: 1px solid rgba(194, 239, 78, 0.3); color: var(--color-accent-lime); padding: 8px 16px; border-radius: var(--radius-xl); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.2px; margin-bottom: 24px;">
+-          <i class="fa-solid fa-hourglass-half"></i> Est. Wait Time: ~12 mins
+-        </div>
+-
+-        <div style="background: var(--color-primary); border: 1px solid var(--border-violet); padding: 16px; border-radius: var(--radius-md); text-align: left; font-size: 13px;">
+-          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+-            <span style="color: var(--text-secondary);">Diner Name:</span> <strong>Alex Mercer</strong>
+-          </div>
+-          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+-            <span style="color: var(--text-secondary);">Party Size:</span> <strong>4 Guests</strong>
++        <div id="queue-status-block" style="display: none;">
++          <div class="queue-number" id="queue-position">Position #--</div>
++          <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(194, 239, 78, 0.12); border: 1px solid rgba(194, 239, 78, 0.3); color: var(--color-accent-lime); padding: 8px 16px; border-radius: var(--radius-xl); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.2px; margin-bottom: 24px;">
++            <i class="fa-solid fa-hourglass-half"></i> <span id="queue-wait-time">Est. Wait Time: -- mins</span>
+           </div>
+-          <div style="display: flex; justify-content: space-between;">
+-            <span style="color: var(--text-secondary);">Seating Preference:</span> <strong>Main Dining Hall</strong>
++
++          <div style="background: var(--color-primary); border: 1px solid var(--border-violet); padding: 16px; border-radius: var(--radius-md); text-align: left; font-size: 13px;">
++            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
++              <span style="color: var(--text-secondary);">Diner Name:</span> <strong id="queue-diner-name">--</strong>
++            </div>
++            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
++              <span style="color: var(--text-secondary);">Party Size:</span> <strong id="queue-party-size">--</strong>
++            </div>
++            <div style="display: flex; justify-content: space-between;">
++              <span style="color: var(--text-secondary);">Status:</span> <strong id="queue-status-label">WAITING</strong>
++            </div>
+           </div>
++          <button type="button" class="btn-chip" id="btn-leave-queue" style="margin-top: 14px;"><i class="fa-solid fa-xmark"></i> Leave Queue</button>
++        </div>
++
++        <div style="margin-top: 28px; text-align: left;">
++          <h4 style="font-family: var(--font-display); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2px; color: var(--text-secondary); margin-bottom: 10px;">
++            <i class="fa-solid fa-people-line"></i> Full Waiting List (Host Stand View)
++          </h4>
++          <div id="full-queue-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+         </div>
+       </section>
+ 
+@@ -120,11 +130,78 @@
+   </main>
+ 
+   <script type="module">
++    import { dbEngine } from '../services/supabaseClient.js';
++
++    const MY_ENTRY_KEY = 'rest_os_my_queue_entry';
++    const MINS_PER_PARTY = 5; // rough estimated turnover time used to project wait
++
++    function renderQueue() {
++      const queue = dbEngine.getQueue().filter(q => q.status === 'WAITING');
++      const listEl = document.getElementById('full-queue-list');
++      const emptyMsg = document.getElementById('queue-empty-msg');
++      const statusBlock = document.getElementById('queue-status-block');
++
++      // Full waiting list (host-stand view)
++      if (queue.length === 0) {
++        listEl.innerHTML = `<p style="font-size: 12px; color: var(--text-tertiary);">Queue is empty.</p>`;
++      } else {
++        listEl.innerHTML = queue.map((q, idx) => `
++          <div style="display: flex; justify-content: space-between; align-items: center; background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 13px;">
++            <span>#${idx + 1} &nbsp; <strong>${q.name}</strong> &nbsp; <span style="color: var(--text-secondary);">(${q.party_size} guests)</span></span>
++            <button type="button" class="btn-chip btn-chip-lime btn-seat-entry" data-id="${q.id}" style="padding: 4px 10px; font-size: 11px;">Seat Now</button>
++          </div>
++        `).join('');
++
++        listEl.querySelectorAll('.btn-seat-entry').forEach(btn => {
++          btn.addEventListener('click', () => {
++            dbEngine.removeFromQueue(btn.getAttribute('data-id'));
++            renderQueue();
++          });
++        });
++      }
++
++      // My personal position card
++      const myEntryId = sessionStorage.getItem(MY_ENTRY_KEY);
++      const myEntry = myEntryId ? queue.find(q => q.id === myEntryId) : null;
++
++      if (myEntry) {
++        const position = dbEngine.getQueuePosition(myEntry.id);
++        emptyMsg.style.display = 'none';
++        statusBlock.style.display = 'block';
++        document.getElementById('queue-position').textContent = `Position #${String(position).padStart(2, '0')}`;
++        document.getElementById('queue-wait-time').textContent = `Est. Wait Time: ~${position * MINS_PER_PARTY} mins`;
++        document.getElementById('queue-diner-name').textContent = myEntry.name;
++        document.getElementById('queue-party-size').textContent = `${myEntry.party_size} Guests`;
++      } else {
++        sessionStorage.removeItem(MY_ENTRY_KEY);
++        emptyMsg.style.display = 'block';
++        statusBlock.style.display = 'none';
++      }
++    }
++
+     document.getElementById('queue-form').addEventListener('submit', (e) => {
+       e.preventDefault();
+-      const name = document.getElementById('q-name').value;
+-      alert(`Success! ${name}, you have been added to the virtual queue at Position #04 (~15 mins wait).`);
++      const name = document.getElementById('q-name').value.trim();
++      const partySize = parseInt(document.getElementById('q-size').value, 10);
++      if (!name) return;
++
++      const entry = dbEngine.joinQueue({ name, party_size: partySize });
++      sessionStorage.setItem(MY_ENTRY_KEY, entry.id);
++      document.getElementById('queue-form').reset();
++      renderQueue();
+     });
++
++    document.getElementById('btn-leave-queue').addEventListener('click', () => {
++      const myEntryId = sessionStorage.getItem(MY_ENTRY_KEY);
++      if (myEntryId) {
++        dbEngine.removeFromQueue(myEntryId);
++        sessionStorage.removeItem(MY_ENTRY_KEY);
++      }
++      renderQueue();
++    });
++
++    document.addEventListener('DOMContentLoaded', renderQueue);
++    setInterval(renderQueue, 2000);
+   </script>
+ </body>
+ </html>

@@ -1,0 +1,817 @@
+diff --git a/index.html b/index.html
+index 36d6916..7f08018 100644
+--- a/index.html
++++ b/index.html
+@@ -398,6 +398,7 @@
+   </main>
+ 
+   <!-- Supabase & Google Identity Services & Auth Modules -->
++  <script src="src/config.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+   <script src="https://accounts.google.com/gsi/client" async defer></script>
+   <script type="module" src="src/services/supabaseClient.js"></script>
+diff --git a/src/services/authService.js b/src/services/authService.js
+index e446fbe..dd5f48b 100644
+--- a/src/services/authService.js
++++ b/src/services/authService.js
+@@ -1,6 +1,17 @@
+ /**
+- * RestaurantOS - Google Authentication Service
+- * Handles Google Identity Services (GIS) OAuth 2.0 & Session Management
++ * RestaurantOS - Authentication Service
++ * Real Google OAuth (via Supabase Auth) + real email OTP verification.
++ * No fake/demo account picker -- every sign-in goes through Supabase's
++ * actual GoTrue backend when configured (see src/config.js).
++ *
++ * Public API is unchanged from the previous version so navbarAuth.js and
++ * entryModal.js work without modification:
++ *   authService.user, .ensureCustomerSession(), .getActiveRole(),
++ *   .canAccessPage(), .loginWithGoogle(), .logout(), .setUserRole(),
++ *   .onAuthStateChanged()
++ *
++ * New methods added for email OTP verification:
++ *   .sendEmailOtp(email), .verifyEmailOtp(email, token)
+  */
+ 
+ import { dbEngine } from './supabaseClient.js';
+@@ -39,20 +50,95 @@ class AuthService {
+   constructor() {
+     this.user = this.loadStoredUser();
+     this.listeners = [];
+-    this.clientId = window.GOOGLE_CLIENT_ID || '1084920491823-restos-demo.apps.googleusercontent.com';
+-    this.initGIS();
++    this.clientId = window.GOOGLE_CLIENT_ID || '';
++    this.pendingOtpEmail = null;
++    this.initSupabaseSessionSync();
+   }
+ 
+-  // Ensure Customer session state exists and is active
++  // ---------------------------------------------------------------------
++  // Real backend session sync
++  // ---------------------------------------------------------------------
++
++  // If Supabase is configured, keep authService.user in lockstep with the
++  // real GoTrue session -- this is what makes Google OAuth, email OTP, and
++  // page refreshes all behave consistently instead of relying on a
++  // separate locally-faked login state.
++  initSupabaseSessionSync() {
++    if (!dbEngine.supabase || !dbEngine.hasValidSupabaseConfig()) {
++      if (!dbEngine.supabase) {
++        console.info('RestaurantOS: Supabase not configured (src/config.js is empty). Running in local demo mode -- Google/OTP sign-in will show a setup notice instead of failing silently.');
++      }
++      return;
++    }
++
++    // Restore any existing real session (e.g. after an OAuth redirect back)
++    dbEngine.supabase.auth.getSession().then(({ data }) => {
++      if (data?.session?.user) this.handleSupabaseSession(data.session);
++    });
++
++    dbEngine.supabase.auth.onAuthStateChange((event, session) => {
++      if (event === 'SIGNED_IN' && session?.user) {
++        this.handleSupabaseSession(session);
++      } else if (event === 'SIGNED_OUT') {
++        this.saveUser(null);
++      }
++    });
++  }
++
++  // Turn a real Supabase session into the same user shape the rest of the
++  // app already expects (id/name/email/picture/role/auth_provider).
++  async handleSupabaseSession(session) {
++    const authUser = session.user;
++    const meta = authUser.user_metadata || {};
++    const provider = authUser.app_metadata?.provider || 'email';
++
++    // Look up the role from the real profiles table (created automatically
++    // by the on_auth_user_created trigger in src/db/auth_schema.sql). Falls
++    // back to the previously chosen role, then Customer.
++    let role = this.user?.role || 'Customer';
++    try {
++      const { data, error } = await dbEngine.supabase
++        .from('profiles')
++        .select('role, full_name, avatar_url')
++        .eq('id', authUser.id)
++        .single();
++      if (!error && data) {
++        role = data.role || role;
++      }
++    } catch (e) {
++      console.warn('Profile lookup notice:', e.message);
++    }
++
++    const sessionUser = {
++      id: authUser.id,
++      name: meta.full_name || meta.name || authUser.email.split('@')[0],
++      email: authUser.email,
++      picture: meta.avatar_url || meta.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(authUser.email)}`,
++      role,
++      auth_provider: provider,
++      email_verified: !!authUser.email_confirmed_at,
++      signed_in_at: new Date().toISOString()
++    };
++
++    await dbEngine.syncUserProfile(sessionUser);
++    this.saveUser(sessionUser);
++    this.showToast(`Signed in as ${sessionUser.name} (${sessionUser.email})`);
++    this.closeAuthModal();
++  }
++
++  // ---------------------------------------------------------------------
++  // Session state (unchanged from previous version)
++  // ---------------------------------------------------------------------
++
+   ensureCustomerSession() {
+     if (!this.user || this.user.role !== 'Customer') {
+       const customerUser = {
+         id: `cust_${Date.now()}`,
+-        name: this.user ? this.user.name : 'Alex Mercer',
+-        email: this.user ? this.user.email : 'alex.mercer.dev@gmail.com',
+-        picture: this.user ? this.user.picture : 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
++        name: this.user ? this.user.name : 'Guest',
++        email: this.user ? this.user.email : null,
++        picture: this.user ? this.user.picture : `https://api.dicebear.com/7.x/avataaars/svg?seed=guest${Date.now()}`,
+         role: 'Customer',
+-        auth_provider: 'google',
++        auth_provider: 'guest',
+         signed_in_at: new Date().toISOString()
+       };
+       this.saveUser(customerUser);
+@@ -60,14 +146,11 @@ class AuthService {
+     return this.user;
+   }
+ 
+-  // Get active role permissions
+   getActiveRole() {
+     const roleName = this.user ? this.user.role : 'Customer';
+     return ROLE_PERMISSIONS[roleName] || ROLE_PERMISSIONS.Customer;
+   }
+ 
+-
+-  // Check if active role can access page
+   canAccessPage(pagePath) {
+     if (!pagePath) return true;
+     const cleanName = pagePath.split('/').pop().split('?')[0] || 'index.html';
+@@ -77,19 +160,16 @@ class AuthService {
+     return rolePerms.allowedPages.includes(cleanName);
+   }
+ 
+-
+-  // Load user from LocalStorage
+   loadStoredUser() {
+     try {
+       const stored = localStorage.getItem(AUTH_STORAGE_KEY);
+       return stored ? JSON.parse(stored) : null;
+     } catch (e) {
+-      console.error('Error loading Google Auth state:', e);
++      console.error('Error loading auth state:', e);
+       return null;
+     }
+   }
+ 
+-  // Save user to LocalStorage
+   saveUser(user) {
+     this.user = user;
+     if (user) {
+@@ -101,251 +181,99 @@ class AuthService {
+     window.dispatchEvent(new CustomEvent('auth:changed', { detail: { user } }));
+   }
+ 
+-  // Initialize Google Identity Services SDK
+-  initGIS() {
+-    if (typeof window === 'undefined') return;
++  // ---------------------------------------------------------------------
++  // Real Google Sign-In (Supabase OAuth) -- replaces the old fake modal
++  // ---------------------------------------------------------------------
+ 
+-    if (window.google?.accounts?.id) {
+-      this.setupGoogleOneTap();
++  loginWithGoogle() {
++    if (!dbEngine.supabase || !dbEngine.hasValidSupabaseConfig()) {
++      this.showAuthSetupNotice('Google Sign-In');
+       return;
+     }
+-
+-    const existingScript = document.querySelector('script[src*="accounts.google.com/gsi/client"]');
+-    if (existingScript) {
+-      existingScript.addEventListener('load', () => this.setupGoogleOneTap());
+-    } else {
+-      const script = document.createElement('script');
+-      script.id = 'google-gsi-script';
+-      script.src = 'https://accounts.google.com/gsi/client';
+-      script.async = true;
+-      script.defer = true;
+-      script.onload = () => this.setupGoogleOneTap();
+-      document.head.appendChild(script);
+-    }
+-  }
+-
+-  setupGoogleOneTap() {
+-    if (window.google && window.google.accounts && window.google.accounts.id) {
+-      try {
+-        window.google.accounts.id.initialize({
+-          client_id: this.clientId,
+-          callback: (response) => this.handleCredentialResponse(response),
+-          auto_select: false,
+-          cancel_on_tap_outside: true
+-        });
+-      } catch (err) {
+-        console.warn('GIS Client ID initialization notice:', err.message);
+-      }
+-    }
+-  }
+-
+-  // Parse Google JWT ID Token
+-  parseJwt(token) {
+     try {
+-      const base64Url = token.split('.')[1];
+-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+-      const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+-      }).join(''));
+-      return JSON.parse(jsonPayload);
+-    } catch (e) {
+-      console.error('Failed to parse JWT token:', e);
+-      return null;
++      dbEngine.supabase.auth.signInWithOAuth({
++        provider: 'google',
++        options: { redirectTo: window.location.origin + window.location.pathname }
++      });
++      // Browser navigates to Google's real consent screen here; on return,
++      // initSupabaseSessionSync()'s onAuthStateChange listener picks up
++      // the session and calls handleSupabaseSession().
++    } catch (err) {
++      console.warn('Google OAuth redirect notice:', err.message);
++      this.showToast('Could not start Google Sign-In. Check your Supabase Google provider setup.');
+     }
+   }
+ 
+-  // Handle Google OAuth Credential Response
+-  async handleCredentialResponse(response) {
+-    if (!response || !response.credential) return;
+-    const payload = this.parseJwt(response.credential);
+-    if (payload) {
+-      const googleUser = {
+-        id: payload.sub,
+-        name: payload.name || payload.email.split('@')[0],
+-        email: payload.email,
+-        picture: payload.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${payload.email}`,
+-        role: this.user ? this.user.role : 'Customer',
+-        auth_provider: 'google',
+-        signed_in_at: new Date().toISOString()
+-      };
++  // ---------------------------------------------------------------------
++  // Real Email OTP verification
++  // ---------------------------------------------------------------------
+ 
+-      if (dbEngine.supabase) {
+-        try {
+-          const { data, error } = await dbEngine.supabase.auth.signInWithIdToken({
+-            provider: 'google',
+-            token: response.credential
+-          });
+-          if (!error && data?.user) {
+-            googleUser.id = data.user.id;
+-          }
+-        } catch (e) {
+-          console.warn('Supabase ID token sign-in notice:', e.message);
+-        }
+-      }
+-
+-      await dbEngine.syncUserProfile(googleUser);
+-      this.saveUser(googleUser);
+-      this.showToast(`Signed in as ${googleUser.name} (${googleUser.email})`);
++  // Step 1: send a one-time code to the given email via Supabase Auth.
++  async sendEmailOtp(email) {
++    if (!dbEngine.supabase || !dbEngine.hasValidSupabaseConfig()) {
++      this.showAuthSetupNotice('Email OTP verification');
++      return { ok: false, reason: 'not_configured' };
+     }
+-  }
+-
+-  // Trigger Google Sign-In Flow
+-  loginWithGoogle() {
+-    if (dbEngine.supabase && dbEngine.hasValidSupabaseConfig()) {
+-      try {
+-        dbEngine.supabase.auth.signInWithOAuth({
+-          provider: 'google',
+-          options: { redirectTo: window.location.origin + window.location.pathname }
+-        });
+-      } catch (err) {
+-        console.warn('Supabase OAuth redirect notice:', err.message);
+-      }
++    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email || '')) {
++      this.showToast('Enter a valid email address first.');
++      return { ok: false, reason: 'invalid_email' };
+     }
+-
+-    if (window.google?.accounts?.id) {
+-      try {
+-        window.google.accounts.id.prompt();
+-      } catch (err) {
+-        console.warn('GIS prompt notice:', err.message);
++    try {
++      const { error } = await dbEngine.supabase.auth.signInWithOtp({
++        email,
++        options: { shouldCreateUser: true }
++      });
++      if (error) {
++        this.showToast(`Could not send code: ${error.message}`);
++        return { ok: false, reason: error.message };
+       }
++      this.pendingOtpEmail = email;
++      this.showToast(`Verification code sent to ${email}`);
++      return { ok: true };
++    } catch (e) {
++      this.showToast('Could not send verification code. Try again.');
++      return { ok: false, reason: e.message };
+     }
+-    this.showGoogleAuthModal();
+   }
+ 
+-  // Interactive Google OAuth Sign-In Modal (for local dev / hackathon demo)
+-  showGoogleAuthModal() {
+-    const existingModal = document.getElementById('google-auth-modal');
+-    if (existingModal) existingModal.remove();
+-
+-    const modalHtml = `
+-      <div id="google-auth-modal" class="sentry-modal-overlay">
+-        <div class="sentry-modal-content google-auth-modal-card">
+-          <div class="google-modal-header">
+-            <div class="google-logo-icon">
+-              <svg width="24" height="24" viewBox="0 0 24 24">
+-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+-                <path fill="#FBBC05" d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.62z"/>
+-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+-              </svg>
+-            </div>
+-            <div>
+-              <h3 class="google-modal-title">Sign in with Google</h3>
+-              <p class="google-modal-subtitle">Choose an account to continue to <strong>RestaurantOS</strong></p>
+-            </div>
+-            <button class="modal-close-btn" id="close-google-modal">&times;</button>
+-          </div>
+-
+-          <div class="google-accounts-list">
+-            <div class="google-account-item" data-email="saptak.chakroborty@gmail.com" data-name="Saptak Sarathi Chakroborty" data-pic="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150">
+-              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" class="google-acc-avatar" alt="Avatar">
+-              <div class="google-acc-info">
+-                <div class="google-acc-name">Saptak Sarathi Chakroborty</div>
+-                <div class="google-acc-email">saptak.chakroborty@gmail.com</div>
+-              </div>
+-              <span class="badge-google-verified"><i class="fa-solid fa-circle-check"></i> Google</span>
+-            </div>
+-
+-            <div class="google-account-item" data-email="amritanshu.shaw@gmail.com" data-name="Amritanshu Shaw" data-pic="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150">
+-              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150" class="google-acc-avatar" alt="Avatar">
+-              <div class="google-acc-info">
+-                <div class="google-acc-name">Amritanshu Shaw</div>
+-                <div class="google-acc-email">amritanshu.shaw@gmail.com</div>
+-              </div>
+-              <span class="badge-google-verified"><i class="fa-solid fa-circle-check"></i> Google</span>
+-            </div>
+-
+-            <div class="google-account-item" data-email="alex.mercer.dev@gmail.com" data-name="Alex Mercer" data-pic="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150">
+-              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150" class="google-acc-avatar" alt="Avatar">
+-              <div class="google-acc-info">
+-                <div class="google-acc-name">Alex Mercer</div>
+-                <div class="google-acc-email">alex.mercer.dev@gmail.com</div>
+-              </div>
+-              <span class="badge-google-verified"><i class="fa-solid fa-circle-check"></i> Google</span>
+-            </div>
+-          </div>
+-
+-          <div class="google-custom-login-box">
+-            <div class="custom-login-label">Or sign in with custom Google Account:</div>
+-            <div class="custom-login-inputs">
+-              <input type="text" id="custom-google-name" placeholder="Full Name (e.g. Elena Rostova)" class="sentry-input-sm">
+-              <input type="email" id="custom-google-email" placeholder="email@gmail.com" class="sentry-input-sm">
+-              <button id="btn-custom-google-login" class="btn-sentry btn-sentry-sm">
+-                <i class="fa-solid fa-right-to-bracket"></i> Sign In
+-              </button>
+-            </div>
+-          </div>
+-
+-          <div class="google-modal-footer">
+-            <span>Connected to Supabase Backend &amp; Google OAuth 2.0</span>
+-          </div>
+-        </div>
+-      </div>
+-    `;
+-
+-    document.body.insertAdjacentHTML('beforeend', modalHtml);
+-
+-    const modal = document.getElementById('google-auth-modal');
+-    const closeBtn = document.getElementById('close-google-modal');
+-
+-    closeBtn.addEventListener('click', () => modal.remove());
+-    modal.addEventListener('click', (e) => {
+-      if (e.target === modal) modal.remove();
+-    });
+-
+-    // Account list item clicks
+-    modal.querySelectorAll('.google-account-item').forEach(item => {
+-      item.addEventListener('click', () => {
+-        const email = item.getAttribute('data-email');
+-        const name = item.getAttribute('data-name');
+-        const picture = item.getAttribute('data-pic');
+-
+-        const googleUser = {
+-          id: `goog_${Date.now()}`,
+-          name,
+-          email,
+-          picture,
+-          role: 'Manager',
+-          auth_provider: 'google',
+-          signed_in_at: new Date().toISOString()
+-        };
+-
+-        dbEngine.syncUserProfile(googleUser);
+-        this.saveUser(googleUser);
+-        this.showToast(`Signed in with Google as ${name}`);
+-        modal.remove();
++  // Step 2: verify the 6-digit code the user received by email.
++  async verifyEmailOtp(email, token) {
++    if (!dbEngine.supabase || !dbEngine.hasValidSupabaseConfig()) {
++      this.showAuthSetupNotice('Email OTP verification');
++      return { ok: false, reason: 'not_configured' };
++    }
++    try {
++      const { data, error } = await dbEngine.supabase.auth.verifyOtp({
++        email,
++        token,
++        type: 'email'
+       });
+-    });
+-
+-    // Custom login click
+-    document.getElementById('btn-custom-google-login').addEventListener('click', () => {
+-      const nameInput = document.getElementById('custom-google-name').value.trim();
+-      const emailInput = document.getElementById('custom-google-email').value.trim();
+-
+-      if (!emailInput) {
+-        alert('Please enter a valid Gmail address.');
+-        return;
++      if (error || !data?.session) {
++        this.showToast(`Verification failed: ${error ? error.message : 'invalid code'}`);
++        return { ok: false, reason: error ? error.message : 'invalid_code' };
+       }
++      this.pendingOtpEmail = null;
++      await this.handleSupabaseSession(data.session);
++      return { ok: true };
++    } catch (e) {
++      this.showToast('Verification failed. Check the code and try again.');
++      return { ok: false, reason: e.message };
++    }
++  }
+ 
+-      const name = nameInput || emailInput.split('@')[0];
+-      const googleUser = {
+-        id: `goog_${Date.now()}`,
+-        name,
+-        email: emailInput,
+-        picture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(emailInput)}`,
+-        role: 'Customer',
+-        auth_provider: 'google',
+-        signed_in_at: new Date().toISOString()
+-      };
++  showAuthSetupNotice(featureName) {
++    this.showToast(`${featureName} needs Supabase credentials in src/config.js first.`);
++  }
+ 
+-      dbEngine.syncUserProfile(googleUser);
+-      this.saveUser(googleUser);
+-      this.showToast(`Signed in with Google as ${name}`);
+-      modal.remove();
+-    });
++  closeAuthModal() {
++    const modal = document.getElementById('auth-modal');
++    if (modal) modal.remove();
+   }
+ 
+-  // Logout
++  // ---------------------------------------------------------------------
++  // Logout / role switching (unchanged)
++  // ---------------------------------------------------------------------
++
+   logout() {
+     const user = this.user;
+     this.saveUser(null);
+@@ -354,24 +282,18 @@ class AuthService {
+         dbEngine.supabase.auth.signOut();
+       } catch (e) {}
+     }
+-    if (window.google && window.google.accounts && window.google.accounts.id) {
+-      try {
+-        window.google.accounts.id.disableAutoSelect();
+-      } catch (e) {}
+-    }
+     this.showToast(user ? `Signed out ${user.name}` : 'Signed out');
+   }
+ 
+-  // Set active role for the signed in Google user
+   setUserRole(role) {
+     if (this.user) {
+       this.user.role = role;
+       this.saveUser(this.user);
++      dbEngine.syncUserProfile(this.user);
+       this.showToast(`Role updated to ${role}`);
+     }
+   }
+ 
+-  // Helper Toast notification
+   showToast(message) {
+     const existing = document.getElementById('auth-toast');
+     if (existing) existing.remove();
+@@ -391,16 +313,13 @@ class AuthService {
+       </div>
+     `;
+     document.body.appendChild(toast);
+-    setTimeout(() => {
+-      toast.classList.add('show');
+-    }, 10);
++    setTimeout(() => toast.classList.add('show'), 10);
+     setTimeout(() => {
+       toast.classList.remove('show');
+       setTimeout(() => toast.remove(), 300);
+     }, 3500);
+   }
+ 
+-  // Subscription method
+   onAuthStateChanged(callback) {
+     if (typeof callback === 'function') {
+       this.listeners.push(callback);
+diff --git a/src/services/supabaseClient.js b/src/services/supabaseClient.js
+index 9deaf35..bfd9bef 100644
+--- a/src/services/supabaseClient.js
++++ b/src/services/supabaseClient.js
+@@ -15,13 +15,18 @@ const STORAGE_KEYS = {
+ 
+ class DynamicDatabaseEngine {
+   constructor() {
+-    this.supabaseUrl = window.SUPABASE_URL || localStorage.getItem('rest_os_supabase_url') || 'https://xyzrestosproject.supabase.co';
+-    this.supabaseAnonKey = window.SUPABASE_ANON_KEY || localStorage.getItem('rest_os_supabase_key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5enJlc3Rvc3Byb2plY3QiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTY3MDAwMDAwMCwiZXhwIjoyMDgwMDAwMDAwfQ.demo_key_placeholder';
++    // Real credentials come from src/config.js (window.SUPABASE_URL / SUPABASE_ANON_KEY).
++    // No fake project fallback: if unset, the app runs in local-only demo
++    // mode and hasValidSupabaseConfig() reports that honestly instead of
++    // pretending to be connected to a dead placeholder project.
++    this.supabaseUrl = (window.SUPABASE_URL || '').trim();
++    this.supabaseAnonKey = (window.SUPABASE_ANON_KEY || '').trim();
+     this.supabase = this.initSupabaseClient();
+     this.initDefaultState();
+   }
+ 
+   initSupabaseClient() {
++    if (!this.hasValidSupabaseConfig()) return null;
+     if (typeof window !== 'undefined' && window.supabase && typeof window.supabase.createClient === 'function') {
+       try {
+         return window.supabase.createClient(this.supabaseUrl, this.supabaseAnonKey, {
+@@ -38,23 +43,36 @@ class DynamicDatabaseEngine {
+     return null;
+   }
+ 
++  // True only when real credentials are present. This is checked by
++  // authService.js before attempting any real Google/email/OTP auth call,
++  // so the app can clearly communicate "backend not configured" instead of
++  // silently falling back to something that looks connected but isn't.
+   hasValidSupabaseConfig() {
+-    return !!(this.supabaseUrl && !this.supabaseUrl.includes('xyzrestosproject') && this.supabaseAnonKey && !this.supabaseAnonKey.includes('demo_key_placeholder'));
++    return !!(this.supabaseUrl && /^https:\/\/.+\.supabase\.co$/.test(this.supabaseUrl) && this.supabaseAnonKey && this.supabaseAnonKey.length > 20);
+   }
+ 
++  // Generalized profile sync -- matches the real `profiles` table defined
++  // in src/db/auth_schema.sql. Works for any restaurant/user, not tied to
++  // demo data. Note: for Google/email/OTP sign-in, Supabase's own
++  // on_auth_user_created trigger already creates the profile row
++  // automatically; this call is what keeps role/name updates (e.g. a role
++  // switch in the navbar) written back to the same row afterwards.
+   async syncUserProfile(user) {
+     if (!user) return;
+     localStorage.setItem('rest_os_user_profile', JSON.stringify(user));
+     if (this.supabase && this.hasValidSupabaseConfig()) {
+       try {
+-        await this.supabase.from('profiles').upsert({
++        const { error } = await this.supabase.from('profiles').upsert({
+           id: user.id,
+           email: user.email,
+           full_name: user.name,
+-          avatar_url: user.picture,
++          avatar_url: user.picture || null,
+           role: user.role,
++          auth_provider: user.auth_provider || 'email',
++          email_verified: user.email_verified !== false,
+           updated_at: new Date().toISOString()
+-        });
++        }, { onConflict: 'id' });
++        if (error) console.warn('Supabase profile sync error:', error.message);
+       } catch (e) {
+         console.warn('Supabase profile sync notice:', e.message);
+       }
+@@ -171,15 +189,26 @@ class DynamicDatabaseEngine {
+     }
+ 
+     if (!localStorage.getItem(STORAGE_KEYS.TABLES)) {
+-      localStorage.setItem(STORAGE_KEYS.TABLES, JSON.stringify([
+-        { id: 'tbl-01', table_number: 'Table 01', capacity: 2, status: 'AVAILABLE', section: 'Patio' },
+-        { id: 'tbl-02', table_number: 'Table 02', capacity: 4, status: 'OCCUPIED', section: 'Main Hall' },
+-        { id: 'tbl-03', table_number: 'Table 03', capacity: 4, status: 'AVAILABLE', section: 'Main Hall' },
+-        { id: 'tbl-04', table_number: 'Table 04', capacity: 6, status: 'RESERVED', section: 'VIP' },
+-        { id: 'tbl-05', table_number: 'Table 05', capacity: 2, status: 'CLEANING', section: 'Patio' },
+-        { id: 'tbl-06', table_number: 'Table 06', capacity: 8, status: 'AVAILABLE', section: 'Main Hall' }
+-      ]));
++      localStorage.setItem(STORAGE_KEYS.TABLES, JSON.stringify(this.generateDefaultTables()));
++    }
++  }
++
++  // Generalized table seeding: works for any restaurant, any table count.
++  // Every table starts AVAILABLE (vacant) -- no hardcoded demo occupancy.
++  // Mirrors src/db/seed_tables.sql so local mode and real backend mode
++  // produce the same starting state.
++  generateDefaultTables(count = 10, defaultCapacity = 4) {
++    const tables = [];
++    for (let i = 1; i <= count; i++) {
++      tables.push({
++        id: `tbl-${String(i).padStart(2, '0')}`,
++        table_number: `Table ${String(i).padStart(2, '0')}`,
++        capacity: defaultCapacity,
++        status: 'AVAILABLE',
++        section: 'Main Hall'
++      });
+     }
++    return tables;
+   }
+ 
+   // --- MENU CRUD ---
+diff --git a/src/utils/navbarAuth.js b/src/utils/navbarAuth.js
+index 80f008a..19890a2 100644
+--- a/src/utils/navbarAuth.js
++++ b/src/utils/navbarAuth.js
+@@ -4,6 +4,7 @@
+  */
+ 
+ import { authService } from '../services/authService.js';
++import { openEmailAuthModal } from './emailAuthModal.js';
+ 
+ class NavbarAuth {
+   constructor() {
+@@ -134,12 +135,19 @@ class NavbarAuth {
+           </svg>
+           <span>Sign in with Google</span>
+         </button>
++        <button id="btn-navbar-email-login" class="btn-ghost-sm" style="margin-left:8px;">
++          <i class="fa-solid fa-envelope"></i> Sign in with Email
++        </button>
+       `;
+ 
+       const loginBtn = widget.querySelector('#btn-navbar-google-login');
+       if (loginBtn) {
+         loginBtn.addEventListener('click', () => authService.loginWithGoogle());
+       }
++      const emailBtn = widget.querySelector('#btn-navbar-email-login');
++      if (emailBtn) {
++        emailBtn.addEventListener('click', () => openEmailAuthModal());
++      }
+     } else {
+       const avatarSrc = user.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.email)}`;
+       const roleColor = user.role === 'Manager' ? 'var(--color-accent-violet)' :
+diff --git a/src/utils/validation.js b/src/utils/validation.js
+index f6ba088..205cee9 100644
+--- a/src/utils/validation.js
++++ b/src/utils/validation.js
+@@ -3,6 +3,11 @@
+  * Standalone pure functions for Luhn algorithm check, brand detection, and field formatters.
+  */
+ 
++// Email Format Validation
++export function validateEmail(email) {
++  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((email || '').trim());
++}
++
+ // Luhn Algorithm Checksum Validation
+ export function validateLuhn(cardNumber) {
+   const digits = (cardNumber || '').replace(/\D/g, '');
+diff --git a/src/views/analytics.html b/src/views/analytics.html
+index a39bbcd..80d7a95 100644
+--- a/src/views/analytics.html
++++ b/src/views/analytics.html
+@@ -154,6 +154,9 @@
+   </script>
+ 
+   <!-- Google Identity Services & Auth Modules -->
++  <script src="../config.js"></script>
++  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
++  <script type="module" src="../services/supabaseClient.js"></script>
+   <script src="https://accounts.google.com/gsi/client" async defer></script>
+   <script type="module" src="../services/authService.js"></script>
+   <script type="module" src="../utils/navbarAuth.js"></script>
+diff --git a/src/views/customer.html b/src/views/customer.html
+index 242a25d..2272976 100644
+--- a/src/views/customer.html
++++ b/src/views/customer.html
+@@ -309,6 +309,7 @@
+   </aside>
+ 
+   <script src="../utils/customerMotion.js"></script>
++  <script src="../config.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+   <script src="https://accounts.google.com/gsi/client" async defer></script>
+   <script type="module" src="../services/supabaseClient.js"></script>
+diff --git a/src/views/digital_twin.html b/src/views/digital_twin.html
+index 5792928..4b90a8d 100644
+--- a/src/views/digital_twin.html
++++ b/src/views/digital_twin.html
+@@ -189,6 +189,9 @@
+   </script>
+ 
+   <!-- Google Identity Services & Auth Modules -->
++  <script src="../config.js"></script>
++  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
++  <script type="module" src="../services/supabaseClient.js"></script>
+   <script src="https://accounts.google.com/gsi/client" async defer></script>
+   <script type="module" src="../services/authService.js"></script>
+   <script type="module" src="../utils/navbarAuth.js"></script>
+diff --git a/src/views/inventory.html b/src/views/inventory.html
+index 6116964..85b6354 100644
+--- a/src/views/inventory.html
++++ b/src/views/inventory.html
+@@ -189,6 +189,9 @@
+   </script>
+ 
+   <!-- Google Identity Services & Auth Modules -->
++  <script src="../config.js"></script>
++  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
++  <script type="module" src="../services/supabaseClient.js"></script>
+   <script src="https://accounts.google.com/gsi/client" async defer></script>
+   <script type="module" src="../services/authService.js"></script>
+   <script type="module" src="../utils/navbarAuth.js"></script>
+diff --git a/src/views/kds.html b/src/views/kds.html
+index 0bcb4c0..01effad 100644
+--- a/src/views/kds.html
++++ b/src/views/kds.html
+@@ -103,6 +103,9 @@
+   <script type="module" src="../controllers/kdsController.js"></script>
+ 
+   <!-- Google Identity Services & Auth Modules -->
++  <script src="../config.js"></script>
++  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
++  <script type="module" src="../services/supabaseClient.js"></script>
+   <script src="https://accounts.google.com/gsi/client" async defer></script>
+   <script type="module" src="../services/authService.js"></script>
+   <script type="module" src="../utils/navbarAuth.js"></script>
+diff --git a/src/views/opscopilot.html b/src/views/opscopilot.html
+index 4d2001c..6cf29d0 100644
+--- a/src/views/opscopilot.html
++++ b/src/views/opscopilot.html
+@@ -242,6 +242,9 @@
+   </script>
+ 
+   <!-- Google Identity Services & Auth Modules -->
++  <script src="../config.js"></script>
++  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
++  <script type="module" src="../services/supabaseClient.js"></script>
+   <script src="https://accounts.google.com/gsi/client" async defer></script>
+   <script type="module" src="../services/authService.js"></script>
+   <script type="module" src="../utils/navbarAuth.js"></script>
+diff --git a/src/views/payment.html b/src/views/payment.html
+index e1d95b0..4a9377a 100644
+--- a/src/views/payment.html
++++ b/src/views/payment.html
+@@ -205,6 +205,9 @@
+   <script type="module" src="../app.js"></script>
+ 
+   <!-- Google Identity Services & Auth Modules -->
++  <script src="../config.js"></script>
++  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
++  <script type="module" src="../services/supabaseClient.js"></script>
+   <script src="https://accounts.google.com/gsi/client" async defer></script>
+   <script type="module" src="../services/authService.js"></script>
+   <script type="module" src="../utils/navbarAuth.js"></script>
+diff --git a/src/views/pos.html b/src/views/pos.html
+index 2277986..99c2b8e 100644
+--- a/src/views/pos.html
++++ b/src/views/pos.html
+@@ -160,6 +160,9 @@
+   <script type="module" src="../controllers/posController.js"></script>
+ 
+   <!-- Google Identity Services & Auth Modules -->
++  <script src="../config.js"></script>
++  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
++  <script type="module" src="../services/supabaseClient.js"></script>
+   <script src="https://accounts.google.com/gsi/client" async defer></script>
+   <script type="module" src="../services/authService.js"></script>
+   <script type="module" src="../utils/navbarAuth.js"></script>
+diff --git a/src/views/queue.html b/src/views/queue.html
+index 1b03e14..ea05b5b 100644
+--- a/src/views/queue.html
++++ b/src/views/queue.html
+@@ -191,6 +191,9 @@
+   </script>
+ 
+   <!-- Google Identity Services & Auth Modules -->
++  <script src="../config.js"></script>
++  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
++  <script type="module" src="../services/supabaseClient.js"></script>
+   <script src="https://accounts.google.com/gsi/client" async defer></script>
+   <script type="module" src="../services/authService.js"></script>
+   <script type="module" src="../utils/navbarAuth.js"></script>
