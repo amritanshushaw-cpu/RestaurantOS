@@ -192,26 +192,33 @@ class AuthService {
       return { ok: false, reason: 'missing_fields' };
     }
 
-    // Mock Login to prevent freezing with fake Supabase credentials
-    await new Promise(resolve => setTimeout(resolve, 600)); // Simulated network delay
-    
-    const mockUser = {
-      id: `email_${Date.now()}`,
-      name: cleanEmail.split('@')[0],
-      email: cleanEmail,
-      picture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(cleanEmail)}`,
-      role: role || 'Customer',
-      auth_provider: 'email',
-      signed_in_at: new Date().toISOString()
-    };
+    try {
+      const { data, error } = await dbEngine.supabase.auth.signInWithPassword({
+        email: cleanEmail,
+        password
+      });
 
-    this.saveUser(mockUser);
-    
-    // We intentionally do not await syncUserProfile to prevent Supabase timeout freezes
-    try { dbEngine.syncUserProfile(mockUser); } catch(e) {}
-    
-    this.showToast(`Signed in as ${mockUser.name}`);
-    return { ok: true, session: { user: mockUser } };
+      if (error || !data?.session) {
+        // If login fails, try sign up automatically (first time user)
+        const { data: signUpData, error: signUpError } = await dbEngine.supabase.auth.signUp({
+          email: cleanEmail,
+          password,
+          options: { data: { full_name: cleanEmail.split('@')[0], role } }
+        });
+        if (signUpError || !signUpData?.session) {
+          this.showToast(`Login failed: ${error ? error.message : 'check your credentials'}`);
+          return { ok: false, reason: error?.message || 'auth_failed' };
+        }
+        await this.handleSupabaseSession(signUpData.session, role);
+        return { ok: true, session: signUpData.session };
+      }
+
+      await this.handleSupabaseSession(data.session, role);
+      return { ok: true, session: data.session };
+    } catch (e) {
+      this.showToast(`Authentication error: ${e.message}`);
+      return { ok: false, reason: e.message };
+    }
   }
 
   async signUpWithEmailPassword(email, password, fullName = '', role = 'Customer') {
