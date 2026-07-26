@@ -76,11 +76,18 @@ export function openEmailAuthModal(targetRole = 'Customer', targetUrl = null) {
     const btn = document.getElementById('btn-verify-otp');
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
-    const result = await authService.verifyEmailOtp(currentEmail, token, targetRole, targetUrl);
+    const result = await authService.verifyEmailOtp(currentEmail, token);
     btn.disabled = false;
     btn.innerHTML = '<i class="fa-solid fa-check"></i> Verify & sign in';
     if (result.ok) {
+      if (targetRole) authService.setUserRole(targetRole);
       if (document.getElementById('auth-modal')) document.getElementById('auth-modal').remove();
+      if (targetUrl) {
+        authService.showToast(`Authenticated for ${targetRole} Mode. Redirecting...`);
+        setTimeout(() => {
+          window.location.href = targetUrl;
+        }, 300);
+      }
     }
   }
 
