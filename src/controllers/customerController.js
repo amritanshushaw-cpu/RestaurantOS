@@ -60,31 +60,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function getVisualCategories() {
     const categories = [...(menuData.categories || [])].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
-    const customerPicks = ['Garlic Butter Naan', 'Mango Lassi', 'Wagyu Beef Sliders']
+    const customerPicks = ['Butter Chicken (Murgh Makhani)', 'Steamed Truffle Edamame Dim Sum (6 pcs)', 'Dry-Aged Ribeye Steak 12oz', 'Mango Lassi Alphonso', 'Garlic Butter Naan']
       .map((name) => menuData.items.find((item) => item.name === name))
       .filter(Boolean);
 
     return [
       ...categories.map((category, index) => ({
         ...category,
-        className: category.id === 'cat-03' ? 'darkcat' : '',
-        status: index === 0 ? 'READY NOW' : index === 1 ? "CHEF'S BOARD" : category.id === 'cat-03' ? 'FROM THE BAR' : category.id === 'cat-04' ? 'SWEET FINISH' : '',
-        description: category.id === 'cat-01'
-          ? 'Small plates, bright chutneys, first bites.'
-          : category.id === 'cat-02'
-            ? 'Comfort plates, bold grills, slow-cooked favorites.'
-            : category.id === 'cat-05'
-              ? 'Slow spices, warm breads, family recipes.'
-              : category.id === 'cat-03'
-                ? 'Chilled, spiced, sparkling, poured to order.'
-                : 'Warm, syrupy, creamy — choose your last bite.'
+        className: category.id === 'cat-03' ? 'darkcat' : category.id === 'cat-chinese' ? 'butcat' : '',
+        status: category.id === 'cat-05' ? 'ROYAL INDIAN' :
+                category.id === 'cat-continental' ? "CHEF'S BOARD" :
+                category.id === 'cat-chinese' ? 'WOK & STEAM' :
+                category.id === 'cat-01' ? 'STARTERS' :
+                category.id === 'cat-03' ? 'FROM THE BAR' : 'SWEET FINISH',
+        description: category.id === 'cat-05'
+          ? 'Rich gravies, dum biryanis, tandoori grills & clay oven naans.'
+          : category.id === 'cat-continental'
+            ? 'Dry-aged steaks, pan-seared salmon, truffle risottos & pasta.'
+            : category.id === 'cat-chinese'
+              ? 'Dim sums, wok-tossed hakka noodles, Schezwan & Indo-Chinese.'
+              : category.id === 'cat-01'
+                ? 'Crispy samosas, paneer tikka, bruschetta & first bites.'
+                : category.id === 'cat-03'
+                  ? 'Chilled Alphonso lassi, masala chai, cocktails & sodas.'
+                  : 'Warm gulab jamuns, saffron rasmalai & molten lava cakes.'
       })),
       {
         id: 'CUSTOMER_PICKS',
-        name: 'Customer Picks',
+        name: 'Customer Favorites',
         className: 'butcat',
-        status: '',
-        description: 'Easy add-ons for every order.',
+        status: 'POPULAR PICKS',
+        description: 'Top-rated dishes loved by our guests.',
         items: customerPicks,
         virtual: true
       }
