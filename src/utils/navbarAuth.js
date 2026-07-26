@@ -77,8 +77,15 @@ class NavbarAuth {
 
     // Require authentication for all protected operational pages
     if (!authService.user) {
-      const landingUrl = window.location.origin + '/index.html?gateway=1';
-      window.location.href = landingUrl;
+      document.body.innerHTML = `
+        <div style="padding: 40px; background: red; color: white; font-size: 24px;">
+          ERROR: Auth user is null on this page.<br>
+          Path: ${path}<br>
+          LocalStorage (rest_os_google_user): ${localStorage.getItem('rest_os_google_user')}<br>
+          Supabase Token: ${Object.keys(localStorage).filter(k => k.includes('supabase')).join(', ')}<br>
+          Please copy this and tell the developer!
+        </div>
+      `;
       return;
     }
 
