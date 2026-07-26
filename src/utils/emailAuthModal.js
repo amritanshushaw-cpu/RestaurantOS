@@ -1,57 +1,90 @@
 /**
  * RestaurantOS - Real Supabase Authentication Modal
- * Supports:
- *  1. Google OAuth (via Supabase Auth)
- *  2. Real Email & Password Sign In / Sign Up (Supabase GoTrue)
- *  3. Real Email OTP Verification Code (Supabase Auth)
+ * Supports Sign Up & Login with Role Selection:
+ *  - Customer
+ *  - Manager / Owner
+ *  - Waiter
+ *  - Kitchen Staff
+ * Via both Email + Password / OTP AND Google OAuth.
  */
 
 import { authService } from '../services/authService.js';
 
-export function openEmailAuthModal(defaultTab = 'email') {
+export function openEmailAuthModal(defaultRole = 'Customer') {
   const existing = document.getElementById('auth-modal');
   if (existing) existing.remove();
 
   const modalHtml = `
     <div id="auth-modal" class="sentry-modal-overlay">
-      <div class="sentry-modal-content google-auth-modal-card" style="max-width: 480px; width: 92%;">
+      <div class="sentry-modal-content google-auth-modal-card" style="max-width: 520px; width: 92%;">
         <div class="google-modal-header">
           <div>
-            <h3 class="google-modal-title">Supabase Authentication</h3>
-            <p class="google-modal-subtitle">Sign in or register using your Supabase backend credentials</p>
+            <h3 class="google-modal-title"><i class="fa-solid fa-user-shield" style="color: var(--color-accent-lime);"></i> Supabase Authentication</h3>
+            <p class="google-modal-subtitle">Sign in or register your account with role-based access</p>
           </div>
           <button class="modal-close-btn" id="close-email-auth-modal">&times;</button>
         </div>
 
-        <!-- Auth Method Selector Tabs -->
-        <div style="display: flex; gap: 8px; border-bottom: 1px solid var(--border-violet); margin-bottom: 16px; padding-bottom: 8px;">
-          <button type="button" class="auth-tab-btn active" data-tab="pass" style="background: none; border: none; color: var(--color-accent-lime); font-size: 13px; font-weight: 700; cursor: pointer; padding: 6px 12px; border-bottom: 2px solid var(--color-accent-lime);">
-            Password
-          </button>
-          <button type="button" class="auth-tab-btn" data-tab="otp" style="background: none; border: none; color: var(--text-secondary); font-size: 13px; font-weight: 700; cursor: pointer; padding: 6px 12px;">
-            Email OTP Code
-          </button>
-        </div>
-
-        <!-- Method A: Password Sign In / Sign Up -->
-        <div id="auth-tab-pass-content">
-          <div style="display: flex; flex-direction: column; gap: 12px;">
-            <input type="text" id="auth-fullname-input" placeholder="Full Name (optional for sign up)" class="sentry-input-sm">
-            <input type="email" id="auth-email-input" placeholder="name@domain.com" class="sentry-input-sm" required>
-            <input type="password" id="auth-password-input" placeholder="Password (min 6 chars)" class="sentry-input-sm" required>
-
-            <div style="display: flex; gap: 10px; margin-top: 6px;">
-              <button id="btn-email-signin" class="btn-sentry btn-sentry-sm" style="flex: 1;">
-                <i class="fa-solid fa-right-to-bracket"></i> Sign In
-              </button>
-              <button id="btn-email-signup" class="btn-ghost-sm" style="flex: 1; border: 1px solid var(--border-violet);">
-                <i class="fa-solid fa-user-plus"></i> Create Account
-              </button>
-            </div>
+        <!-- Role Selector Pills -->
+        <div style="margin-bottom: 16px;">
+          <label style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 6px;">
+            Select Access Role:
+          </label>
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;" id="auth-role-pills">
+            <button type="button" class="btn-role-opt ${defaultRole === 'Customer' ? 'active' : ''}" data-role="Customer" style="background: var(--color-primary); border: 1px solid ${defaultRole === 'Customer' ? 'var(--color-accent-lime)' : 'var(--border-violet)'}; color: #fff; padding: 6px; border-radius: var(--radius-md); font-size: 11px; font-weight: 700; cursor: pointer;">
+              <i class="fa-solid fa-user"></i> Customer
+            </button>
+            <button type="button" class="btn-role-opt ${defaultRole === 'Manager' ? 'active' : ''}" data-role="Manager" style="background: var(--color-primary); border: 1px solid ${defaultRole === 'Manager' ? 'var(--color-accent-lime)' : 'var(--border-violet)'}; color: #fff; padding: 6px; border-radius: var(--radius-md); font-size: 11px; font-weight: 700; cursor: pointer;">
+              <i class="fa-solid fa-user-tie"></i> Manager
+            </button>
+            <button type="button" class="btn-role-opt ${defaultRole === 'Waiter' ? 'active' : ''}" data-role="Waiter" style="background: var(--color-primary); border: 1px solid ${defaultRole === 'Waiter' ? 'var(--color-accent-lime)' : 'var(--border-violet)'}; color: #fff; padding: 6px; border-radius: var(--radius-md); font-size: 11px; font-weight: 700; cursor: pointer;">
+              <i class="fa-solid fa-concierge-bell"></i> Waiter
+            </button>
+            <button type="button" class="btn-role-opt ${defaultRole === 'Kitchen' ? 'active' : ''}" data-role="Kitchen" style="background: var(--color-primary); border: 1px solid ${defaultRole === 'Kitchen' ? 'var(--color-accent-lime)' : 'var(--border-violet)'}; color: #fff; padding: 6px; border-radius: var(--radius-md); font-size: 11px; font-weight: 700; cursor: pointer;">
+              <i class="fa-solid fa-utensils"></i> Kitchen
+            </button>
           </div>
         </div>
 
-        <!-- Method B: Email OTP Code -->
+        <!-- Auth Method Selector Tabs (Sign In / Sign Up / OTP) -->
+        <div style="display: flex; gap: 8px; border-bottom: 1px solid var(--border-violet); margin-bottom: 16px; padding-bottom: 8px;">
+          <button type="button" class="auth-tab-btn active" data-tab="signin" style="background: none; border: none; color: var(--color-accent-lime); font-size: 13px; font-weight: 700; cursor: pointer; padding: 6px 12px; border-bottom: 2px solid var(--color-accent-lime);">
+            Sign In
+          </button>
+          <button type="button" class="auth-tab-btn" data-tab="signup" style="background: none; border: none; color: var(--text-secondary); font-size: 13px; font-weight: 700; cursor: pointer; padding: 6px 12px;">
+            Create Account
+          </button>
+          <button type="button" class="auth-tab-btn" data-tab="otp" style="background: none; border: none; color: var(--text-secondary); font-size: 13px; font-weight: 700; cursor: pointer; padding: 6px 12px;">
+            Email OTP
+          </button>
+        </div>
+
+        <!-- Tab 1: Sign In -->
+        <div id="auth-tab-signin-content">
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <input type="email" id="auth-signin-email" placeholder="Email address" class="sentry-input-sm" required>
+            <input type="password" id="auth-signin-pass" placeholder="Password" class="sentry-input-sm" required>
+
+            <button id="btn-do-signin" class="btn-sentry btn-sentry-sm" style="width: 100%; margin-top: 4px;">
+              <i class="fa-solid fa-right-to-bracket"></i> Sign In to Account
+            </button>
+          </div>
+        </div>
+
+        <!-- Tab 2: Create Account / Sign Up -->
+        <div id="auth-tab-signup-content" style="display: none;">
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <input type="text" id="auth-signup-name" placeholder="Full Name (e.g. Rahul Sharma)" class="sentry-input-sm" required>
+            <input type="email" id="auth-signup-email" placeholder="Email address" class="sentry-input-sm" required>
+            <input type="password" id="auth-signup-pass" placeholder="Create Password (min 6 chars)" class="sentry-input-sm" required>
+
+            <button id="btn-do-signup" class="btn-sentry btn-sentry-sm" style="width: 100%; margin-top: 4px; background: var(--color-accent-pink);">
+              <i class="fa-solid fa-user-plus"></i> Create Account & Register Role
+            </button>
+          </div>
+        </div>
+
+        <!-- Tab 3: Email OTP Code -->
         <div id="auth-tab-otp-content" style="display: none;">
           <div id="email-auth-step-1" class="google-custom-login-box">
             <div class="custom-login-inputs">
@@ -66,7 +99,7 @@ export function openEmailAuthModal(defaultTab = 'email') {
             <div class="custom-login-inputs">
               <input type="text" id="otp-code-input" placeholder="6-digit verification code" maxlength="6" class="sentry-input-sm">
               <button id="btn-verify-otp" class="btn-sentry btn-sentry-sm">
-                <i class="fa-solid fa-check"></i> Verify Code & Sign In
+                <i class="fa-solid fa-check"></i> Verify & Sign In
               </button>
             </div>
             <button id="btn-resend-otp" class="btn-ghost-sm" style="margin-top:8px;">Resend Code</button>
@@ -76,7 +109,7 @@ export function openEmailAuthModal(defaultTab = 'email') {
         <!-- Divider -->
         <div style="display: flex; align-items: center; margin: 18px 0; color: var(--text-tertiary); font-size: 11px;">
           <div style="flex:1; height:1px; background: var(--border-violet);"></div>
-          <span style="padding: 0 10px; text-transform: uppercase;">OR CONTINUED WITH</span>
+          <span style="padding: 0 10px; text-transform: uppercase;">OR SIGN IN WITH GOOGLE</span>
           <div style="flex:1; height:1px; background: var(--border-violet);"></div>
         </div>
 
@@ -88,11 +121,11 @@ export function openEmailAuthModal(defaultTab = 'email') {
             <path fill="#FBBC05" d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.62z"/>
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
           </svg>
-          <strong style="color: var(--text-primary);">Sign in with Google OAuth</strong>
+          <strong style="color: var(--text-primary);">Google OAuth (Sign In / Register)</strong>
         </button>
 
         <div class="google-modal-footer" style="margin-top: 16px; text-align: center; font-size: 11px; color: var(--text-tertiary);">
-          Protected by Supabase Authentication & Real GoTrue Service
+          Supabase Auth Engine · Role Selection Sync Enabled
         </div>
       </div>
     </div>
@@ -100,10 +133,20 @@ export function openEmailAuthModal(defaultTab = 'email') {
 
   document.body.insertAdjacentHTML('beforeend', modalHtml);
   const modal = document.getElementById('auth-modal');
+  let selectedRole = defaultRole;
   let currentOtpEmail = '';
 
   document.getElementById('close-email-auth-modal').addEventListener('click', () => modal.remove());
   modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+
+  // Role Pill Selection
+  modal.querySelectorAll('.btn-role-opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      modal.querySelectorAll('.btn-role-opt').forEach(b => b.style.borderColor = 'var(--border-violet)');
+      btn.style.borderColor = 'var(--color-accent-lime)';
+      selectedRole = btn.dataset.role;
+    });
+  });
 
   // Tab Switching
   modal.querySelectorAll('.auth-tab-btn').forEach(btn => {
@@ -116,45 +159,41 @@ export function openEmailAuthModal(defaultTab = 'email') {
       btn.style.borderBottom = '2px solid var(--color-accent-lime)';
 
       const tab = btn.dataset.tab;
-      if (tab === 'pass') {
-        document.getElementById('auth-tab-pass-content').style.display = 'block';
-        document.getElementById('auth-tab-otp-content').style.display = 'none';
-      } else {
-        document.getElementById('auth-tab-pass-content').style.display = 'none';
-        document.getElementById('auth-tab-otp-content').style.display = 'block';
-      }
+      document.getElementById('auth-tab-signin-content').style.display = tab === 'signin' ? 'block' : 'none';
+      document.getElementById('auth-tab-signup-content').style.display = tab === 'signup' ? 'block' : 'none';
+      document.getElementById('auth-tab-otp-content').style.display = tab === 'otp' ? 'block' : 'none';
     });
   });
 
-  // Password Sign In Action
-  document.getElementById('btn-email-signin')?.addEventListener('click', async () => {
-    const email = document.getElementById('auth-email-input').value.trim();
-    const password = document.getElementById('auth-password-input').value;
-    const btn = document.getElementById('btn-email-signin');
+  // Sign In Action
+  document.getElementById('btn-do-signin')?.addEventListener('click', async () => {
+    const email = document.getElementById('auth-signin-email').value.trim();
+    const password = document.getElementById('auth-signin-pass').value;
+    const btn = document.getElementById('btn-do-signin');
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Signing in...';
 
-    const res = await authService.loginWithEmailPassword(email, password);
+    const res = await authService.loginWithEmailPassword(email, password, selectedRole);
     btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sign In';
+    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sign In to Account';
 
     if (res.ok && document.getElementById('auth-modal')) {
       document.getElementById('auth-modal').remove();
     }
   });
 
-  // Password Sign Up Action
-  document.getElementById('btn-email-signup')?.addEventListener('click', async () => {
-    const email = document.getElementById('auth-email-input').value.trim();
-    const password = document.getElementById('auth-password-input').value;
-    const fullName = document.getElementById('auth-fullname-input').value.trim();
-    const btn = document.getElementById('btn-email-signup');
+  // Sign Up Action
+  document.getElementById('btn-do-signup')?.addEventListener('click', async () => {
+    const fullName = document.getElementById('auth-signup-name').value.trim();
+    const email = document.getElementById('auth-signup-email').value.trim();
+    const password = document.getElementById('auth-signup-pass').value;
+    const btn = document.getElementById('btn-do-signup');
     btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating...';
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating Account...';
 
-    const res = await authService.signUpWithEmailPassword(email, password, fullName);
+    const res = await authService.signUpWithEmailPassword(email, password, fullName, selectedRole);
     btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Create Account';
+    btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Create Account & Register Role';
 
     if (res.ok && document.getElementById('auth-modal')) {
       document.getElementById('auth-modal').remove();
@@ -163,7 +202,7 @@ export function openEmailAuthModal(defaultTab = 'email') {
 
   // Google OAuth Button Action
   document.getElementById('btn-google-auth-trigger')?.addEventListener('click', () => {
-    authService.loginWithGoogle();
+    authService.loginWithGoogle(selectedRole);
   });
 
   // OTP Send Action
@@ -192,7 +231,7 @@ export function openEmailAuthModal(defaultTab = 'email') {
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
     const result = await authService.verifyEmailOtp(currentOtpEmail, token);
     btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-check"></i> Verify Code & Sign In';
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Verify & Sign In';
     if (result.ok && document.getElementById('auth-modal')) {
       document.getElementById('auth-modal').remove();
     }

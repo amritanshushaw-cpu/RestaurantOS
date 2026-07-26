@@ -748,6 +748,18 @@ class DynamicDatabaseEngine {
     return JSON.parse(localStorage.getItem(STORAGE_KEYS.CUSTOMER_HISTORY) || '[]');
   }
 
+  clearActiveSession(customerId) {
+    const sessions = this.getSessions();
+    const session = sessions.find(s => (s.customer_id === customerId || !customerId) && s.status === 'ACTIVE');
+    if (session) {
+      session.status = 'TERMINATED';
+      session.session_end_time = new Date().toLocaleTimeString();
+      this.setTableVacancyStatus(session.table_no, 'Y');
+      this.saveSessions(sessions);
+    }
+    localStorage.removeItem('rest_os_active_session');
+  }
+
   saveCustomerHistory(history) {
     localStorage.setItem(STORAGE_KEYS.CUSTOMER_HISTORY, JSON.stringify(history));
   }

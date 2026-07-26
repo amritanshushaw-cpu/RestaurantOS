@@ -185,7 +185,7 @@ class AuthService {
   // Real Email & Password Authentication (Supabase GoTrue Backend)
   // ---------------------------------------------------------------------
 
-  async loginWithEmailPassword(email, password) {
+  async loginWithEmailPassword(email, password, role = 'Customer') {
     const cleanEmail = (email || '').trim();
     if (!cleanEmail || !password) {
       this.showToast('Please enter both email and password.');
@@ -198,12 +198,12 @@ class AuthService {
         id: 'user-' + Date.now(),
         name: rawName,
         email: cleanEmail,
-        role: 'Customer',
+        role: role || 'Customer',
         auth_provider: 'email',
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(cleanEmail)}`
       };
       this.saveUser(demoUser);
-      this.showToast(`Signed in as ${demoUser.name} (${demoUser.email})`);
+      this.showToast(`Signed in as ${demoUser.name} [Role: ${demoUser.role}]`);
       this.closeAuthModal();
       return { ok: true, user: demoUser };
     }
@@ -219,7 +219,12 @@ class AuthService {
         return { ok: false, reason: error ? error.message : 'auth_failed' };
       }
 
-      await this.handleSupabaseSession(data.session);
+      if (role && data.session?.user) {
+        data.session.user.user_metadata = data.session.user.user_metadata || {};
+        data.session.user.user_metadata.role = role;
+      }
+
+      await this.handleSupabaseSession(data.session, role);
       return { ok: true, session: data.session };
     } catch (e) {
       this.showToast(`Authentication error: ${e.message}`);
@@ -240,12 +245,12 @@ class AuthService {
         id: 'user-' + Date.now(),
         name: rawName,
         email: cleanEmail,
-        role,
+        role: role || 'Customer',
         auth_provider: 'email',
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(cleanEmail)}`
       };
       this.saveUser(newUser);
-      this.showToast(`Account created for ${newUser.name}! Signed in.`);
+      this.showToast(`Account created for ${newUser.name}! [Role: ${newUser.role}]`);
       this.closeAuthModal();
       return { ok: true, user: newUser };
     }
@@ -257,7 +262,7 @@ class AuthService {
         options: {
           data: {
             full_name: fullName || cleanEmail.split('@')[0],
-            role
+            role: role || 'Customer'
           }
         }
       });
@@ -268,9 +273,9 @@ class AuthService {
       }
 
       if (data.session) {
-        await this.handleSupabaseSession(data.session);
+        await this.handleSupabaseSession(data.session, role);
       } else {
-        this.showToast(`Account created! Please check your email to confirm registration.`);
+        this.showToast(`Account created for [Role: ${role}]! Please check email or sign in.`);
       }
 
       return { ok: true, data };
@@ -284,17 +289,19 @@ class AuthService {
   // Real Google Sign-In (Supabase OAuth)
   // ---------------------------------------------------------------------
 
-  loginWithGoogle() {
+  loginWithGoogle(role = 'Customer') {
+    localStorage.setItem('rest_os_pending_google_role', role);
+
     if (!dbEngine.supabase || !dbEngine.hasValidSupabaseConfig()) {
       const demoGoogleUser = {
         id: 'user-google-demo',
         name: 'Alex Mercer',
         email: 'alex.mercer@gmail.com',
-        role: 'Customer',
+        role: role || 'Customer',
         avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80'
       };
       this.saveUser(demoGoogleUser);
-      this.showToast('Signed in as Alex Mercer (Google Demo)');
+      this.showToast(`Signed in as Alex Mercer (Google Auth - Role: ${role})`);
       this.closeAuthModal();
       return;
     }
@@ -415,13 +422,16 @@ class AuthService {
 
   logout() {
     const user = this.user;
+    if (user) {
+      dbEngine.clearActiveSession(user.email || user.id);
+    }
     this.saveUser(null);
     if (dbEngine.supabase) {
       try {
         dbEngine.supabase.auth.signOut();
       } catch (e) {}
     }
-    this.showToast(user ? `Signed out ${user.name}` : 'Signed out');
+    this.showToast(user ? `Signed out ${user.name}. Active Session ID cleared!` : 'Signed out. Active Session ID cleared!');
   }
 
   setUserRole(role) {
