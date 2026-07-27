@@ -22,7 +22,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnCloseAddDish = document.getElementById('btn-close-add-dish');
   const addDishForm = document.getElementById('add-dish-form');
 
-  const currentUser = JSON.parse(localStorage.getItem('rest_os_google_user'));
+  let currentUser = JSON.parse(localStorage.getItem('rest_os_google_user'));
+  if (!currentUser || currentUser.role !== 'Waiter') {
+    currentUser = {
+      id: currentUser ? currentUser.id : 'waiter-' + Date.now(),
+      name: currentUser ? currentUser.name : 'Sam (Waitstaff)',
+      email: currentUser ? currentUser.email : 'waiter@restaurantos.com',
+      picture: currentUser ? currentUser.picture : 'https://api.dicebear.com/7.x/avataaars/svg?seed=Waiter',
+      role: 'Waiter',
+      auth_provider: currentUser ? currentUser.auth_provider : 'system'
+    };
+    localStorage.setItem('rest_os_google_user', JSON.stringify(currentUser));
+    try { window.dispatchEvent(new CustomEvent('auth:changed', { detail: { user: currentUser } })); } catch(e){}
+  }
+  
   if (currentUser) {
     dbEngine.registerStaffPresence(currentUser.id, currentUser.name, 'Waiter');
   }
@@ -82,11 +95,14 @@ document.addEventListener('DOMContentLoaded', () => {
         ? `<button type="button" class="btn-sentry btn-waiter-action" data-id="${o.id}" data-action="${btnAction}" style="width: 100%; background: ${btnBg}; color: #000; padding: 6px;">${btnLabel}</button>` 
         : `<div style="color: var(--text-tertiary); font-size: 12px; text-align: center; padding: 6px; border: 1px dashed var(--border-violet); border-radius: 4px;">${btnLabel}</div>`;
 
+      const itemsSummary = (o.items || []).map(i => `${i.quantity || 1}x ${i.name || i.item_name}`).join(', ');
+
       return `
-        <div style="background: var(--color-primary); border: 1px solid ${btnBg !== 'transparent' ? btnBg : 'var(--border-violet)'}; padding: 12px; border-radius: 8px; min-width: 250px;">
+        <div style="background: var(--color-primary); border: 1px solid ${btnBg !== 'transparent' ? btnBg : 'var(--border-violet)'}; padding: 12px; border-radius: 8px; min-width: 270px;">
           <div style="font-weight: 700; color: #fff;">${o.table_number || o.table_id} - ${o.order_number}</div>
           <div style="font-size: 11px; color: var(--color-accent-lime); margin-bottom: 4px;">Cust: ${o.customer_name || 'Guest'} | Sess: ${o.session_id}</div>
-          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">Status: ${o.status} ${o.chef_id ? `| Chef: ${o.chef_id}` : ''}</div>
+          <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 6px;">Dishes: <strong style="color: #fff;">${itemsSummary || 'Dishes'}</strong></div>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">Status: <span class="badge" style="background: rgba(194, 239, 78, 0.15); color: var(--color-accent-lime);">${o.status}</span> ${o.chef_id ? `| Chef: ${o.chef_id}` : ''}</div>
           ${buttonHtml}
         </div>
       `;
