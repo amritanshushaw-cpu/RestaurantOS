@@ -51,17 +51,21 @@ class EntryGatewayModal {
     const existingModal = document.getElementById('entry-gateway-modal');
     if (existingModal) existingModal.remove();
 
-    // Always force a fresh sign-in — clear any stale session
-    authService.saveUser(null);
-    sessionStorage.setItem('rest_os_logged_out', '1');
-    // Clear Supabase SDK persisted tokens
-    try {
-      Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
-          localStorage.removeItem(key);
-        }
-      });
-    } catch(e) {}
+    // Clear explicit logout flag so new login attempts succeed
+    sessionStorage.removeItem('rest_os_logged_out');
+
+    // If user is already logged in with this exact role, navigate directly into workspace
+    if (authService.user && authService.user.role === role) {
+      authService.showToast(`Entering ${role} Workspace Mode…`);
+      window.isAppNavigation = true;
+      window.location.href = targetPage;
+      return;
+    }
+
+    // If user has a different role or is signed out, prepare fresh login for requested role
+    if (authService.user) {
+      authService.saveUser(null);
+    }
     
     this.openSigningWindow(role, targetPage);
   }

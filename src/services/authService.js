@@ -116,10 +116,9 @@ class AuthService {
       // CRITICAL: skip all state changes while logout is in progress
       if (this._loggingOut) return;
 
-      if (event === 'SIGNED_IN' && session?.user) {
-        if (!sessionStorage.getItem('rest_os_logged_out')) {
-          this.handleSupabaseSession(session);
-        }
+      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
+        sessionStorage.removeItem('rest_os_logged_out');
+        this.handleSupabaseSession(session);
       } else if (event === 'SIGNED_OUT') {
         // Only process if we're not already mid-logout
         if (this.user) {
@@ -340,6 +339,7 @@ class AuthService {
   async loginWithGoogle(role = 'Customer', targetUrl = null) {
     const finalTarget = targetUrl || this.getRoleRedirectUrl(role);
 
+    sessionStorage.removeItem('rest_os_logged_out');
     localStorage.setItem('rest_os_pending_google_role', role);
     localStorage.setItem('rest_os_pending_redirect', finalTarget);
 
