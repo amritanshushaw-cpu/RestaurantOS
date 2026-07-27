@@ -55,7 +55,7 @@ class EntryGatewayModal {
             <p class="entry-modal-subtitle">
               ${currentUser 
                 ? `Signed in as <strong style="color:var(--color-accent-lime);">${currentUser.name}</strong> (${currentUser.role} Mode) · Pick a mode to enter its workspace`
-                : 'Choose your workspace mode to enter with real Supabase Auth (Email OTP / Google OAuth)'}
+                : 'Choose your workspace mode to enter'}
             </p>
           </div>
 
