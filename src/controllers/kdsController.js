@@ -7,6 +7,17 @@ import { dbEngine } from '../services/supabaseClient.js';
 document.addEventListener('DOMContentLoaded', () => {
   const ticketsContainer = document.getElementById('kds-tickets-container');
 
+  // Kitchen Presence Polling
+  const currentUser = JSON.parse(localStorage.getItem('rest_os_google_user'));
+  if (currentUser) {
+    dbEngine.registerStaffPresence(currentUser.id, currentUser.name, 'Kitchen');
+  }
+  setInterval(() => {
+    if (currentUser) {
+      dbEngine.registerStaffPresence(currentUser.id, currentUser.name, 'Kitchen');
+    }
+  }, 5000);
+
   // Inject Waiter Interface Notifications Feed Panel if not present
   let waiterFeedContainer = document.getElementById('waiter-notifications-feed');
   if (!waiterFeedContainer && ticketsContainer) {

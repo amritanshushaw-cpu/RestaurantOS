@@ -478,10 +478,57 @@ class DynamicDatabaseEngine {
     return String(Math.floor(100000 + Math.random() * 900000));
   }
 
+  // --- STAFF PRESENCE (Multi-device simulation) ---
+  registerStaffPresence(userId, userName, role) {
+    const presence = JSON.parse(localStorage.getItem('rest_os_staff_presence') || '[]');
+    const existing = presence.find(p => p.id === userId);
+    if (existing) {
+      existing.lastActive = Date.now();
+      existing.role = role;
+    } else {
+      presence.push({ id: userId, name: userName, role, lastActive: Date.now(), assignedTables: [] });
+    }
+    localStorage.setItem('rest_os_staff_presence', JSON.stringify(presence));
+
+    // Auto-assign any waiting sessions to this waiter
+    if (role === 'Waiter') {
+      const sessions = this.getSessions();
+      let updated = false;
+      sessions.forEach(s => {
+        if (!s.waiter_id && s.status === 'ACTIVE') {
+          s.waiter_id = userId;
+          updated = true;
+        }
+      });
+      if (updated) {
+        this.saveSessions(sessions);
+        window.dispatchEvent(new Event('storage')); // trigger local update too
+      }
+    }
+  }
+
+  getAvailableStaff(role) {
+    const presence = JSON.parse(localStorage.getItem('rest_os_staff_presence') || '[]');
+    // Clean up stale sessions (older than 15 minutes)
+    const active = presence.filter(p => (Date.now() - p.lastActive) < 15 * 60 * 1000);
+    localStorage.setItem('rest_os_staff_presence', JSON.stringify(active));
+    return active.filter(p => p.role === role);
+  }
+
   // Helper: Waiter Allotment
   allotWaiter() {
-    const waiters = ['WAIT-01 (Rahul S.)', 'WAIT-02 (Priya M.)', 'WAIT-03 (Amit K.)', 'WAIT-04 (Vikram R.)'];
-    return waiters[Math.floor(Math.random() * waiters.length)];
+    const waiters = this.getAvailableStaff('Waiter');
+    if (waiters.length === 0) return null; // None logged in
+    
+    // Sort by least assigned tables
+    waiters.sort((a, b) => (a.assignedTables?.length || 0) - (b.assignedTables?.length || 0));
+    return waiters[0].id;
+  }
+  
+  allotKitchen() {
+    const kitchen = this.getAvailableStaff('Kitchen');
+    if (kitchen.length === 0) return null; // None logged in
+    return kitchen[0].id;
   }
 
   // --- SESSIONS ---

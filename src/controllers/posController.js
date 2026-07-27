@@ -22,6 +22,40 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnCloseAddDish = document.getElementById('btn-close-add-dish');
   const addDishForm = document.getElementById('add-dish-form');
 
+  // Waiter Presence & Task Polling
+  const currentUser = JSON.parse(localStorage.getItem('rest_os_google_user'));
+  if (currentUser) {
+    dbEngine.registerStaffPresence(currentUser.id, currentUser.name, 'Waiter');
+  }
+
+  let knownAssignedTables = new Set();
+  function checkWaiterTasks() {
+    if (!currentUser) return;
+    const sessions = dbEngine.getSessions();
+    const mySessions = sessions.filter(s => s.waiter_id === currentUser.id && s.status === 'ACTIVE');
+    
+    mySessions.forEach(s => {
+      if (!knownAssignedTables.has(s.table_no)) {
+        knownAssignedTables.add(s.table_no);
+        alert(`🔔 WAITER TASK: Report to ${s.table_no}!\nA new customer session has started.`);
+      }
+    });
+  }
+
+  setInterval(() => {
+    if (currentUser) {
+      dbEngine.registerStaffPresence(currentUser.id, currentUser.name, 'Waiter');
+      checkWaiterTasks();
+    }
+  }, 5000);
+  
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'rest_os_sessions') checkWaiterTasks();
+  });
+  
+  // Initialize current known tables
+  if (currentUser) checkWaiterTasks();
+
   let activeCart = [];
   let selectedTable = 'Table 02';
   let currentCategoryFilter = 'ALL';
