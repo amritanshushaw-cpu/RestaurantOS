@@ -83,13 +83,9 @@
               </div>
 
               <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                <select id="cust-table-booking-select" class="sentry-input-sm" style="background: var(--color-primary); color: #fff; border: 1px solid var(--border-violet); padding: 8px 12px; border-radius: var(--radius-md); font-size: 13px;">
-                  <option value="Table 01">Table 01 (Main Hall)</option>
-                  <option value="Table 02">Table 02 (Main Hall)</option>
-                  <option value="Table 03" selected>Table 03 (Window Seat)</option>
-                  <option value="Table 04">Table 04 (Patio)</option>
-                  <option value="Table 05">Table 05 (VIP Lounge)</option>
-                </select>
+                <div id="cust-table-matrix-container" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;">
+                  <!-- Dynamic Tables -->
+                </div>
                 <button type="button" id="btn-book-table-action" class="btn-sentry" style="padding: 8px 16px; font-size: 13px;">
                   <i class="fa-solid fa-chair"></i> Book Table & Start Session
                 </button>

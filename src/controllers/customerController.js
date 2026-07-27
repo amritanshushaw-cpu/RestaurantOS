@@ -411,13 +411,54 @@ document.addEventListener('DOMContentLoaded', () => {
   // VibeAthon SESSION ENGINE & TABLE BOOKING CONTROLS
   // =========================================================================
   const bookTableBtn = document.getElementById('btn-book-table-action');
-  const tableBookingSelect = document.getElementById('cust-table-booking-select');
+  const tableMatrixContainer = document.getElementById('cust-table-matrix-container');
   const sessionStatusTag = document.getElementById('cust-session-status-tag');
   const sessionDetailsEl = document.getElementById('cust-session-details');
   const sessionHeaderChip = document.getElementById('cust-header-session-chip');
 
   let currentActiveSession = null;
   let waitTimerInterval = null;
+
+  function renderTableMatrixUI() {
+    if (!tableMatrixContainer) return;
+    const tables = dbEngine.getTables();
+    tableMatrixContainer.innerHTML = '';
+    
+    tables.forEach(t => {
+      const isBooked = t.status !== 'AVAILABLE';
+      const isSelected = selectedTable === t.table_number;
+      
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn-sentry';
+      btn.style.padding = '8px';
+      btn.style.fontSize = '11px';
+      btn.style.border = isSelected ? '2px solid #fff' : '1px solid transparent';
+      
+      if (isBooked) {
+        btn.style.background = 'var(--color-warning)';
+        btn.style.color = '#fff';
+        btn.innerHTML = `<i class="fa-solid fa-chair"></i> ${t.table_number.replace('Table ', 'T')}<br>BOOKED`;
+        btn.disabled = true;
+      } else {
+        btn.style.background = 'var(--color-accent-lime)';
+        btn.style.color = '#000';
+        btn.innerHTML = `<i class="fa-solid fa-chair"></i> ${t.table_number.replace('Table ', 'T')}<br>VACANT`;
+        btn.onclick = () => {
+          selectedTable = t.table_number;
+          renderTableMatrixUI();
+        };
+      }
+      
+      tableMatrixContainer.appendChild(btn);
+    });
+  }
+
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'rest_os_tables' || e.key === 'rest_os_sessions') {
+      renderTableMatrixUI();
+    }
+  });
 
   function refreshActiveSessionUI() {
     const currentUser = authService.user;
@@ -454,6 +495,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sessionHeaderChip.textContent = 'NO ACTIVE SESSION';
       }
     }
+    renderTableMatrixUI();
   }
 
   // API Flow: Table booking try -> if not available (FULL) -> returns apology modal -> else generates 6-digit Session ID
@@ -462,7 +504,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const currentUser = authService.user;
       const custId = currentUser?.email || currentUser?.id || 'CUST-8021';
       const custName = currentUser?.name || 'Customer';
-      const prefTable = tableBookingSelect?.value || 'Table 03';
+      const prefTable = selectedTable || 'Table 03';
 
       const res = dbEngine.startSession(custId, custName, prefTable);
 
@@ -476,6 +518,7 @@ document.addEventListener('DOMContentLoaded', () => {
       currentActiveSession = res.session;
       authService.showToast(res.message);
       refreshActiveSessionUI();
+      renderTableMatrixUI();
     });
   }
 

@@ -196,50 +196,11 @@ class DynamicDatabaseEngine {
     }
 
     if (!localStorage.getItem(STORAGE_KEYS.ORDERS)) {
-      const defaultOrders = [
-        {
-          id: 'ord-demo-01',
-          order_number: 'ORD-#1042',
-          table_id: 'Table 02',
-          status: 'PREPARING',
-          customer_name: 'Alex Mercer',
-          special_instructions: 'Medium rare steak, extra truffle aioli on the side. Non-spicy for kids.',
-          items: [
-            { id: 'item-02', name: 'Dry-Aged Ribeye 12oz', price: 1280.00, quantity: 1 },
-            { id: 'item-ind-05', name: 'Garlic Butter Naan', price: 90.00, quantity: 2 }
-          ],
-          subtotal: 1460.00,
-          tax: 73.00,
-          total: 1533.00,
-          created_at: new Date(Date.now() - 8 * 60 * 1000).toISOString()
-        },
-        {
-          id: 'ord-demo-02',
-          order_number: 'ORD-#1043',
-          table_id: 'Table 04',
-          status: 'NEW',
-          customer_name: 'Elena Rostova',
-          special_instructions: 'Gluten-free preference. Extra mint chutney with Samosa Chaat!',
-          items: [
-            { id: 'item-ind-01', name: 'Butter Chicken (Murgh Makhani)', price: 480.00, quantity: 2 },
-            { id: 'item-ind-07', name: 'Crispy Samosa Chaat', price: 180.00, quantity: 1 },
-            { id: 'item-ind-08', name: 'Mango Lassi', price: 140.00, quantity: 2 }
-          ],
-          subtotal: 1420.00,
-          tax: 71.00,
-          total: 1491.00,
-          created_at: new Date(Date.now() - 2 * 60 * 1000).toISOString()
-        }
-      ];
-      localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(defaultOrders));
+      localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify([]));
     }
 
-
-
     if (!localStorage.getItem(STORAGE_KEYS.QUEUE)) {
-      localStorage.setItem(STORAGE_KEYS.QUEUE, JSON.stringify([
-        { id: 'q-01', name: 'Alex Mercer', party_size: 4, status: 'WAITING', joined_at: new Date().toISOString() }
-      ]));
+      localStorage.setItem(STORAGE_KEYS.QUEUE, JSON.stringify([]));
     }
 
     if (!localStorage.getItem(STORAGE_KEYS.TABLES)) {
