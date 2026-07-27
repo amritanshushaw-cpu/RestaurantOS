@@ -86,8 +86,7 @@ class AuthService {
   // Safe redirect helper — sets navigation flag and goes to index
   _redirectToLanding() {
     window.isAppNavigation = true;
-    const inViews = window.location.pathname.includes('/views/');
-    window.location.href = inViews ? '../index.html' : 'index.html';
+    window.location.href = window.location.origin + '/index.html';
   }
 
   // ---------------------------------------------------------------------
@@ -522,8 +521,7 @@ class AuthService {
 
     // 7. Redirect IMMEDIATELY — no setTimeout, no cascading
     window.isAppNavigation = true;
-    const inViews = window.location.pathname.includes('/views/');
-    window.location.href = inViews ? '../index.html' : 'index.html';
+    window.location.href = window.location.origin + '/index.html';
   }
 
   setUserRole(role) {
