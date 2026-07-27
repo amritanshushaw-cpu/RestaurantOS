@@ -1,0 +1,34 @@
+{
+  "trailingSlash": "auto",
+  "routes": [
+    {
+      "route": "/customer*",
+      "rewrite": "/src/views/customer.html"
+    },
+    {
+      "route": "/waiter*",
+      "rewrite": "/src/views/pos.html"
+    },
+    {
+      "route": "/kitchen*",
+      "rewrite": "/src/views/kitchen.html"
+    },
+    {
+      "route": "/admin*",
+      "rewrite": "/src/views/admin.html"
+    }
+  ],
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/assets/*", "/css/*", "/src/*", "*.{png,jpg,jpeg,gif,ico,svg,js,css}"]
+  },
+  "globalHeaders": {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "SAMEORIGIN",
+    "X-XSS-Protection": "1; mode=block",
+    "Referrer-Policy": "strict-origin-when-cross-origin"
+  },
+  "mimeTypes": {
+    ".json": "application/json"
+  }
+}
