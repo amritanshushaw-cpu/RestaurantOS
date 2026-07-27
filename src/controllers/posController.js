@@ -4,6 +4,7 @@
 
 import { menuService } from '../services/menuService.js';
 import { dbEngine } from '../services/supabaseClient.js';
+import { authService } from '../services/authService.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const menuGrid = document.getElementById('pos-menu-grid');
@@ -22,18 +23,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnCloseAddDish = document.getElementById('btn-close-add-dish');
   const addDishForm = document.getElementById('add-dish-form');
 
-  let currentUser = JSON.parse(localStorage.getItem('rest_os_google_user'));
-  if (!currentUser || currentUser.role !== 'Waiter') {
+  let currentUser = authService.user || JSON.parse(localStorage.getItem('rest_os_google_user'));
+  if (!currentUser) {
     currentUser = {
-      id: currentUser ? currentUser.id : 'waiter-' + Date.now(),
-      name: currentUser ? currentUser.name : 'Sam (Waitstaff)',
-      email: currentUser ? currentUser.email : 'waiter@restaurantos.com',
-      picture: currentUser ? currentUser.picture : 'https://api.dicebear.com/7.x/avataaars/svg?seed=Waiter',
+      id: 'waiter-' + Date.now(),
+      name: 'Sam (Waitstaff)',
+      email: 'waiter@restaurantos.com',
+      picture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Waiter',
       role: 'Waiter',
-      auth_provider: currentUser ? currentUser.auth_provider : 'system'
+      auth_provider: 'system'
     };
-    localStorage.setItem('rest_os_google_user', JSON.stringify(currentUser));
-    try { window.dispatchEvent(new CustomEvent('auth:changed', { detail: { user: currentUser } })); } catch(e){}
+    authService.saveUser(currentUser);
+  } else if (currentUser.role !== 'Waiter') {
+    authService.setUserRole('Waiter');
+    currentUser = authService.user;
   }
   
   if (currentUser) {

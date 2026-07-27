@@ -53,8 +53,11 @@ class EntryGatewayModal {
 
     sessionStorage.removeItem('rest_os_logged_out');
 
-    // If real authenticated user already exists for this exact role, enter workspace directly
-    if (authService.user && authService.user.role === role) {
+    // If authenticated user exists, set their active role and enter workspace directly
+    if (authService.user) {
+      if (authService.user.role !== role) {
+        authService.setUserRole(role);
+      }
       authService.showToast(`Entering ${role} Workspace Mode…`);
       window.isAppNavigation = true;
       window.location.href = targetPage;

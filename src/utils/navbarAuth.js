@@ -20,9 +20,38 @@ class NavbarAuth {
     }
 
     window.addEventListener('auth:changed', (e) => {
-      this.renderWidget(e.detail.user);
+      this.autoSyncPageRole();
+      this.renderWidget(e.detail?.user || authService.user);
       this.applyRoleRestrictions();
     });
+  }
+
+  autoSyncPageRole() {
+    if (!authService.user) return;
+
+    const path = window.location.pathname;
+    const cleanName = path.split('/').pop().split('?')[0] || 'index.html';
+
+    let targetRole = null;
+    if (cleanName === 'pos.html') {
+      targetRole = 'Waiter';
+    } else if (cleanName === 'kds.html') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('role') === 'waiter') {
+        targetRole = 'Waiter';
+      } else if (authService.user.role !== 'Waiter' && authService.user.role !== 'Manager') {
+        targetRole = 'Kitchen';
+      }
+    } else if (cleanName === 'analytics.html' || cleanName === 'inventory.html' || cleanName === 'opscopilot.html' || cleanName === 'digital_twin.html') {
+      targetRole = 'Manager';
+    } else if (cleanName === 'customer.html') {
+      targetRole = 'Customer';
+    }
+
+    if (targetRole && authService.user.role !== targetRole) {
+      authService.user.role = targetRole;
+      localStorage.setItem('rest_os_google_user', JSON.stringify(authService.user));
+    }
   }
 
   mountWidget() {
@@ -43,6 +72,7 @@ class NavbarAuth {
       }
     }
 
+    this.autoSyncPageRole();
     this.renderWidget(authService.user);
     this.applyRoleRestrictions();
   }
