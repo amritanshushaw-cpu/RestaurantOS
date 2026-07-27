@@ -467,7 +467,7 @@ class AuthService {
   // Logout / role switching (unchanged)
   // ---------------------------------------------------------------------
 
-  logout() {
+  async logout() {
     const user = this.user;
     if (user) {
       dbEngine.clearActiveSession(user.email || user.id);
@@ -475,16 +475,27 @@ class AuthService {
     this.saveUser(null);
     if (dbEngine.supabase) {
       try {
-        dbEngine.supabase.auth.signOut();
+        await dbEngine.supabase.auth.signOut();
       } catch (e) {}
     }
     this.showToast(user ? `Signed out ${user.name}. Active Session ID cleared!` : 'Signed out. Active Session ID cleared!');
     
     setTimeout(() => {
       window.isAppNavigation = true;
-      const isSubdir = window.location.pathname.includes('/views/');
-      const prefix = isSubdir ? '../' : './';
-      window.location.href = `${prefix}index.html`;
+      const path = window.location.pathname;
+      let targetPath = '/';
+      if (path.includes('/src/views/')) {
+        targetPath = path.substring(0, path.indexOf('/src/views/')) + '/index.html';
+      } else if (path.includes('/views/')) {
+        targetPath = path.substring(0, path.indexOf('/views/')) + '/index.html';
+      } else {
+        const parts = path.split('/');
+        parts.pop();
+        targetPath = parts.join('/') + '/index.html';
+      }
+      // Fallback for Vercel root
+      if (targetPath.startsWith('//')) targetPath = '/index.html';
+      window.location.href = targetPath;
     }, 400);
   }
 
