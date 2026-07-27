@@ -111,20 +111,48 @@ app.post('/api/auth/signup', async (req, res) => {
 
 // POST /api/auth/signin — sign in with email+password
 app.post('/api/auth/signin', async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
 
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return res.status(401).json({ error: error.message });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error || !data?.user) {
+      return res.status(401).json({ error: error?.message || 'Invalid email or password' });
+    }
 
-  // Fetch profile for role info
-  const { data: profile } = await supabaseAdmin
-    .from('profiles')
-    .select('*')
-    .eq('id', data.user.id)
-    .single();
+    const userId = data.user.id;
+    const { data: profile, error: profileErr } = await supabaseAdmin
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
 
-  res.json({ session: data.session, user: data.user, profile });
+    let profileRecord = profile;
+    if (profileErr && !profile) {
+      const { data: newProfile, error: createErr } = await supabaseAdmin
+        .from('profiles')
+        .insert({
+          id: userId,
+          email: data.user.email,
+          full_name: data.user.user_metadata?.full_name || email.split('@')[0],
+          role: data.user.user_metadata?.role || 'Customer',
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (createErr) {
+        return res.status(500).json({ error: createErr.message });
+      }
+
+      profileRecord = newProfile;
+    }
+
+    res.json({ session: data.session, user: data.user, profile: profileRecord });
+  } catch (error) {
+    console.error('Sign-in error:', error);
+    res.status(500).json({ error: 'Sign-in failed. Please try again.' });
+  }
 });
 
 // POST /api/auth/signout — sign out
