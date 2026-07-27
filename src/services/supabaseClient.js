@@ -566,6 +566,36 @@ class DynamicDatabaseEngine {
     };
   }
 
+  // Reset all analytics, order history, table sessions, and revenue metrics (Manager feature)
+  resetAllAnalytics() {
+    localStorage.removeItem(STORAGE_KEYS.ORDERS);
+    localStorage.removeItem(STORAGE_KEYS.SESSIONS);
+    localStorage.removeItem(STORAGE_KEYS.PAYMENTS);
+    localStorage.removeItem(STORAGE_KEYS.QUEUE);
+    localStorage.removeItem(STORAGE_KEYS.CUSTOMER_HISTORY);
+    localStorage.removeItem(STORAGE_KEYS.TABLE_VACANCY);
+    localStorage.removeItem('rest_os_active_session');
+
+    // Reset table statuses back to AVAILABLE
+    const tables = this.getTables();
+    tables.forEach(tbl => {
+      tbl.status = 'AVAILABLE';
+      tbl.vacant = 'Y';
+    });
+    localStorage.setItem(STORAGE_KEYS.TABLES, JSON.stringify(tables));
+
+    // Broadcast reset event over cloud realtime channel
+    this.broadcastOrderSync({ id: 'reset-' + Date.now(), status: 'RESET', order_number: 'RESET', items: [] });
+    this.broadcastSessionSync({ session_id: 'reset-' + Date.now(), status: 'RESET' });
+
+    try { window.dispatchEvent(new Event('storage')); } catch (e) {}
+
+    return {
+      ok: true,
+      message: 'All analytics, order history, sessions, and revenue metrics reset.'
+    };
+  }
+
   // =========================================================================
   // REAL SESSION ENGINE & 3-TABLE DATABASE MANAGEMENT (VibeAthon Specs)
   // =========================================================================
