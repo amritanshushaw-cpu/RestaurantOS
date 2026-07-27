@@ -57,11 +57,31 @@ class AuthService {
     // Prevent accidental closing of window without warning
     window.addEventListener('beforeunload', (e) => {
       if (this.user && !window.isAppNavigation) {
-        // Modern browsers will show a generic "Changes you made may not be saved" dialog.
-        // Some older browsers might display this custom string.
         e.preventDefault();
         e.returnValue = 'Are you sure you want to log out and leave this page?';
         return e.returnValue;
+      }
+    });
+
+    // Cross-tab auto-logout: if session changes in another tab
+    window.addEventListener('storage', (e) => {
+      if (e.key === AUTH_STORAGE_KEY) {
+        const newUser = e.newValue ? JSON.parse(e.newValue) : null;
+        if (!newUser) {
+          // Logged out from another tab
+          if (this.user) {
+             this.user = null;
+             window.isAppNavigation = true;
+             const prefix = window.location.pathname.includes('/views/') ? '../' : './';
+             window.location.href = `${prefix}index.html`;
+          }
+        } else if (this.user && this.user.id !== newUser.id) {
+          // A DIFFERENT session was opened (e.g. Waiter logged in over Customer)
+          this.user = null;
+          window.isAppNavigation = true;
+          const prefix = window.location.pathname.includes('/views/') ? '../' : './';
+          window.location.href = `${prefix}index.html`;
+        }
       }
     });
   }
@@ -459,6 +479,13 @@ class AuthService {
       } catch (e) {}
     }
     this.showToast(user ? `Signed out ${user.name}. Active Session ID cleared!` : 'Signed out. Active Session ID cleared!');
+    
+    setTimeout(() => {
+      window.isAppNavigation = true;
+      const isSubdir = window.location.pathname.includes('/views/');
+      const prefix = isSubdir ? '../' : './';
+      window.location.href = `${prefix}index.html`;
+    }, 400);
   }
 
   setUserRole(role) {
