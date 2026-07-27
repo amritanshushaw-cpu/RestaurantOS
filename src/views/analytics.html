@@ -309,12 +309,12 @@
       if (custTbody) {
         custTbody.innerHTML = custRows.map(c => `
           <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-            <td style="padding: 8px; font-weight: 600;">${c.customer_id}</td>
-            <td style="padding: 8px; font-size: 11px;">${c.dates_visited}</td>
-            <td style="padding: 8px; font-family: var(--font-mono); font-size: 11px;">${c.bill_per_visit}</td>
-            <td style="padding: 8px; font-family: var(--font-mono); color: var(--color-accent-lime); font-weight: 700;">₹${c.total_bill.toFixed(2)}</td>
-            <td style="padding: 8px;">${c.visit_count}</td>
-            <td style="padding: 8px;"><span class="badge" style="background: rgba(194, 239, 78, 0.15); color: var(--color-accent-lime);">${c.general_one_word_feedback}</span></td>
+            <td style="padding: 10px; font-weight: 600; color: #fff;">${c.customer_id}</td>
+            <td style="padding: 10px; font-size: 12px; color: var(--text-secondary);">${c.dates_visited}</td>
+            <td style="padding: 10px; font-family: var(--font-mono); font-size: 12px; color: var(--color-accent-lime); font-weight: 600;">${c.bill_per_visit}</td>
+            <td style="padding: 10px; font-family: var(--font-mono); color: var(--color-accent-lime); font-weight: 700;">₹${Number(c.total_bill || 0).toFixed(2)}</td>
+            <td style="padding: 10px; text-align: center; font-weight: 700;">${c.visit_count}</td>
+            <td style="padding: 10px;"><span class="badge" style="background: rgba(194, 239, 78, 0.15); color: var(--color-accent-lime); font-weight: 700; padding: 4px 10px; border-radius: 4px;">${c.general_one_word_feedback}</span></td>
           </tr>
         `).join('');
       }

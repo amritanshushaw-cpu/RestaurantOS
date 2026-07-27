@@ -1145,6 +1145,40 @@ Payment Options:
     }));
   }
 
+  // D-Table 3 (Customer History Engine)
+  getCustomerHistory() {
+    const sessions = this.getSessions();
+    const map = {};
+
+    sessions.forEach(s => {
+      const cid = s.customer_id || 'CUST-8021';
+      const cName = s.customer_name || 'Guest';
+      const date = s.date || new Date(s.created_at || Date.now()).toISOString().split('T')[0];
+      const bill = parseFloat(s.total_session_amount || s.total_order_amount || 0);
+      const feedback = s.feedback?.one_word || s.general_one_word_feedback || 'EXCELLENT';
+
+      if (!map[cid]) {
+        map[cid] = {
+          customer_id: cid,
+          customer_name: cName,
+          dates_visited: [date],
+          bill_per_visit: [bill],
+          total_bill: bill,
+          visit_count: 1,
+          general_one_word_feedback: feedback
+        };
+      } else {
+        map[cid].dates_visited.push(date);
+        map[cid].bill_per_visit.push(bill);
+        map[cid].total_bill += bill;
+        map[cid].visit_count += 1;
+        if (feedback) map[cid].general_one_word_feedback = feedback;
+      }
+    });
+
+    return Object.values(map);
+  }
+
   // D-Table 3 (Customer History)
   // Customer ID | Dates Visited | Bill per visit | Total Bill | Visit Count | General one word feedback
   getDTableCustomerHistory() {
@@ -1152,21 +1186,21 @@ Payment Options:
     if (history.length === 0) {
       return [{
         customer_id: 'CUST-8021',
-        dates_visited: [new Date().toISOString().split('T')[0]],
-        bill_per_visit: [1584.10],
+        dates_visited: new Date().toISOString().split('T')[0],
+        bill_per_visit: '₹1584.10',
         total_bill: 1584.10,
         visit_count: 1,
-        general_one_word_feedback: 'Excellent'
+        general_one_word_feedback: 'EXCELLENT'
       }];
     }
 
     return history.map(h => ({
-      customer_id: h.customer_id,
-      dates_visited: h.dates_visited ? h.dates_visited.join(', ') : new Date().toISOString().split('T')[0],
-      bill_per_visit: h.bill_per_visit ? h.bill_per_visit.map(b => `₹${b.toFixed(2)}`).join(', ') : `₹${h.total_bill.toFixed(2)}`,
+      customer_id: h.customer_name && h.customer_name !== 'Guest' ? `${h.customer_name} (${h.customer_id})` : h.customer_id,
+      dates_visited: Array.isArray(h.dates_visited) ? Array.from(new Set(h.dates_visited)).join(', ') : h.dates_visited,
+      bill_per_visit: Array.isArray(h.bill_per_visit) ? h.bill_per_visit.map(b => `₹${Number(b).toFixed(2)}`).join(', ') : `₹${Number(h.total_bill || 0).toFixed(2)}`,
       total_bill: parseFloat((h.total_bill || 0).toFixed(2)),
       visit_count: h.visit_count || 1,
-      general_one_word_feedback: h.general_one_word_feedback || 'Good'
+      general_one_word_feedback: String(h.general_one_word_feedback || 'EXCELLENT').toUpperCase()
     }));
   }
 }
