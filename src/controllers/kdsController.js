@@ -67,14 +67,20 @@ document.addEventListener('DOMContentLoaded', () => {
   function refreshKDSTickets() {
     updateWaiterFeed();
     const allOrders = dbEngine.getOrders();
-    // Kitchen only sees SENT_TO_KITCHEN and PREPARING orders
-    const activeOrders = allOrders.filter(o => o.status === 'SENT_TO_KITCHEN' || o.status === 'PREPARING');
+    // Kitchen sees all incoming orders: NEW, PENDING, SENT_TO_KITCHEN, and PREPARING
+    const activeOrders = allOrders.filter(o => 
+      o.status === 'NEW' || 
+      o.status === 'PENDING' || 
+      o.status === 'SENT_TO_KITCHEN' || 
+      o.status === 'PREPARING'
+    );
 
     if (activeOrders.length === 0) {
       ticketsContainer.innerHTML = `
         <div style="grid-column: 1 / -1; text-align: center; color: var(--text-tertiary); margin-top: 60px;">
-          <i class="fa-solid fa-utensils" style="font-size: 36px; margin-bottom: 12px;"></i>
-          <p>No active kitchen orders. Wait for a Waiter to ACCEPT an order!</p>
+          <i class="fa-solid fa-utensils" style="font-size: 36px; margin-bottom: 12px; color: var(--color-accent-pink);"></i>
+          <p style="font-size: 15px; font-weight: 600;">No active kitchen orders right now.</p>
+          <p style="font-size: 13px; color: var(--text-tertiary);">Orders placed by Customers or Waiters will appear here instantly!</p>
         </div>
       `;
       return;
@@ -93,68 +99,64 @@ document.addEventListener('DOMContentLoaded', () => {
       let btnColor = '#fff';
 
       if (order.status === 'PREPARING') {
-        actionBtnText = 'Completed (Order Ready)';
+        actionBtnText = 'Mark Completed (Order Ready)';
         nextStatus = 'READY';
         btnBg = 'var(--color-success)';
         btnColor = '#000';
       }
 
-      const itemsListHTML = order.items.map(item => `
-        <li class="ticket-item">
-          <span><span class="kds-item-qty-badge">${item.quantity}x</span> ${item.name || item.item_name}</span>
-          <i class="fa-regular fa-circle"></i>
+      const itemsListHTML = (order.items || []).map(item => `
+        <li class="ticket-item" style="display:flex; justify-content:space-between; align-items:center; padding: 6px 0; border-bottom: 1px dashed rgba(255,255,255,0.08);">
+          <span><span class="kds-item-qty-badge" style="background: var(--color-accent-pink); color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-right: 6px;">${item.quantity}x</span> ${item.name || item.item_name}</span>
+          <i class="fa-regular fa-circle-check" style="color: var(--text-tertiary);"></i>
         </li>
       `).join('');
 
       const cookingNotesHTML = order.special_instructions ? `
-        <div class="kds-cooking-instructions">
-          <i class="fa-solid fa-utensils"></i>
-          <div>
-            <strong style="color: var(--color-warning); text-transform: uppercase; letter-spacing: 0.3px;">Chef Note:</strong> ${order.special_instructions}
-          </div>
+        <div class="kds-cooking-instructions" style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 10px; margin: 10px 0; font-size: 13px;">
+          <i class="fa-solid fa-utensils" style="color: #f59e0b; margin-right: 6px;"></i>
+          <strong style="color: #f59e0b; text-transform: uppercase; letter-spacing: 0.3px;">Chef Note:</strong> ${order.special_instructions}
         </div>
       ` : '';
 
+      const formattedTime = order.created_at ? new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now';
+
       card.innerHTML = `
         <div>
-          <div class="ticket-header">
+          <div class="ticket-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--border-violet); padding-bottom: 10px; margin-bottom: 10px;">
             <div>
-              <strong style="font-size: 16px;">${order.order_number}</strong>
-              <span class="badge sandbox-badge" style="margin-left: 8px;">${order.table_number || order.table_id || 'Table 01'}</span>
+              <strong style="font-size: 16px; color: var(--color-accent-lime);">${order.order_number}</strong>
+              <span class="badge sandbox-badge" style="margin-left: 8px; background: rgba(236, 72, 153, 0.2); color: #ec4899;">${order.table_number || order.table_id || 'Table 01'}</span>
               ${order.session_id ? `<span class="badge" style="font-family: var(--font-mono); margin-left: 6px; background: rgba(16, 185, 129, 0.15); color: #10b981;">Sess: ${order.session_id}</span>` : ''}
             </div>
             <span class="badge" style="font-size: 11px; font-weight: 700; background: rgba(194, 239, 78, 0.15); color: var(--color-accent-lime);">${order.status}</span>
           </div>
 
-          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">
-            <strong>Waiter ID:</strong> <span style="color:#ec4899; font-weight:700;">${order.waiter_id || 'WAIT-01'}</span> &nbsp;·&nbsp;
-            <strong>Customer:</strong> <span style="color: var(--color-accent-lime);">${order.customer_name || 'Guest'}</span><br/>
-            <strong>Chef ID:</strong> ${order.chef_id || 'Pending...'} &nbsp;·&nbsp;
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; line-height: 1.6;">
+            <strong>Customer:</strong> <span style="color: var(--color-accent-lime); font-weight:600;">${order.customer_name || 'Guest'}</span> &nbsp;·&nbsp;
+            <strong>Waiter:</strong> <span style="color:#ec4899; font-weight:700;">${order.waiter_id || 'WAIT-01'}</span><br/>
+            <strong>Time:</strong> <span style="color:#fff;">${formattedTime}</span> &nbsp;·&nbsp;
             <strong>Delivered Status:</strong> <span style="font-weight: 700; color: ${order.delivered === 'Y' ? '#10b981' : '#f59e0b'};">${order.delivered || 'N'}</span>
           </div>
 
           ${cookingNotesHTML}
 
-          <ul class="ticket-items">
+          <ul class="ticket-items" style="list-style:none; padding:0; margin: 12px 0;">
             ${itemsListHTML}
           </ul>
         </div>
 
-        <button class="pay-btn btn-progress-ticket" style="background: ${btnBg}; color: ${btnColor}; padding: 10px; font-size: 13px; margin-top: 12px;">
-          ${actionBtnText} <i class="fa-solid fa-arrow-right"></i>
+        <button class="pay-btn btn-progress-ticket" style="background: ${btnBg}; color: ${btnColor}; padding: 10px; font-size: 13px; font-weight: 700; margin-top: 12px; border-radius: var(--radius-sm); border: none; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <span>${actionBtnText}</span> <i class="fa-solid fa-arrow-right"></i>
         </button>
       `;
 
       card.querySelector('.btn-progress-ticket').addEventListener('click', () => {
-        const allOrdersNow = dbEngine.getOrders();
-        const target = allOrdersNow.find(x => x.id === order.id);
-        if (target) {
-          target.status = nextStatus;
+        const updated = dbEngine.updateOrderStatus(order.id, nextStatus);
+        if (updated) {
           if (nextStatus === 'PREPARING' && currentUser) {
-            target.chef_id = currentUser.id;
+            updated.chef_id = currentUser.id;
           }
-          localStorage.setItem('rest_os_orders', JSON.stringify(allOrdersNow));
-          try { window.dispatchEvent(new Event('storage')); } catch(e){}
           refreshKDSTickets();
         }
       });
