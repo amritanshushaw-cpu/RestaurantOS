@@ -535,6 +535,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     renderTableMatrixUI();
+    updateLiveOrderTrackerUI();
   }
 
   // API Flow: Table booking try -> if not available (FULL) -> returns apology modal -> else generates 6-digit Session ID
@@ -599,7 +600,87 @@ document.addEventListener('DOMContentLoaded', () => {
         authService.showToast('Order SERVED! Waiter & Kitchen confirmed delivery (DB Delivered = Y).');
       }
     }
-  }, 2000);
+
+    updateLiveOrderTrackerUI();
+  }, 1500);
+
+  function updateLiveOrderTrackerUI() {
+    const badgeEl = document.getElementById('tracker-order-id-badge');
+    const step1 = document.getElementById('chk-step-1');
+    const step2 = document.getElementById('chk-step-2');
+    const step3 = document.getElementById('chk-step-3');
+    const step4 = document.getElementById('chk-step-4');
+
+    if (!step1 || !step2 || !step3 || !step4) return;
+
+    if (!currentActiveSession) {
+      if (badgeEl) badgeEl.textContent = 'NO ORDER';
+      resetTrackerSteps([step1, step2, step3, step4]);
+      return;
+    }
+
+    const allOrders = dbEngine.getOrders();
+    const activeOrder = allOrders.find(o => o.session_id === currentActiveSession.session_id && o.status !== 'TERMINATED');
+
+    if (!activeOrder) {
+      if (badgeEl) badgeEl.textContent = `SESS: ${currentActiveSession.session_id}`;
+      resetTrackerSteps([step1, step2, step3, step4]);
+      return;
+    }
+
+    if (badgeEl) badgeEl.textContent = activeOrder.order_number;
+
+    const status = activeOrder.status;
+
+    // 1) Order taken by waiter: ACCEPTED, SENT_TO_KITCHEN, PREPARING, READY, COLLECTED, DELIVERED, PAID
+    const s1Done = ['ACCEPTED', 'SENT_TO_KITCHEN', 'PREPARING', 'READY', 'COLLECTED', 'DELIVERED', 'PAID'].includes(status);
+    
+    // 2) Order send to kitchen: SENT_TO_KITCHEN, PREPARING, READY, COLLECTED, DELIVERED, PAID
+    const s2Done = ['SENT_TO_KITCHEN', 'PREPARING', 'READY', 'COLLECTED', 'DELIVERED', 'PAID'].includes(status);
+    
+    // 3) Order collected by waiter: READY, COLLECTED, DELIVERED, PAID
+    const s3Done = ['READY', 'COLLECTED', 'DELIVERED', 'PAID'].includes(status);
+    
+    // 4) Order delivered to customer: DELIVERED, PAID or activeOrder.delivered === 'Y'
+    const s4Done = ['DELIVERED', 'PAID'].includes(status) || activeOrder.delivered === 'Y';
+
+    setTrackerStepState(step1, s1Done);
+    setTrackerStepState(step2, s2Done);
+    setTrackerStepState(step3, s3Done);
+    setTrackerStepState(step4, s4Done);
+  }
+
+  function setTrackerStepState(stepEl, isDone) {
+    if (!stepEl) return;
+    const circle = stepEl.querySelector('.step-circle');
+    const label = stepEl.querySelector('.step-label');
+
+    if (isDone) {
+      if (circle) {
+        circle.style.border = '2px solid #10b981';
+        circle.style.background = '#10b981';
+        circle.style.color = '#000';
+        circle.innerHTML = '<i class="fa-solid fa-check"></i>';
+      }
+      if (label) {
+        label.style.color = '#10b981';
+      }
+    } else {
+      if (circle) {
+        circle.style.border = '2px solid #4b5563';
+        circle.style.background = '#12131a';
+        circle.style.color = '#4b5563';
+        circle.innerHTML = '<i class="fa-solid fa-circle" style="font-size: 5px;"></i>';
+      }
+      if (label) {
+        label.style.color = 'var(--text-tertiary)';
+      }
+    }
+  }
+
+  function resetTrackerSteps(steps) {
+    steps.forEach(step => setTrackerStepState(step, false));
+  }
 
   // Timer countdown for estimated waiting time
   function startWaitingTimer(minutes = 15) {
