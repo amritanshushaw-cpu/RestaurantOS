@@ -16,10 +16,38 @@ class EntryGatewayModal {
   }
 
   init() {
+    window.requirePinAndGo = (role, targetUrl) => {
+      if (role !== 'Customer') {
+        const pins = { 'Manager': '1234', 'Waiter': '2345', 'Kitchen': '3456' };
+        const entered = prompt(`Enter Security PIN for ${role} Mode:`);
+        if (entered !== pins[role]) {
+          alert('Invalid PIN! Access Denied.');
+          return;
+        }
+      }
+      this.handleSelectRole(role, targetUrl);
+    };
+
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => this.checkAndShowModal());
     } else {
       this.checkAndShowModal();
+    }
+  }
+
+  handleSelectRole(role, targetPage) {
+    sessionStorage.setItem('rest_os_gateway_dismissed', 'true');
+    const existingModal = document.getElementById('entry-gateway-modal');
+    if (existingModal) existingModal.remove();
+
+    if (authService.user) {
+      authService.setUserRole(role);
+      authService.showToast(`Entering ${role} Workspace Mode…`);
+      setTimeout(() => {
+        window.location.href = targetPage;
+      }, 200);
+    } else {
+      this.openSigningWindow(role, targetPage);
     }
   }
 
@@ -143,34 +171,6 @@ class EntryGatewayModal {
     const btnKitchen = document.getElementById('btn-mode-kitchen');
     const btnManager = document.getElementById('btn-mode-manager');
     const btnBrowse = document.getElementById('btn-browse-landing');
-
-    const handleSelectRole = (role, targetPage) => {
-      sessionStorage.setItem('rest_os_gateway_dismissed', 'true');
-      const existingModal = document.getElementById('entry-gateway-modal');
-      if (existingModal) existingModal.remove();
-
-      if (authService.user) {
-        authService.setUserRole(role);
-        authService.showToast(`Entering ${role} Workspace Mode…`);
-        setTimeout(() => {
-          window.location.href = targetPage;
-        }, 200);
-      } else {
-        this.openSigningWindow(role, targetPage);
-      }
-    };
-
-    window.requirePinAndGo = (role, targetUrl) => {
-      if (role !== 'Customer') {
-        const pins = { 'Manager': '1234', 'Waiter': '2345', 'Kitchen': '3456' };
-        const entered = prompt(`Enter Security PIN for ${role} Mode:`);
-        if (entered !== pins[role]) {
-          alert('Invalid PIN! Access Denied.');
-          return;
-        }
-      }
-      handleSelectRole(role, targetUrl);
-    };
 
     btnCustomer?.addEventListener('click', () => window.requirePinAndGo('Customer', `${prefix}customer.html`));
     btnWaiter?.addEventListener('click', () => window.requirePinAndGo('Waiter', `${prefix}pos.html`));
