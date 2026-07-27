@@ -467,16 +467,14 @@ class AuthService {
   // Logout / role switching (unchanged)
   // ---------------------------------------------------------------------
 
-  async logout() {
+  logout() {
     const user = this.user;
     if (user) {
       dbEngine.clearActiveSession(user.email || user.id);
     }
     this.saveUser(null);
     if (dbEngine.supabase) {
-      try {
-        await dbEngine.supabase.auth.signOut();
-      } catch (e) {}
+      dbEngine.supabase.auth.signOut().catch(e => console.warn('Supabase signout notice:', e.message));
     }
     this.showToast(user ? `Signed out ${user.name}. Active Session ID cleared!` : 'Signed out. Active Session ID cleared!');
     
