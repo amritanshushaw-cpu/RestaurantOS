@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "npx http-server ./ -p 3000 -c-1",
     "start": "npx http-server ./ -p 3000",
-    "build": "echo Static site ready",
+    "build": "node -e \"const fs=require('fs'); if(!fs.existsSync('dist')) fs.mkdirSync('dist'); fs.cpSync('index.html', 'dist/index.html'); if(fs.existsSync('src')) fs.cpSync('src', 'dist/src', {recursive: true}); console.log('Dist built successfully');\"",
     "server": "node server/index.js",
     "server:dev": "node --watch server/index.js"
   },

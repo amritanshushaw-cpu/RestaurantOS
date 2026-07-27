@@ -1,0 +1,23 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/customer",
+      "destination": "/src/views/customer.html"
+    },
+    {
+      "source": "/waiter",
+      "destination": "/src/views/pos.html"
+    },
+    {
+      "source": "/kitchen",
+      "destination": "/src/views/kitchen.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/src/views/admin.html"
+    }
+  ]
+}
