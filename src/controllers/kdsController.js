@@ -152,7 +152,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Poll state every 2 seconds
+  // Poll state every 2 seconds & on storage events
+  window.addEventListener('storage', refreshKDSTickets);
   setInterval(refreshKDSTickets, 2000);
   refreshKDSTickets();
 });

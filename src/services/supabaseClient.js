@@ -499,19 +499,39 @@ class DynamicDatabaseEngine {
     }
     localStorage.setItem('rest_os_staff_presence', JSON.stringify(presence));
 
-    // Auto-assign any waiting sessions to this waiter
+    // Auto-assign any waiting sessions and orders to this waiter
     if (role === 'Waiter') {
       const sessions = this.getSessions();
-      let updated = false;
+      let updatedSess = false;
       sessions.forEach(s => {
         if (!s.waiter_id && s.status === 'ACTIVE') {
           s.waiter_id = userId;
-          updated = true;
+          updatedSess = true;
         }
       });
-      if (updated) {
+      if (updatedSess) {
         this.saveSessions(sessions);
-        window.dispatchEvent(new Event('storage')); // trigger local update too
+      }
+
+      const orders = this.getOrders();
+      let updatedOrders = false;
+      orders.forEach(o => {
+        if (!o.waiter_id) {
+          const matchingSess = sessions.find(s => s.session_id === o.session_id);
+          if (matchingSess && matchingSess.waiter_id) {
+            o.waiter_id = matchingSess.waiter_id;
+            updatedOrders = true;
+          } else {
+            o.waiter_id = userId;
+            updatedOrders = true;
+          }
+        }
+      });
+      if (updatedOrders) {
+        localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+      }
+      if (updatedSess || updatedOrders) {
+        window.dispatchEvent(new Event('storage'));
       }
     }
     
@@ -520,7 +540,7 @@ class DynamicDatabaseEngine {
       const orders = this.getOrders();
       let updated = false;
       orders.forEach(o => {
-        if (!o.chef_id && (o.status === 'ACCEPTED' || o.status === 'SENT_TO_KITCHEN' || o.status === 'PREPARING')) {
+        if (!o.chef_id && (o.status === 'NEW' || o.status === 'ACCEPTED' || o.status === 'SENT_TO_KITCHEN' || o.status === 'PREPARING')) {
           o.chef_id = userId;
           updated = true;
         }

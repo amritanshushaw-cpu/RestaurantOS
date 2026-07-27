@@ -480,9 +480,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   window.addEventListener('storage', (e) => {
-    if (e.key === 'rest_os_tables' || e.key === 'rest_os_sessions') {
-      renderTableMatrixUI();
-    }
+    refreshActiveSessionUI();
+    renderTableMatrixUI();
   });
 
   function refreshActiveSessionUI() {

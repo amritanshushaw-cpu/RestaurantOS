@@ -155,11 +155,13 @@ class AuthService {
     if (pendingRole) localStorage.removeItem('rest_os_pending_google_role');
 
     try {
-      const { data, error } = await dbEngine.supabase
+      const profilePromise = dbEngine.supabase
         .from('profiles')
         .select('role, full_name, avatar_url')
         .eq('id', authUser.id)
         .single();
+      const timeoutPromise = new Promise(resolve => setTimeout(() => resolve({ data: null, error: 'timeout' }), 1500));
+      const { data, error } = await Promise.race([profilePromise, timeoutPromise]);
       if (!error && data) {
         role = data.role || role;
       }

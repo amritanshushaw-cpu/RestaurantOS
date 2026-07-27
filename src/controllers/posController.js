@@ -179,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }, 5000);
   
   window.addEventListener('storage', (e) => {
-    if (e.key === 'rest_os_sessions') checkWaiterTasks();
+    checkWaiterTasks();
   });
   
   // Initialize current known tables
