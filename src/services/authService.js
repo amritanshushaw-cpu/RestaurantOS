@@ -53,6 +53,17 @@ class AuthService {
     this.clientId = window.GOOGLE_CLIENT_ID || '';
     this.pendingOtpEmail = null;
     this.initSupabaseSessionSync();
+
+    // Prevent accidental closing of window without warning
+    window.addEventListener('beforeunload', (e) => {
+      if (this.user && !window.isAppNavigation) {
+        // Modern browsers will show a generic "Changes you made may not be saved" dialog.
+        // Some older browsers might display this custom string.
+        e.preventDefault();
+        e.returnValue = 'Are you sure you want to log out and leave this page?';
+        return e.returnValue;
+      }
+    });
   }
 
   // ---------------------------------------------------------------------
@@ -141,12 +152,14 @@ class AuthService {
     if (pendingRedirect) {
       localStorage.removeItem('rest_os_pending_redirect');
       setTimeout(() => {
+        window.isAppNavigation = true;
         window.location.href = pendingRedirect;
       }, 300);
     } else if (window.location.pathname.includes('login.html')) {
       // Auto-redirect if we are on the login page (e.g. after OAuth or Magic Link return)
       const isSubdir = window.location.pathname.includes('/views/');
       const prefix = isSubdir ? '' : 'src/views/';
+      window.isAppNavigation = true;
       if (role === 'Manager') window.location.href = `${prefix}analytics.html`;
       else if (role === 'Waiter') window.location.href = `${prefix}kds.html?role=waiter`;
       else if (role === 'Kitchen') window.location.href = `${prefix}kds.html?role=kitchen`;
@@ -307,7 +320,10 @@ class AuthService {
       };
       this.saveUser(user);
       this.showToast(`Demo Mode: Signed in as ${user.name}`);
-      setTimeout(() => { window.location.href = finalTarget; }, 350);
+      setTimeout(() => { 
+        window.isAppNavigation = true;
+        window.location.href = finalTarget; 
+      }, 350);
       return;
     }
 
@@ -392,7 +408,10 @@ class AuthService {
       this.saveUser(user);
       this.showToast(`Demo verified as ${user.name} (${role} Mode). Redirecting…`);
       this.pendingOtpEmail = null;
-      setTimeout(() => { window.location.href = finalTarget; }, 350);
+      setTimeout(() => { 
+        window.isAppNavigation = true;
+        window.location.href = finalTarget; 
+      }, 350);
       return { ok: true };
     }
 

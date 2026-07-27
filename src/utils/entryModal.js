@@ -55,6 +55,7 @@ class EntryGatewayModal {
       authService.setUserRole(role);
       authService.showToast(`Entering ${role} Workspace Mode…`);
       setTimeout(() => {
+        window.isAppNavigation = true;
         window.location.href = targetPage;
       }, 200);
     } else {
@@ -280,6 +281,7 @@ class EntryGatewayModal {
       authService.showToast(`Signed in as ${user.name} (${roleName} Mode). Redirecting...`);
       modal.remove();
       setTimeout(() => {
+        window.isAppNavigation = true;
         window.location.href = targetUrl;
       }, 300);
     });

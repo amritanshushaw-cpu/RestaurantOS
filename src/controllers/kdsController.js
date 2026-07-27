@@ -125,7 +125,8 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
 
           <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">
-            <strong>Waiter Allotted:</strong> ${order.waiter_id || 'WAIT-01'} &nbsp;·&nbsp;
+            <strong>Waiter:</strong> ${order.waiter_id || 'WAIT-01'} &nbsp;·&nbsp;
+            <strong>Customer:</strong> <span style="color: var(--color-accent-lime);">${order.customer_name || 'Guest'}</span><br/>
             <strong>Delivered Status:</strong> <span style="font-weight: 700; color: ${order.delivered === 'Y' ? '#10b981' : '#f59e0b'};">${order.delivered || 'N'}</span>
           </div>
 

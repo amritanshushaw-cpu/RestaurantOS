@@ -85,8 +85,9 @@ export function openEmailAuthModal(targetRole = 'Customer', targetUrl = null) {
       if (targetUrl) {
         authService.showToast(`Authenticated for ${targetRole} Mode. Redirecting...`);
         setTimeout(() => {
+          window.isAppNavigation = true;
           window.location.href = targetUrl;
-        }, 300);
+        }, 500);
       }
     }
   }

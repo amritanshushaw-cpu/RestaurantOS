@@ -75,9 +75,9 @@ class NavbarAuth {
       return;
     }
 
-    // Require authentication for all protected operational pages
     if (!authService.user) {
       const landingUrl = window.location.origin + '/index.html?gateway=1';
+      window.isAppNavigation = true;
       window.location.href = landingUrl;
       return;
     }

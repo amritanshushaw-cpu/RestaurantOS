@@ -84,6 +84,15 @@ class DynamicDatabaseEngine {
 
   // Initialize or load state from localStorage
   initDefaultState() {
+    const APP_VERSION = 'rest_os_v2_6_clean';
+    if (!localStorage.getItem(APP_VERSION)) {
+      // Clean slate for new commit: wipe lingering demo data
+      localStorage.removeItem(STORAGE_KEYS.ORDERS);
+      localStorage.removeItem(STORAGE_KEYS.SESSIONS);
+      localStorage.removeItem(STORAGE_KEYS.TABLES);
+      localStorage.removeItem(STORAGE_KEYS.QUEUE);
+      localStorage.setItem(APP_VERSION, 'true');
+    }
     const defaultCategories = [
       { id: 'cat-05', name: 'Indian Specialties', display_order: 1 },
       { id: 'cat-continental', name: 'Continental Specials', display_order: 2 },

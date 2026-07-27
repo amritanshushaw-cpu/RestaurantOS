@@ -59,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return `
         <div style="background: var(--color-primary); border: 1px solid ${isNew ? 'var(--color-warning)' : 'var(--color-success)'}; padding: 12px; border-radius: 8px; min-width: 250px;">
           <div style="font-weight: 700; color: #fff;">${o.table_number || o.table_id} - ${o.order_number}</div>
+          <div style="font-size: 11px; color: var(--color-accent-lime); margin-bottom: 4px;">Customer: ${o.customer_name || 'Guest'}</div>
           <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">Status: ${o.status}</div>
           <button type="button" class="btn-sentry btn-waiter-action" data-id="${o.id}" data-action="${isNew ? 'ACCEPT' : 'DELIVER'}" style="width: 100%; background: ${isNew ? 'var(--color-warning)' : 'var(--color-success)'}; color: #000; padding: 6px;">
             ${isNew ? 'Accept Order (Send to Kitchen)' : 'Mark as Delivered'}
