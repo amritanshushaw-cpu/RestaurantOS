@@ -59,11 +59,23 @@ document.addEventListener('DOMContentLoaded', () => {
       return `
         <div style="background: var(--color-primary); border: 1px solid ${isNew ? 'var(--color-warning)' : 'var(--color-success)'}; padding: 12px; border-radius: 8px; min-width: 250px;">
           <div style="font-weight: 700; color: #fff;">${o.table_number || o.table_id} - ${o.order_number}</div>
-          <div style="font-size: 11px; color: var(--color-accent-lime); margin-bottom: 4px;">Customer: ${o.customer_name || 'Guest'}</div>
-          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">Status: ${o.status}</div>
+          <div style="font-size: 11px; color: var(--color-accent-lime); margin-bottom: 4px;">Cust: ${o.customer_name || 'Guest'} | Sess: ${o.session_id}</div>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">Status: ${o.status} ${o.chef_id ? `| Chef: ${o.chef_id}` : ''}</div>
           <button type="button" class="btn-sentry btn-waiter-action" data-id="${o.id}" data-action="${isNew ? 'ACCEPT' : 'DELIVER'}" style="width: 100%; background: ${isNew ? 'var(--color-warning)' : 'var(--color-success)'}; color: #000; padding: 6px;">
             ${isNew ? 'Accept Order (Send to Kitchen)' : 'Mark as Delivered'}
           </button>
+        </div>
+      `;
+    }).join('');
+    
+    // Render Seated Customers (No orders yet)
+    const activeSessions = dbEngine.getSessions().filter(s => s.waiter_id === currentUser.id && s.status === 'ACTIVE' && (!s.order_ids || s.order_ids.length === 0));
+    html += activeSessions.map(s => {
+      return `
+        <div style="background: var(--color-primary); border: 1px solid #3b82f6; padding: 12px; border-radius: 8px; min-width: 250px; border-left: 4px solid #3b82f6;">
+          <div style="font-weight: 700; color: #fff;">${s.table_no} - Seated</div>
+          <div style="font-size: 11px; color: var(--color-accent-lime); margin-bottom: 4px;">Cust: ${s.customer_name || 'Guest'} | Sess: ${s.session_id}</div>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">Waiting for Customer to order...</div>
         </div>
       `;
     }).join('');
@@ -90,7 +102,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const allOrders = dbEngine.getOrders();
         const o = allOrders.find(x => x.id === orderId);
         if (o) {
-          if (action === 'ACCEPT') o.status = 'ACCEPTED';
+          if (action === 'ACCEPT') {
+            o.status = 'ACCEPTED';
+            o.chef_id = dbEngine.allotKitchen();
+          }
           if (action === 'DELIVER') {
              o.status = 'DELIVERED';
              dbEngine.markOrderServed(orderId);

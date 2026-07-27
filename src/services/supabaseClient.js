@@ -514,6 +514,22 @@ class DynamicDatabaseEngine {
         window.dispatchEvent(new Event('storage')); // trigger local update too
       }
     }
+    
+    // Auto-assign unassigned kitchen orders to this chef
+    if (role === 'Kitchen') {
+      const orders = this.getOrders();
+      let updated = false;
+      orders.forEach(o => {
+        if (!o.chef_id && (o.status === 'ACCEPTED' || o.status === 'PREPARING')) {
+          o.chef_id = userId;
+          updated = true;
+        }
+      });
+      if (updated) {
+        localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+        window.dispatchEvent(new Event('storage'));
+      }
+    }
   }
 
   getAvailableStaff(role) {
