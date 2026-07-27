@@ -67,13 +67,14 @@ document.addEventListener('DOMContentLoaded', () => {
   function refreshKDSTickets() {
     updateWaiterFeed();
     const allOrders = dbEngine.getOrders();
-    const activeOrders = allOrders.filter(o => o.status !== 'PAID' && o.status !== 'CANCELLED');
+    // Kitchen only sees ACCEPTED and PREPARING orders
+    const activeOrders = allOrders.filter(o => o.status === 'ACCEPTED' || o.status === 'PREPARING');
 
     if (activeOrders.length === 0) {
       ticketsContainer.innerHTML = `
         <div style="grid-column: 1 / -1; text-align: center; color: var(--text-tertiary); margin-top: 60px;">
           <i class="fa-solid fa-utensils" style="font-size: 36px; margin-bottom: 12px;"></i>
-          <p>No active kitchen orders. Place an order from the POS Terminal or Customer Payment page to see live tickets appear here!</p>
+          <p>No active kitchen orders. Wait for a Waiter to ACCEPT an order!</p>
         </div>
       `;
       return;
@@ -91,12 +92,8 @@ document.addEventListener('DOMContentLoaded', () => {
       let btnBg = 'var(--accent-amber)';
 
       if (order.status === 'PREPARING') {
-        actionBtnText = 'Mark as Ready / Served (Delivered: Y)';
+        actionBtnText = 'Complete (Send to Waiter)';
         nextStatus = 'READY';
-        btnBg = '#3b82f6';
-      } else if (order.status === 'READY') {
-        actionBtnText = 'Complete / Served (Delivered: Y)';
-        nextStatus = 'PAID';
         btnBg = 'var(--color-success)';
       }
 
@@ -145,13 +142,16 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
 
       card.querySelector('.btn-progress-ticket').addEventListener('click', () => {
-        if (nextStatus === 'READY' || nextStatus === 'PAID') {
-          // Updates Delivered (Y/N) column in DB from N to Y
-          dbEngine.markOrderServed(order.id);
-        } else {
-          dbEngine.updateOrderStatus(order.id, nextStatus);
+        if (nextStatus === 'PREPARING' || nextStatus === 'READY') {
+          const allOrdersNow = dbEngine.getOrders();
+          const target = allOrdersNow.find(x => x.id === order.id);
+          if (target) {
+            target.status = nextStatus;
+            localStorage.setItem('rest_os_orders', JSON.stringify(allOrdersNow));
+            window.dispatchEvent(new Event('storage'));
+            refreshKDSTickets();
+          }
         }
-        refreshKDSTickets();
       });
 
       ticketsContainer.appendChild(card);

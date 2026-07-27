@@ -22,10 +22,65 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnCloseAddDish = document.getElementById('btn-close-add-dish');
   const addDishForm = document.getElementById('add-dish-form');
 
-  // Waiter Presence & Task Polling
   const currentUser = JSON.parse(localStorage.getItem('rest_os_google_user'));
   if (currentUser) {
     dbEngine.registerStaffPresence(currentUser.id, currentUser.name, 'Waiter');
+  }
+
+  // Inject Waiter Tasks Panel
+  const mainPosLayout = document.querySelector('.pos-layout');
+  if (mainPosLayout) {
+    const tasksPanel = document.createElement('div');
+    tasksPanel.style.cssText = 'grid-column: 1/-1; background: var(--color-ink-deep); border: 1px solid var(--color-accent-pink); border-radius: var(--radius-xl); padding: 16px; margin-bottom: 16px;';
+    tasksPanel.innerHTML = `
+      <h3 style="color: var(--color-accent-pink); margin-top: 0; margin-bottom: 12px; font-size: 16px;">🔔 Waiter Task Dashboard (Live)</h3>
+      <div id="waiter-order-feed" style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px;"></div>
+    `;
+    mainPosLayout.parentNode.insertBefore(tasksPanel, mainPosLayout);
+  }
+
+  function renderWaiterOrderTasks() {
+    const feed = document.getElementById('waiter-order-feed');
+    if (!feed || !currentUser) return;
+    
+    const orders = dbEngine.getOrders().filter(o => o.waiter_id === currentUser.id && (o.status === 'NEW' || o.status === 'READY'));
+    
+    if (orders.length === 0) {
+      feed.innerHTML = '<div style="color: var(--text-tertiary); font-size: 13px;">No pending orders for you right now.</div>';
+      return;
+    }
+    
+    feed.innerHTML = orders.map(o => {
+      const isNew = o.status === 'NEW';
+      return `
+        <div style="background: var(--color-primary); border: 1px solid ${isNew ? 'var(--color-warning)' : 'var(--color-success)'}; padding: 12px; border-radius: 8px; min-width: 250px;">
+          <div style="font-weight: 700; color: #fff;">${o.table_number || o.table_id} - ${o.order_number}</div>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">Status: ${o.status}</div>
+          <button type="button" class="btn-sentry btn-waiter-action" data-id="${o.id}" data-action="${isNew ? 'ACCEPT' : 'DELIVER'}" style="width: 100%; background: ${isNew ? 'var(--color-warning)' : 'var(--color-success)'}; color: #000; padding: 6px;">
+            ${isNew ? 'Accept Order (Send to Kitchen)' : 'Mark as Delivered'}
+          </button>
+        </div>
+      `;
+    }).join('');
+    
+    feed.querySelectorAll('.btn-waiter-action').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const orderId = btn.getAttribute('data-id');
+        const action = btn.getAttribute('data-action');
+        const allOrders = dbEngine.getOrders();
+        const o = allOrders.find(x => x.id === orderId);
+        if (o) {
+          if (action === 'ACCEPT') o.status = 'ACCEPTED';
+          if (action === 'DELIVER') {
+             o.status = 'DELIVERED';
+             dbEngine.markOrderServed(orderId);
+          }
+          localStorage.setItem('rest_os_orders', JSON.stringify(allOrders));
+          window.dispatchEvent(new Event('storage'));
+          renderWaiterOrderTasks();
+        }
+      });
+    });
   }
 
   let knownAssignedTables = new Set();
@@ -40,6 +95,8 @@ document.addEventListener('DOMContentLoaded', () => {
         alert(`🔔 WAITER TASK: Report to ${s.table_no}!\nA new customer session has started.`);
       }
     });
+    
+    renderWaiterOrderTasks();
   }
 
   setInterval(() => {
