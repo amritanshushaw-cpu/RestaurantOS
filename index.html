@@ -230,7 +230,7 @@
           <p>Choose your workspace mode to enter with real Supabase Auth (Email OTP / Google OAuth)</p>
         </div>        <div class="portal-gateway-grid" style="grid-template-columns: repeat(4, 1fr); gap: 16px;">
           <!-- Mode 1: Customer Mode -->
-          <a href="src/views/customer.html" class="portal-choice-card card-customer-portal">
+          <a href="javascript:void(0)" onclick="window.requirePinAndGo('Customer', 'src/views/customer.html')" class="portal-choice-card card-customer-portal">
             <div class="portal-card-top">
               <span class="portal-badge badge-customer"><i class="fa-solid fa-user"></i> Customer</span>
               <span class="portal-ui-tag">Dining UI</span>
@@ -246,7 +246,7 @@
           </a>
 
           <!-- Mode 2: Waiter Mode -->
-          <a href="src/views/pos.html" class="portal-choice-card card-staff-portal" style="border-color: #ec4899;">
+          <a href="javascript:void(0)" onclick="window.requirePinAndGo('Waiter', 'src/views/pos.html')" class="portal-choice-card card-staff-portal" style="border-color: #ec4899;">
             <div class="portal-card-top">
               <span class="portal-badge" style="background: rgba(236,72,153,0.15); color: #ec4899;"><i class="fa-solid fa-concierge-bell"></i> Waiter</span>
               <span class="portal-ui-tag">Waiter UI</span>
@@ -262,7 +262,7 @@
           </a>
 
           <!-- Mode 3: Kitchen Staff Mode -->
-          <a href="src/views/kds.html" class="portal-choice-card card-staff-portal" style="border-color: #3b82f6;">
+          <a href="javascript:void(0)" onclick="window.requirePinAndGo('Kitchen', 'src/views/kds.html')" class="portal-choice-card card-staff-portal" style="border-color: #3b82f6;">
             <div class="portal-card-top">
               <span class="portal-badge" style="background: rgba(59,130,246,0.15); color: #3b82f6;"><i class="fa-solid fa-fire"></i> Kitchen</span>
               <span class="portal-ui-tag">KDS Prep</span>
@@ -278,7 +278,7 @@
           </a>
 
           <!-- Mode 4: Manager Mode -->
-          <a href="src/views/analytics.html" class="portal-choice-card card-staff-portal">
+          <a href="javascript:void(0)" onclick="window.requirePinAndGo('Manager', 'src/views/analytics.html')" class="portal-choice-card card-staff-portal">
             <div class="portal-card-top">
               <span class="portal-badge badge-staff"><i class="fa-solid fa-user-shield"></i> Manager</span>
               <span class="portal-ui-tag">Admin UI</span>
@@ -347,7 +347,7 @@
           <h3 class="ft-title">Menu & Virtual Queue</h3>
           <p class="ft-desc">Dynamic menu card, 6-digit session ID generation, special cooking notes, live itemized bill, and Virtual Queue waiting list.</p>
         </div>
-        <a href="src/views/customer.html" class="ft-link">Enter Customer Mode →</a>
+        <a href="javascript:void(0)" onclick="window.requirePinAndGo('Customer', 'src/views/customer.html')" class="ft-link">Enter Customer Mode →</a>
       </div>
 
       <!-- Mode 2: Waiter Modules -->
@@ -360,7 +360,7 @@
           <h3 class="ft-title">Tables & Order Delivery</h3>
           <p class="ft-desc">Table allocation alerts, waiter ID assignment, order dispatch terminal, and cash/card/UPI payment alerts.</p>
         </div>
-        <a href="src/views/pos.html" class="ft-link" style="color: #ec4899;">Enter Waiter Mode →</a>
+        <a href="javascript:void(0)" onclick="window.requirePinAndGo('Waiter', 'src/views/pos.html')" class="ft-link" style="color: #ec4899;">Enter Waiter Mode →</a>
       </div>
 
       <!-- Mode 3: Kitchen Staff Modules -->
@@ -373,7 +373,7 @@
           <h3 class="ft-title">KDS & Kitchen Inventory</h3>
           <p class="ft-desc">Kitchen Display System (KDS) prep tickets, chef notes, cooking timers, ingredient usage, and Mark as Served (Delivered: Y).</p>
         </div>
-        <a href="src/views/kds.html" class="ft-link" style="color: #3b82f6;">Enter Kitchen Mode →</a>
+        <a href="javascript:void(0)" onclick="window.requirePinAndGo('Kitchen', 'src/views/kds.html')" class="ft-link" style="color: #3b82f6;">Enter Kitchen Mode →</a>
       </div>
 
       <!-- Mode 4: Manager / Admin Modules -->
@@ -386,7 +386,7 @@
           <h3 class="ft-title">Analytics & Operations</h3>
           <p class="ft-desc">3 Server Data Tables (Main Data, Table Vacancy, Customer History), BI revenue metrics, inventory predictor, Digital Twin, and OpsCopilot AI.</p>
         </div>
-        <a href="src/views/analytics.html" class="ft-link" style="color: var(--color-accent-violet);">Enter Manager Mode →</a>
+        <a href="javascript:void(0)" onclick="window.requirePinAndGo('Manager', 'src/views/analytics.html')" class="ft-link" style="color: var(--color-accent-violet);">Enter Manager Mode →</a>
       </div>
       </div>
     </section>

@@ -82,13 +82,12 @@ class NavbarAuth {
       return;
     }
 
+    const activeRole = authService.getActiveRole();
     const canAccess = authService.canAccessPage(path);
     const existingGuard = document.getElementById('rbac-page-guard-overlay');
     if (existingGuard) existingGuard.remove();
 
     if (!canAccess) {
-      const activeRole = authService.getActiveRole();
-
       const guardHtml = `
         <div id="rbac-page-guard-overlay" class="rbac-guard-overlay">
           <div class="rbac-guard-card">
@@ -97,7 +96,7 @@ class NavbarAuth {
             </div>
             <h2 class="rbac-guard-title">Access Restricted to ${activeRole.name} Role</h2>
             <p class="rbac-guard-desc">
-              You are currently signed in as <strong>${authService.user.name}</strong> (${activeRole.name} Role).
+              You are currently signed in as <strong>${authService.user.name}</strong> (${activeRole.name} Mode).
               <br><br>
               <strong>${activeRole.name} permissions:</strong> ${activeRole.description}
             </p>
@@ -119,6 +118,23 @@ class NavbarAuth {
       if (switchBtn) {
         switchBtn.addEventListener('click', () => {
           authService.logout();
+        });
+      }
+    } else {
+      // User has access. Setup Back Button Interceptor for Logout Protection
+      if (!window.__restOsBackInterceptorActive) {
+        window.__restOsBackInterceptorActive = true;
+        // Push a state so that 'back' triggers popstate instead of leaving the page
+        window.history.pushState({ locked: true }, '', window.location.href);
+        
+        window.addEventListener('popstate', (e) => {
+          const confirmLogout = confirm("Are you sure you want to logout?");
+          if (confirmLogout) {
+            authService.logout();
+          } else {
+            // Restore the state to trap the back button again
+            window.history.pushState({ locked: true }, '', window.location.href);
+          }
         });
       }
     }
@@ -160,6 +176,9 @@ class NavbarAuth {
                         user.role === 'Kitchen' ? 'var(--color-warning)' :
                         user.role === 'Waiter' ? 'var(--color-accent-pink)' : 'var(--color-accent-lime)';
 
+      const isCustomer = user.role === 'Customer';
+      const staffIdStr = !isCustomer && user.id ? ` • ID: ${user.role.substring(0,3).toUpperCase()}-${user.id.substring(0,5).toUpperCase()}` : '';
+
       widget.innerHTML = `
         <div class="google-user-profile-badge">
           <div class="user-avatar-wrapper">
@@ -177,7 +196,7 @@ class NavbarAuth {
           <div class="google-user-details">
             <span class="google-user-name">${user.name}</span>
             <div class="google-user-meta">
-              <span class="user-role-chip" style="color: ${roleColor}; border-color: ${roleColor}40;">${user.role}</span>
+              <span class="user-role-chip" style="color: ${roleColor}; border-color: ${roleColor}40;">${user.role}${staffIdStr}</span>
             </div>
           </div>
 

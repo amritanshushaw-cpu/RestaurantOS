@@ -146,7 +146,8 @@ class EntryGatewayModal {
 
     const handleSelectRole = (role, targetPage) => {
       sessionStorage.setItem('rest_os_gateway_dismissed', 'true');
-      modal.remove();
+      const existingModal = document.getElementById('entry-gateway-modal');
+      if (existingModal) existingModal.remove();
 
       if (authService.user) {
         authService.setUserRole(role);
@@ -159,10 +160,22 @@ class EntryGatewayModal {
       }
     };
 
-    btnCustomer?.addEventListener('click', () => handleSelectRole('Customer', `${prefix}customer.html`));
-    btnWaiter?.addEventListener('click', () => handleSelectRole('Waiter', `${prefix}pos.html`));
-    btnKitchen?.addEventListener('click', () => handleSelectRole('Kitchen', `${prefix}kds.html`));
-    btnManager?.addEventListener('click', () => handleSelectRole('Manager', `${prefix}analytics.html`));
+    window.requirePinAndGo = (role, targetUrl) => {
+      if (role !== 'Customer') {
+        const pins = { 'Manager': '1234', 'Waiter': '2345', 'Kitchen': '3456' };
+        const entered = prompt(`Enter Security PIN for ${role} Mode:`);
+        if (entered !== pins[role]) {
+          alert('Invalid PIN! Access Denied.');
+          return;
+        }
+      }
+      handleSelectRole(role, targetUrl);
+    };
+
+    btnCustomer?.addEventListener('click', () => window.requirePinAndGo('Customer', `${prefix}customer.html`));
+    btnWaiter?.addEventListener('click', () => window.requirePinAndGo('Waiter', `${prefix}pos.html`));
+    btnKitchen?.addEventListener('click', () => window.requirePinAndGo('Kitchen', `${prefix}kds.html`));
+    btnManager?.addEventListener('click', () => window.requirePinAndGo('Manager', `${prefix}analytics.html`));
 
     btnBrowse?.addEventListener('click', () => {
       sessionStorage.setItem('rest_os_gateway_dismissed', 'true');
