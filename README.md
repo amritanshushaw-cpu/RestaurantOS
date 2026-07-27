@@ -185,3 +185,11 @@ Copy `.env.example` to `.env` and configure your environment. Key settings inclu
 ## License
 
 MIT License. See `LICENSE`.
+
+---
+
+## Team Attribution
+
+- Team members: Amritanshu Shaw, Ritam Karmakar, Saptak Sarathi Chakraborty
+- Team lead: Shrinivas Ghosh
+- Made by HexCore
