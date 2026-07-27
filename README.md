@@ -1,6 +1,6 @@
 ﻿# 🍳 RestaurantOS — Restaurant Operating System & Payment Enclave
 
-> A lightweight restaurant operations suite with static frontend billing plus an optional Supabase-backed Express API.
+> A modern restaurant operations platform with customer ordering, POS workflow, kitchen dispatch, authentication, and manager analytics.
 
 [![License-MIT](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
 [![Vanilla JS](https://img.shields.io/badge/Stack-HTML5%20%7C%20CSS3%20%7C%20Vanilla%20ES6+-orange?style=flat-square&logo=javascript)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
@@ -8,28 +8,73 @@
 
 ---
 
+## Project Summary
+
+- Team Name: **Team RestaurantOS**
+- Hosted Application Link: **https://restaurant-os-woad.vercel.app**
+- Tech Stack:
+  - Frontend: HTML5, CSS3, Vanilla ES6 JavaScript
+  - Backend: Node.js, Express
+  - Database/Auth: Supabase / PostgreSQL
+  - Authentication: Email OTP verification, Google OAuth, role-based access
+  - Deployment: Render / Vercel-compatible static frontend
+
+---
+
+## User Stories Completed
+
+### Bronze Level – User Experience
+- User Story 1: Designed a modern, intuitive interface for customers and restaurant staff.
+- Customer-facing views include menu browsing, checkout, queue status, and payment.
+- Restaurant staff views include POS, kitchen display, queue management, and management analytics.
+- The solution clearly demonstrates how technology improves the dining experience with live order updates, table assignments, and checkout guidance.
+
+### Silver Level – Authentication & Digital Operations
+- User Story 2: Implemented secure authentication with email/password OTP and Google OAuth.
+- Role-based access is enforced for Customer, Waiter, Kitchen, and Manager workflows.
+- User Story 3: Digitized core restaurant workflows including digital menu, live availability state, order management, queue handling, billing, and customer notifications.
+- The app supports menu browsing, order dispatch, payment sessions, kitchen ticketing, and waiter task tracking.
+
+### Gold Level – Restaurant Management
+- User Story 4: Built a management dashboard for staff to manage daily operations.
+- Dashboard capabilities include orders, tables, inventory, staff presence, customers, revenue, and analytics insights.
+- The management view reduces manual effort through digital order routing, inventory state, and role-specific pages.
+
+> Platinum Level – User Story 5 was intentionally excluded as intelligent features were not implemented for this version.
+
+---
+
+## AI Usage
+
+- The codebase includes a `GeminiService` module for smart menu pairing recommendations and revenue insight messaging.
+- This implementation currently provides simulated AI-style suggestions and executive insight samples.
+- No live demand forecasting or advanced AI-powered decision-making features are included in the shipped product.
+
+---
+
 ## Overview
 
 RestaurantOS is a browser-first restaurant management experience that combines:
 
-- static checkout/payment enclave UI,
+- customer ordering and payment enclave,
 - waiter-facing POS terminal,
 - kitchen display workflow,
-- authentication and menu APIs,
-- Supabase integration for data storage and role-based access.
+- authentication and Supabase-backed menu/auth APIs,
+- manager analytics and role-based access.
 
-The frontend is built with pure HTML, CSS, and Vanilla ES6+ JavaScript. The optional backend server is implemented in Express and lives under `server/`.
+The frontend uses pure HTML, CSS, and Vanilla ES6 JavaScript. The optional backend server is implemented in Express and lives under `server/`.
 
 ---
 
 ## Key Capabilities
 
-- Payment enclave with card visualization, brand detection, local Luhn validation, and 3DS-style OTP flow
+- Payment enclave with card visualization, brand detection, local Luhn validation, and OTP flow
 - POS interface with table selection, order cart, tax calculation, and kitchen dispatch
 - Kitchen Display System (KDS) with order status tracking and chef workflow
 - Supabase-backed menu and auth service for users, roles, and protected endpoints
-- Google OAuth and identity integration support
-- Environment config sample in `.env.example`
+- Google OAuth and email OTP authentication support
+- Simulated AI recommendations for food pairings and revenue insights
+- Live queue and session management for waiter and kitchen staff
 
 ---
 
@@ -42,6 +87,7 @@ RestaurantOS/
 ├── index.html                  # Frontend payment enclave landing page
 ├── package.json                # Frontend npm scripts and dependency manifest
 ├── README.md                   # Project documentation
+├── render.yaml                 # Render deployment configuration
 ├── server/                     # Express backend API server
 │   ├── Dockerfile             # Optional backend container setup
 │   ├── index.js               # Express server entrypoint and API routes
