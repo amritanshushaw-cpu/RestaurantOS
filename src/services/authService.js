@@ -480,20 +480,14 @@ class AuthService {
     
     setTimeout(() => {
       window.isAppNavigation = true;
-      const path = window.location.pathname;
-      let targetPath = '/';
-      if (path.includes('/src/views/')) {
-        targetPath = path.substring(0, path.indexOf('/src/views/')) + '/index.html';
-      } else if (path.includes('/views/')) {
-        targetPath = path.substring(0, path.indexOf('/views/')) + '/index.html';
-      } else {
-        const parts = path.split('/');
-        parts.pop();
-        targetPath = parts.join('/') + '/index.html';
-      }
-      // Fallback for Vercel root
-      if (targetPath.startsWith('//')) targetPath = '/index.html';
-      window.location.href = targetPath;
+      let depth = 0;
+      if (window.location.pathname.includes('/src/views/')) depth = 2;
+      else if (window.location.pathname.includes('/views/')) depth = 1;
+      
+      let prefix = '';
+      for (let i=0; i<depth; i++) prefix += '../';
+      
+      window.location.href = prefix + 'index.html';
     }, 400);
   }
 

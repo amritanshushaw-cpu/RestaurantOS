@@ -51,16 +51,15 @@ class EntryGatewayModal {
     const existingModal = document.getElementById('entry-gateway-modal');
     if (existingModal) existingModal.remove();
 
+    // Force sign-in every time a new session mode is selected to prevent "already logged in" overlap
     if (authService.user) {
-      authService.setUserRole(role);
-      authService.showToast(`Entering ${role} Workspace Mode…`);
-      setTimeout(() => {
-        window.isAppNavigation = true;
-        window.location.href = targetPage;
-      }, 200);
-    } else {
-      this.openSigningWindow(role, targetPage);
+       authService.saveUser(null);
+       if (authService.supabase) {
+         try { authService.supabase.auth.signOut().catch(()=>{}); } catch(e){}
+       }
     }
+    
+    this.openSigningWindow(role, targetPage);
   }
 
   checkAndShowModal() {
