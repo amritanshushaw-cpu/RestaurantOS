@@ -19,14 +19,19 @@
   <header class="sentry-navbar customer-site-header">
     <div class="hbar sentry-navbar-inner">
       <div class="logo">
-        <div class="mark" aria-hidden="true">R</div>
-        <div>
-          <div class="name">RestaurantOS</div>
-          <div class="est">CUSTOMER SPACE · SIGNED IN</div>
-        </div>
+        <a href="../../index.html" style="display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit;" title="Return to Main Landing Page">
+          <div class="mark" aria-hidden="true">R</div>
+          <div>
+            <div class="name">RestaurantOS</div>
+            <div class="est">CUSTOMER SPACE · SIGNED IN</div>
+          </div>
+        </a>
       </div>
 
       <nav class="main" aria-label="Customer space navigation">
+        <a href="../../index.html" style="font-weight: 700; color: var(--poppy); display: inline-flex; align-items: center; gap: 5px;" title="Back to RestaurantOS Landing Page">
+          <i class="fa-solid fa-house" style="font-size: 11px;"></i> Home
+        </a>
         <a href="#menu" class="active">Menu</a>
         <a href="#regulars">Top Picks</a>
         <a href="#pairings">Pairings</a>
@@ -37,6 +42,9 @@
       <div class="sentry-nav-links" aria-hidden="true" hidden></div>
 
       <div class="hright">
+        <a href="../../index.html" style="display: inline-flex; align-items: center; gap: 6px; text-decoration: none; padding: 6px 14px; border: 2px solid var(--ink); background: var(--bone); color: var(--ink); font-family: var(--mono); font-size: 11px; font-weight: 700; border-radius: 999px; transition: all 0.2s ease; white-space: nowrap;" title="Go to Main Landing Page">
+          <i class="fa-solid fa-arrow-left" style="font-size: 11px;"></i> Main Landing Page
+        </a>
         <span class="status"><span class="dot" aria-hidden="true"></span>OPEN · LIVE</span>
         <div id="sentry-google-auth-widget" class="sentry-auth-widget-container" aria-label="Signed-in customer account"></div>
         <button class="btn js-view-order" type="button">View Order</button>

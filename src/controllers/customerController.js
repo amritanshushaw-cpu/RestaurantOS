@@ -1028,8 +1028,9 @@ ${formattedBillText}
 
     navLinks.forEach((link) => {
       link.addEventListener('click', (e) => {
-        e.preventDefault();
         const targetId = link.getAttribute('href');
+        if (!targetId || targetId.includes('index.html')) return; // Allow normal navigation to landing page
+        e.preventDefault();
 
         navLinks.forEach(l => l.classList.remove('active'));
         link.classList.add('active');
