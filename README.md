@@ -132,6 +132,7 @@ Copy `.env.example` to `.env` and configure your environment. Key settings inclu
 - The frontend can run standalone as a static site.
 - The backend is optional but enables API-based auth, protected routes, and server-managed menu operations.
 - Database schema files and sample seeds are available in `src/db/`.
+- Please note : Codes to access different modes: Waiter(2345) Manager(1234) Kitchen(3456)
 
 ---
 
