@@ -191,6 +191,31 @@ document.addEventListener('DOMContentLoaded', () => {
     return items;
   }
 
+  function getItemDietaryTag(item) {
+    if (!item || !item.name) return '';
+    const name = item.name.toLowerCase();
+    const desc = (item.description || '').toLowerCase();
+
+    if (Array.isArray(item.tags) && item.tags.length > 0) {
+      return item.tags.join(' ');
+    }
+
+    const isNonVeg = /chicken|mutton|pork|beef|steak|ribeye|salmon|fish|prawn|lobster|duck|calamari|lamb|guanciale|wings|bacon|ham|momos|cod/i.test(name) ||
+                     /chicken|mutton|pork|beef|steak|salmon|fish|prawn|lobster|duck|calamari|lamb|ham/i.test(desc);
+
+    const hasDairy = /paneer|butter|cheese|cheddar|alfredo|cream|creamy|bisque|malai|lassi|milk|tiramisu|rasmalai|ice cream|mozzarella|gruyère|parmesan|mascarpone|chai|kofta|makhani|culp|fettuccine/i.test(name) ||
+                     /paneer|butter|cheese|cheddar|cream|bisque|malai|lassi|milk|mozzarella|parmesan|mascarpone|makhani/i.test(desc);
+
+    const isVegan = !isNonVeg && !hasDairy && (
+      /vegan|edamame|tofu|aloo|gobi|samosa|bruschetta|mojito|old fashioned|chole|manchurian|spring roll|honey chilli potato|roti|hakka noodles|spinach|salad|dim sum|kulcha/i.test(name) ||
+      /vegan|plant-based|edamame|tofu|veggies/i.test(desc)
+    );
+
+    if (hasDairy) return 'D';
+    if (isVegan) return 'V';
+    return '';
+  }
+
   function renderMenu() {
     const categories = getVisualCategories()
       .filter((category) => currentCategory === 'ALL' || currentCategory === category.id);
@@ -219,14 +244,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       section.append(categoryHead, categoryDescription);
 
-      items.forEach((item, index) => {
+      items.forEach((item) => {
         const row = document.createElement('button');
         row.type = 'button';
         row.className = 'row menu-order-row';
         row.dataset.itemId = item.id;
         row.setAttribute('aria-label', `Add ${item.name} to order`);
 
-        const tag = index % 3 === 0 ? 'V' : index % 3 === 1 ? 'D' : '';
+        const tag = getItemDietaryTag(item);
         row.innerHTML = `
           <span class="nm">${escapeHTML(item.name)}</span>
           ${tag ? `<span class="tag">${tag}</span>` : ''}
