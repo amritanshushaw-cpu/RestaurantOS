@@ -51,23 +51,31 @@ class EntryGatewayModal {
     const existingModal = document.getElementById('entry-gateway-modal');
     if (existingModal) existingModal.remove();
 
-    // Clear explicit logout flag so new login attempts succeed
     sessionStorage.removeItem('rest_os_logged_out');
 
-    // If user is already logged in with this exact role, navigate directly into workspace
-    if (authService.user && authService.user.role === role) {
-      authService.showToast(`Entering ${role} Workspace Mode…`);
-      window.isAppNavigation = true;
-      window.location.href = targetPage;
-      return;
+    const demoNames = {
+      Customer: 'Alex Mercer',
+      Waiter: 'Sam (Waitstaff)',
+      Kitchen: 'Chef Marco',
+      Manager: 'Director Vance'
+    };
+
+    let user = authService.user;
+    if (!user || user.role !== role) {
+      user = {
+        id: (user && user.id) ? user.id : `${role.toLowerCase()}-${Date.now()}`,
+        name: (user && user.name && user.name !== 'Guest') ? user.name : (demoNames[role] || `${role} Guest`),
+        email: (user && user.email) ? user.email : `${role.toLowerCase()}@restaurantos.com`,
+        picture: (user && user.picture) ? user.picture : `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(role)}`,
+        role: role,
+        auth_provider: user ? user.auth_provider : 'system'
+      };
+      authService.saveUser(user);
     }
 
-    // If user has a different role or is signed out, prepare fresh login for requested role
-    if (authService.user) {
-      authService.saveUser(null);
-    }
-    
-    this.openSigningWindow(role, targetPage);
+    authService.showToast(`Entering ${role} Workspace Mode…`);
+    window.isAppNavigation = true;
+    window.location.href = targetPage;
   }
 
   checkAndShowModal() {
