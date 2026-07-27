@@ -51,13 +51,17 @@ class EntryGatewayModal {
     const existingModal = document.getElementById('entry-gateway-modal');
     if (existingModal) existingModal.remove();
 
-    // Force sign-in every time a new session mode is selected to prevent "already logged in" overlap
-    if (authService.user) {
-       authService.saveUser(null);
-       if (authService.supabase) {
-         try { authService.supabase.auth.signOut().catch(()=>{}); } catch(e){}
-       }
-    }
+    // Always force a fresh sign-in — clear any stale session
+    authService.saveUser(null);
+    sessionStorage.setItem('rest_os_logged_out', '1');
+    // Clear Supabase SDK persisted tokens
+    try {
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+          localStorage.removeItem(key);
+        }
+      });
+    } catch(e) {}
     
     this.openSigningWindow(role, targetPage);
   }

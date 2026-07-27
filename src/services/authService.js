@@ -102,14 +102,23 @@ class AuthService {
       return;
     }
 
-    // Restore any existing real session (e.g. after an OAuth redirect back)
-    dbEngine.supabase.auth.getSession().then(({ data }) => {
-      if (data?.session?.user) this.handleSupabaseSession(data.session);
-    });
+    // Only restore session if user did NOT explicitly log out.
+    // The 'rest_os_logged_out' flag is set in logout() and cleared in saveUser() on login.
+    const wasLoggedOut = sessionStorage.getItem('rest_os_logged_out');
+    if (!wasLoggedOut) {
+      dbEngine.supabase.auth.getSession().then(({ data }) => {
+        if (data?.session?.user && !sessionStorage.getItem('rest_os_logged_out')) {
+          this.handleSupabaseSession(data.session);
+        }
+      });
+    }
 
     dbEngine.supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
-        this.handleSupabaseSession(session);
+        // Only auto-login if not explicitly logged out
+        if (!sessionStorage.getItem('rest_os_logged_out')) {
+          this.handleSupabaseSession(session);
+        }
       } else if (event === 'SIGNED_OUT') {
         this.saveUser(null);
       }
@@ -235,6 +244,8 @@ class AuthService {
     this.user = user;
     if (user) {
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
+      // Clear the logout flag since a real login just happened
+      sessionStorage.removeItem('rest_os_logged_out');
     } else {
       localStorage.removeItem(AUTH_STORAGE_KEY);
     }
@@ -470,25 +481,33 @@ class AuthService {
   logout() {
     const user = this.user;
     if (user) {
-      dbEngine.clearActiveSession(user.email || user.id);
+      try { dbEngine.clearActiveSession(user.email || user.id); } catch(e) {}
     }
     this.saveUser(null);
+
+    // Mark explicit logout so initSupabaseSessionSync won't auto-re-login
+    sessionStorage.setItem('rest_os_logged_out', '1');
+
+    // Nuke ALL Supabase SDK localStorage keys (sb-*-auth-token) to prevent
+    // the SDK from auto-restoring a dead session on the next page load
+    try {
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+          localStorage.removeItem(key);
+        }
+      });
+    } catch(e) {}
+
     if (dbEngine.supabase) {
       dbEngine.supabase.auth.signOut().catch(e => console.warn('Supabase signout notice:', e.message));
     }
-    this.showToast(user ? `Signed out ${user.name}. Active Session ID cleared!` : 'Signed out. Active Session ID cleared!');
+
+    this.showToast(user ? `Signed out ${user.name}` : 'Signed out');
     
-    setTimeout(() => {
-      window.isAppNavigation = true;
-      let depth = 0;
-      if (window.location.pathname.includes('/src/views/')) depth = 2;
-      else if (window.location.pathname.includes('/views/')) depth = 1;
-      
-      let prefix = '';
-      for (let i=0; i<depth; i++) prefix += '../';
-      
-      window.location.href = prefix + 'index.html';
-    }, 400);
+    // Redirect to landing page
+    window.isAppNavigation = true;
+    const inViews = window.location.pathname.includes('/views/');
+    window.location.href = inViews ? '../index.html' : 'index.html';
   }
 
   setUserRole(role) {
