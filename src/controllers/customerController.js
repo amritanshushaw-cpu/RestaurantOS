@@ -595,6 +595,11 @@ document.addEventListener('DOMContentLoaded', () => {
       currentActiveSession = startRes.session;
       refreshActiveSessionUI();
     }
+    
+    if (!currentActiveSession.waiter_id) {
+      alert('Please wait! Searching for an available Waiter... Your order cannot be placed until a Waiter is assigned to your table. The system will auto-assign once a Waiter logs in.');
+      return;
+    }
 
     // Submit Order to active session
     const orderRes = dbEngine.createSessionOrder(

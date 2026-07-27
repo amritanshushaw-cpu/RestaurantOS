@@ -234,6 +234,15 @@
     import { geminiService } from '../services/geminiService.js';
     import { dbEngine } from '../services/supabaseClient.js';
 
+    // Manager Presence Polling
+    const currentUser = JSON.parse(localStorage.getItem('rest_os_google_user'));
+    if (currentUser) {
+      dbEngine.registerStaffPresence(currentUser.id, currentUser.name, 'Manager');
+      setInterval(() => {
+        dbEngine.registerStaffPresence(currentUser.id, currentUser.name, 'Manager');
+      }, 5000);
+    }
+
     async function renderAnalytics() {
       const summary = dbEngine.getAnalyticsSummary();
 

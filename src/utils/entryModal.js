@@ -25,6 +25,17 @@ class EntryGatewayModal {
           return;
         }
       }
+
+      if (role === 'Manager') {
+        const presence = JSON.parse(localStorage.getItem('rest_os_staff_presence') || '[]');
+        const activeManager = presence.find(p => p.role === 'Manager' && (Date.now() - p.lastActive) < 15 * 60 * 1000);
+        const currentUserId = authService.user ? authService.user.id : null;
+        if (activeManager && activeManager.id !== currentUserId) {
+          alert('Another Manager is currently logged in! Only one active Manager is allowed at a time. Please ask them to log out.');
+          return;
+        }
+      }
+
       this.handleSelectRole(role, targetUrl);
     };
 
