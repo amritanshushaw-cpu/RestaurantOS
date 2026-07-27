@@ -686,6 +686,95 @@ document.addEventListener('DOMContentLoaded', () => {
     steps.forEach(step => setTrackerStepState(step, false));
   }
 
+  // Draggable Live Order Tracker Logic (Movable anywhere across screen)
+  function initDraggableTracker() {
+    const panel = document.getElementById('cust-order-tracker-panel');
+    const header = document.getElementById('cust-order-tracker-header');
+    const btnToggle = document.getElementById('btn-toggle-tracker');
+    const body = document.getElementById('cust-order-tracker-body');
+
+    if (!panel || !header) return;
+
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let initialLeft = 0;
+    let initialTop = 0;
+
+    const startDrag = (clientX, clientY) => {
+      isDragging = true;
+      startX = clientX;
+      startY = clientY;
+      const rect = panel.getBoundingClientRect();
+      initialLeft = rect.left;
+      initialTop = rect.top;
+      header.style.cursor = 'grabbing';
+      panel.style.boxShadow = '0 16px 40px rgba(0,0,0,0.85)';
+    };
+
+    const moveDrag = (clientX, clientY) => {
+      if (!isDragging) return;
+      const dx = clientX - startX;
+      const dy = clientY - startY;
+
+      let newLeft = initialLeft + dx;
+      let newTop = initialTop + dy;
+
+      const maxLeft = window.innerWidth - panel.offsetWidth - 10;
+      const maxTop = window.innerHeight - panel.offsetHeight - 10;
+
+      newLeft = Math.max(10, Math.min(newLeft, maxLeft));
+      newTop = Math.max(10, Math.min(newTop, maxTop));
+
+      panel.style.left = `${newLeft}px`;
+      panel.style.top = `${newTop}px`;
+      panel.style.right = 'auto';
+      panel.style.bottom = 'auto';
+    };
+
+    const endDrag = () => {
+      if (isDragging) {
+        isDragging = false;
+        header.style.cursor = 'grab';
+        panel.style.boxShadow = '0 12px 32px rgba(0,0,0,0.6)';
+      }
+    };
+
+    header.addEventListener('mousedown', (e) => {
+      if (e.target.closest('button')) return;
+      startDrag(e.clientX, e.clientY);
+      e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => moveDrag(e.clientX, e.clientY));
+    document.addEventListener('mouseup', endDrag);
+
+    header.addEventListener('touchstart', (e) => {
+      if (e.target.closest('button')) return;
+      const touch = e.touches[0];
+      startDrag(touch.clientX, touch.clientY);
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (e) => {
+      if (!isDragging) return;
+      const touch = e.touches[0];
+      moveDrag(touch.clientX, touch.clientY);
+    }, { passive: true });
+
+    document.addEventListener('touchend', endDrag);
+
+    if (btnToggle && body) {
+      btnToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isCollapsed = body.style.display === 'none';
+        body.style.display = isCollapsed ? 'flex' : 'none';
+        btnToggle.innerHTML = isCollapsed ? '<i class="fa-solid fa-chevron-up"></i>' : '<i class="fa-solid fa-chevron-down"></i>';
+      });
+    }
+  }
+
+  initDraggableTracker();
+
   // Timer countdown for estimated waiting time
   function startWaitingTimer(minutes = 15) {
     let secondsLeft = minutes * 60;
