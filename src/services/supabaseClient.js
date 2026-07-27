@@ -32,18 +32,97 @@ class DynamicDatabaseEngine {
     if (!this.hasValidSupabaseConfig()) return null;
     if (typeof window !== 'undefined' && window.supabase && typeof window.supabase.createClient === 'function') {
       try {
-        return window.supabase.createClient(this.supabaseUrl, this.supabaseAnonKey, {
+        const client = window.supabase.createClient(this.supabaseUrl, this.supabaseAnonKey, {
           auth: {
             persistSession: true,
             autoRefreshToken: true,
             detectSessionInUrl: true
           }
         });
+        setTimeout(() => this.setupRealtimeSync(client), 150);
+        return client;
       } catch (err) {
         console.warn('Supabase client initialization notice:', err.message);
       }
     }
     return null;
+  }
+
+  setupRealtimeSync(client) {
+    if (!client) return;
+    try {
+      this.realtimeChannel = client.channel('restaurant-os-cloud-live');
+      this.realtimeChannel
+        .on('broadcast', { event: 'order_sync' }, (payload) => {
+          if (payload?.payload?.order) {
+            this.handleRemoteOrderSync(payload.payload.order);
+          }
+        })
+        .on('broadcast', { event: 'session_sync' }, (payload) => {
+          if (payload?.payload?.session) {
+            this.handleRemoteSessionSync(payload.payload.session);
+          }
+        })
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.info('⚡ RestaurantOS: Multi-Device Cloud Realtime Channel Subscribed!');
+          }
+        });
+    } catch (e) {
+      console.warn('Realtime channel notice:', e.message);
+    }
+  }
+
+  broadcastOrderSync(order) {
+    if (!order) return;
+    if (this.realtimeChannel) {
+      try {
+        this.realtimeChannel.send({
+          type: 'broadcast',
+          event: 'order_sync',
+          payload: { order }
+        });
+      } catch (e) {}
+    }
+  }
+
+  broadcastSessionSync(session) {
+    if (!session) return;
+    if (this.realtimeChannel) {
+      try {
+        this.realtimeChannel.send({
+          type: 'broadcast',
+          event: 'session_sync',
+          payload: { session }
+        });
+      } catch (e) {}
+    }
+  }
+
+  handleRemoteOrderSync(remoteOrder) {
+    if (!remoteOrder || !remoteOrder.id) return;
+    const orders = this.getOrders();
+    const idx = orders.findIndex(o => o.id === remoteOrder.id || o.order_number === remoteOrder.order_number);
+    if (idx !== -1) {
+      orders[idx] = { ...orders[idx], ...remoteOrder };
+    } else {
+      orders.unshift(remoteOrder);
+    }
+    localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+    try { window.dispatchEvent(new Event('storage')); } catch (e) {}
+  }
+
+  handleRemoteSessionSync(remoteSession) {
+    if (!remoteSession || !remoteSession.session_id) return;
+    const sessions = this.getSessions();
+    const idx = sessions.findIndex(s => s.session_id === remoteSession.session_id);
+    if (idx !== -1) {
+      sessions[idx] = { ...sessions[idx], ...remoteSession };
+    } else {
+      sessions.unshift(remoteSession);
+    }
+    localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(sessions));
+    try { window.dispatchEvent(new Event('storage')); } catch (e) {}
   }
 
   // True only when real credentials are present. This is checked by
@@ -321,6 +400,9 @@ class DynamicDatabaseEngine {
     // Deduct stock for order items dynamically
     this.deductInventoryForOrder(orderData.items);
 
+    // Broadcast across cloud channel to all devices
+    this.broadcastOrderSync(newOrder);
+
     return newOrder;
   }
 
@@ -341,6 +423,9 @@ class DynamicDatabaseEngine {
           this.updateTableStatus(order.table_id, 'AVAILABLE');
         }
       }
+
+      // Broadcast across cloud channel to all devices
+      this.broadcastOrderSync(order);
     }
     return order;
   }
@@ -656,6 +741,9 @@ class DynamicDatabaseEngine {
 
     // Update Table status to OCCUPIED / Vacant = N
     this.updateTableStatus(allottedTable.id, 'OCCUPIED');
+    
+    // Broadcast cloud sync across all devices
+    this.broadcastSessionSync(newSession);
     try { window.dispatchEvent(new Event('storage')); } catch(e){}
 
     return {
@@ -714,6 +802,10 @@ class DynamicDatabaseEngine {
     const idx = sessions.findIndex(s => s.session_id === session.session_id);
     if (idx !== -1) sessions[idx] = session;
     this.saveSessions(sessions);
+
+    // Broadcast cloud sync across all devices
+    this.broadcastOrderSync(orderData);
+    this.broadcastSessionSync(session);
     try { window.dispatchEvent(new Event('storage')); } catch(e){}
 
     return {
@@ -744,8 +836,11 @@ class DynamicDatabaseEngine {
         const idx = sessions.findIndex(s => s.session_id === session.session_id);
         if (idx !== -1) sessions[idx] = session;
         this.saveSessions(sessions);
+        this.broadcastSessionSync(session);
       }
     }
+
+    this.broadcastOrderSync(order);
 
     return { ok: true, order, message: `Order ${order.order_number} marked as SERVED! DB updated Delivered = Y.` };
   }
