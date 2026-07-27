@@ -152,13 +152,15 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
 
       card.querySelector('.btn-progress-ticket').addEventListener('click', () => {
-        const updated = dbEngine.updateOrderStatus(order.id, nextStatus);
-        if (updated) {
-          if (nextStatus === 'PREPARING' && currentUser) {
+        if (nextStatus === 'READY') {
+          dbEngine.markOrderServed(order.id || order.order_number);
+        } else {
+          const updated = dbEngine.updateOrderStatus(order.id, nextStatus);
+          if (updated && nextStatus === 'PREPARING' && currentUser) {
             updated.chef_id = currentUser.id;
           }
-          refreshKDSTickets();
         }
+        refreshKDSTickets();
       });
 
       ticketsContainer.appendChild(card);

@@ -636,17 +636,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const status = activeOrder.status;
 
-    // 1) Order taken by waiter: ACCEPTED, SENT_TO_KITCHEN, PREPARING, READY, COLLECTED, DELIVERED, PAID
-    const s1Done = ['ACCEPTED', 'SENT_TO_KITCHEN', 'PREPARING', 'READY', 'COLLECTED', 'DELIVERED', 'PAID'].includes(status);
+    // 1) Order taken by waiter: NEW, ACCEPTED, SENT_TO_KITCHEN, PREPARING, READY, COLLECTED, DELIVERED, PAID
+    const s1Done = ['NEW', 'ACCEPTED', 'SENT_TO_KITCHEN', 'PREPARING', 'READY', 'COLLECTED', 'DELIVERED', 'PAID'].includes(status);
     
-    // 2) Order send to kitchen: SENT_TO_KITCHEN, PREPARING, READY, COLLECTED, DELIVERED, PAID
-    const s2Done = ['SENT_TO_KITCHEN', 'PREPARING', 'READY', 'COLLECTED', 'DELIVERED', 'PAID'].includes(status);
+    // 2) Order send to kitchen: NEW, SENT_TO_KITCHEN, PREPARING, READY, COLLECTED, DELIVERED, PAID
+    const s2Done = ['NEW', 'SENT_TO_KITCHEN', 'PREPARING', 'READY', 'COLLECTED', 'DELIVERED', 'PAID'].includes(status);
     
-    // 3) Order collected by waiter: READY, COLLECTED, DELIVERED, PAID
-    const s3Done = ['READY', 'COLLECTED', 'DELIVERED', 'PAID'].includes(status);
+    // 3) Order collected by waiter: PREPARING, READY, COLLECTED, DELIVERED, PAID
+    const s3Done = ['PREPARING', 'READY', 'COLLECTED', 'DELIVERED', 'PAID'].includes(status) || activeOrder.delivered === 'Y';
     
-    // 4) Order delivered to customer: DELIVERED, PAID or activeOrder.delivered === 'Y'
-    const s4Done = ['DELIVERED', 'PAID'].includes(status) || activeOrder.delivered === 'Y';
+    // 4) Order delivered to customer: READY, COLLECTED, DELIVERED, PAID or activeOrder.delivered === 'Y'
+    const s4Done = ['READY', 'COLLECTED', 'DELIVERED', 'PAID'].includes(status) || activeOrder.delivered === 'Y';
 
     setTrackerStepState(step1, s1Done);
     setTrackerStepState(step2, s2Done);
