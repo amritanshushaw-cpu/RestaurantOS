@@ -743,19 +743,21 @@
   height: 100vh;
   background: rgba(10, 6, 20, 0.85);
   backdrop-filter: blur(12px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  overflow-y: auto;
+  padding: 40px 16px;
+  box-sizing: border-box;
   z-index: 9999;
 }
 
-.google-auth-modal-card {
-  background: #181424;
-  border: 1px solid var(--border-violet);
-  border-radius: 20px;
+.sentry-modal-content {
+  background: #151022;
+  border: 1.5px solid var(--border-violet);
+  border-radius: 24px;
   width: 90%;
-  max-width: 440px;
-  padding: 28px;
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 32px;
+  position: relative;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(106, 95, 193, 0.2);
   color: var(--text-primary);
 }
@@ -996,21 +998,24 @@
   height: 100vh;
   background: rgba(10, 6, 20, 0.94);
   backdrop-filter: blur(16px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 99999;
+  overflow-y: auto;
+  padding: 40px 16px;
+  box-sizing: border-box;
+  z-index: 999999;
 }
 
 .rbac-guard-card {
-  background: #181424;
-  border: 1px solid var(--border-violet);
+  background: #110d1a;
+  border: 1.5px solid var(--border-violet);
   border-radius: 24px;
-  max-width: 480px;
+  max-width: 500px;
   width: 90%;
-  padding: 36px;
+  margin: 0 auto;
+  padding: 40px;
   text-align: center;
-  box-shadow: 0 25px 60px rgba(0,0,0,0.7), 0 0 40px rgba(245, 158, 11, 0.15);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(239, 68, 68, 0.15);
+  position: relative;
+  overflow: hidden;
 }
 
 .rbac-guard-icon {
@@ -1257,8 +1262,10 @@
   background: rgba(10, 6, 20, 0.88);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  display: flex;
-  align-items: center;
+  overflow-y: auto;
+  padding: 40px 16px;
+  box-sizing: border-box;
+  z-index: 9999;
   justify-content: center;
   z-index: 999999;
   opacity: 1;
@@ -1276,6 +1283,7 @@
   border-radius: 32px;
   max-width: 880px;
   width: 92%;
+  margin: 0 auto;
   padding: 40px;
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8), 0 0 50px rgba(194, 239, 78, 0.15);
   text-align: center;
