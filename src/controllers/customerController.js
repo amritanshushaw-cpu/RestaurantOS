@@ -563,6 +563,10 @@ document.addEventListener('DOMContentLoaded', () => {
       refreshActiveSessionUI();
       renderTableMatrixUI();
       alert('Payment Verified by Waiter! Session Complete. Thank you!');
+      if (window.authService) {
+        window.isAppNavigation = true; // bypass beforeunload
+        window.authService.logout();
+      }
       return;
     }
     

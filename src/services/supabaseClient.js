@@ -520,7 +520,7 @@ class DynamicDatabaseEngine {
       const orders = this.getOrders();
       let updated = false;
       orders.forEach(o => {
-        if (!o.chef_id && (o.status === 'ACCEPTED' || o.status === 'PREPARING')) {
+        if (!o.chef_id && (o.status === 'ACCEPTED' || o.status === 'SENT_TO_KITCHEN' || o.status === 'PREPARING')) {
           o.chef_id = userId;
           updated = true;
         }

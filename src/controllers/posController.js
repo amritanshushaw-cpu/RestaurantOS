@@ -54,16 +54,36 @@ document.addEventListener('DOMContentLoaded', () => {
     let html = '';
     
     // Render Order Tasks
-    html += orders.map(o => {
-      const isNew = o.status === 'NEW';
+    const activeOrders = dbEngine.getOrders().filter(o => o.waiter_id === currentUser.id && ['NEW', 'ACCEPTED', 'SENT_TO_KITCHEN', 'READY', 'COLLECTED'].includes(o.status));
+    
+    html += activeOrders.map(o => {
+      let btnAction = ''; let btnLabel = ''; let btnBg = '';
+      if (o.status === 'NEW') {
+        btnAction = 'ACCEPT'; btnLabel = 'Accept Order'; btnBg = 'var(--color-warning)';
+      } else if (o.status === 'ACCEPTED') {
+        if (o.chef_id) {
+          btnAction = 'SEND'; btnLabel = 'Send to Kitchen'; btnBg = '#3b82f6';
+        } else {
+          btnLabel = 'Waiting for Chef Login...'; btnBg = 'transparent';
+        }
+      } else if (o.status === 'SENT_TO_KITCHEN') {
+        btnLabel = 'Cooking in Kitchen...'; btnBg = 'transparent';
+      } else if (o.status === 'READY') {
+        btnAction = 'COLLECT'; btnLabel = 'Collect Order'; btnBg = '#f59e0b';
+      } else if (o.status === 'COLLECTED') {
+        btnAction = 'DELIVER'; btnLabel = 'Mark as Delivered'; btnBg = '#10b981';
+      }
+
+      const buttonHtml = btnAction 
+        ? `<button type="button" class="btn-sentry btn-waiter-action" data-id="${o.id}" data-action="${btnAction}" style="width: 100%; background: ${btnBg}; color: #000; padding: 6px;">${btnLabel}</button>` 
+        : `<div style="color: var(--text-tertiary); font-size: 12px; text-align: center; padding: 6px; border: 1px dashed var(--border-violet); border-radius: 4px;">${btnLabel}</div>`;
+
       return `
-        <div style="background: var(--color-primary); border: 1px solid ${isNew ? 'var(--color-warning)' : 'var(--color-success)'}; padding: 12px; border-radius: 8px; min-width: 250px;">
+        <div style="background: var(--color-primary); border: 1px solid ${btnBg !== 'transparent' ? btnBg : 'var(--border-violet)'}; padding: 12px; border-radius: 8px; min-width: 250px;">
           <div style="font-weight: 700; color: #fff;">${o.table_number || o.table_id} - ${o.order_number}</div>
           <div style="font-size: 11px; color: var(--color-accent-lime); margin-bottom: 4px;">Cust: ${o.customer_name || 'Guest'} | Sess: ${o.session_id}</div>
           <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">Status: ${o.status} ${o.chef_id ? `| Chef: ${o.chef_id}` : ''}</div>
-          <button type="button" class="btn-sentry btn-waiter-action" data-id="${o.id}" data-action="${isNew ? 'ACCEPT' : 'DELIVER'}" style="width: 100%; background: ${isNew ? 'var(--color-warning)' : 'var(--color-success)'}; color: #000; padding: 6px;">
-            ${isNew ? 'Accept Order (Send to Kitchen)' : 'Mark as Delivered'}
-          </button>
+          ${buttonHtml}
         </div>
       `;
     }).join('');
@@ -105,8 +125,11 @@ document.addEventListener('DOMContentLoaded', () => {
           if (action === 'ACCEPT') {
             o.status = 'ACCEPTED';
             o.chef_id = dbEngine.allotKitchen();
-          }
-          if (action === 'DELIVER') {
+          } else if (action === 'SEND') {
+            o.status = 'SENT_TO_KITCHEN';
+          } else if (action === 'COLLECT') {
+            o.status = 'COLLECTED';
+          } else if (action === 'DELIVER') {
              o.status = 'DELIVERED';
              dbEngine.markOrderServed(orderId);
           }

@@ -67,8 +67,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function refreshKDSTickets() {
     updateWaiterFeed();
     const allOrders = dbEngine.getOrders();
-    // Kitchen only sees ACCEPTED and PREPARING orders
-    const activeOrders = allOrders.filter(o => o.status === 'ACCEPTED' || o.status === 'PREPARING');
+    // Kitchen only sees SENT_TO_KITCHEN and PREPARING orders
+    const activeOrders = allOrders.filter(o => o.status === 'SENT_TO_KITCHEN' || o.status === 'PREPARING');
 
     if (activeOrders.length === 0) {
       ticketsContainer.innerHTML = `
@@ -87,15 +87,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const statusClass = order.status.toLowerCase();
       card.className = `ticket-card ${statusClass}`;
 
-      let actionBtnText = 'Start Preparing';
-      let nextStatus = 'PREPARING';
-      let btnBg = 'var(--accent-amber)';
-
-      if (order.status === 'PREPARING') {
-        actionBtnText = 'Complete (Send to Waiter)';
-        nextStatus = 'READY';
-        btnBg = 'var(--color-success)';
-      }
+      let actionBtnText = 'DONE (Order Ready)';
+      let nextStatus = 'READY';
+      let btnBg = 'var(--color-success)';
 
       const itemsListHTML = order.items.map(item => `
         <li class="ticket-item">
@@ -144,15 +138,13 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
 
       card.querySelector('.btn-progress-ticket').addEventListener('click', () => {
-        if (nextStatus === 'PREPARING' || nextStatus === 'READY') {
-          const allOrdersNow = dbEngine.getOrders();
-          const target = allOrdersNow.find(x => x.id === order.id);
-          if (target) {
-            target.status = nextStatus;
-            localStorage.setItem('rest_os_orders', JSON.stringify(allOrdersNow));
-            window.dispatchEvent(new Event('storage'));
-            refreshKDSTickets();
-          }
+        const allOrdersNow = dbEngine.getOrders();
+        const target = allOrdersNow.find(x => x.id === order.id);
+        if (target) {
+          target.status = 'READY';
+          localStorage.setItem('rest_os_orders', JSON.stringify(allOrdersNow));
+          window.dispatchEvent(new Event('storage'));
+          refreshKDSTickets();
         }
       });
 
