@@ -406,8 +406,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (tableSelect) {
     tableSelect.addEventListener('change', (event) => {
-      selectedTable = event.target.value;
-      if (tableBadge) tableBadge.textContent = selectedTable.replace(' · ', ' ');
+      const fullVal = event.target.value || 'Table 02';
+      const cleanTableNo = fullVal.split(' · ')[0].trim();
+      selectedTable = cleanTableNo;
+      if (tableBadge) tableBadge.textContent = cleanTableNo;
+      const receiptTableTag = document.querySelector('#receipt .pk');
+      if (receiptTableTag) receiptTableTag.textContent = cleanTableNo.toUpperCase();
     });
   }
 
