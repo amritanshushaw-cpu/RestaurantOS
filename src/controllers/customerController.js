@@ -474,9 +474,13 @@ document.addEventListener('DOMContentLoaded', () => {
         sessionDetailsEl.innerHTML = `
           <strong>Session ID:</strong> <span class="mono">${currentActiveSession.session_id}</span> (6-digit) &nbsp;·&nbsp;
           <strong>Table:</strong> ${currentActiveSession.table_no} &nbsp;·&nbsp;
-          <strong>Waiter Allotted:</strong> ${currentActiveSession.waiter_id} &nbsp;·&nbsp;
+          <strong>Waiter Allotted:</strong> ${currentActiveSession.waiter_id || '<span style="color:var(--color-warning);">WAITING FOR WAITER...</span>'} &nbsp;·&nbsp;
           <strong>Delivered:</strong> <span id="session-delivered-flag" style="color: ${currentActiveSession.delivered === 'Y' ? '#10b981' : '#f59e0b'}; font-weight: 700;">${currentActiveSession.delivered}</span>
+          ${currentActiveSession.status === 'ACTIVE' ? `<button id="btn-generate-bill-customer" class="btn-sentry" style="margin-left: 12px; font-size: 11px; padding: 4px 8px;"><i class="fa-solid fa-file-invoice-dollar"></i> Generate Bill & Pay</button>` : `<span class="badge" style="margin-left: 12px; background: var(--color-warning); color: #000;">${currentActiveSession.status}</span>`}
         `;
+        document.getElementById('btn-generate-bill-customer')?.addEventListener('click', () => {
+           renderBillPaymentModal(currentActiveSession, null);
+        });
       }
       if (sessionHeaderChip) {
         sessionHeaderChip.textContent = `SESSION: ${currentActiveSession.session_id} · ${currentActiveSession.table_no}`;
@@ -526,7 +530,18 @@ document.addEventListener('DOMContentLoaded', () => {
   setInterval(() => {
     if (!currentActiveSession) return;
     const session = dbEngine.getSessionById(currentActiveSession.session_id);
-    if (session && session.delivered !== currentActiveSession.delivered) {
+    if (!session) return;
+    
+    // Check if session was terminated by Waiter (Payment Accepted)
+    if (session.status === 'TERMINATED') {
+      currentActiveSession = null;
+      refreshActiveSessionUI();
+      renderTableMatrixUI();
+      alert('Payment Verified by Waiter! Session Complete. Thank you!');
+      return;
+    }
+    
+    if (session.delivered !== currentActiveSession.delivered) {
       currentActiveSession = session;
       const flagEl = document.getElementById('session-delivered-flag');
       if (flagEl) {
@@ -595,10 +610,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Start Server Estimated Waiting Time Timer (15 min)
     startWaitingTimer(15);
-    authService.showToast(orderRes.message);
+    authService.showToast('Order successfully sent to kitchen!');
 
-    // Render Formatted Bill Receipt Payment Gateway Modal
-    renderBillPaymentModal(currentActiveSession, orderRes.order);
     activeCart = [];
     updateBillSummaryUI();
     closeOrderDrawer();
@@ -697,7 +710,17 @@ ${formattedBillText}
 
     // Option A: Terminate Session -> Mark Table Vacant + Customer Feedback Popup
     document.getElementById('btn-session-terminate')?.addEventListener('click', () => {
+      const sessions = dbEngine.getSessions();
+      const targetSession = sessions.find(s => s.session_id === session.session_id);
+      if (targetSession) {
+        targetSession.status = 'PAYMENT_PENDING';
+        targetSession.payment_type = selectedPayType;
+        dbEngine.saveSessions(sessions);
+        window.dispatchEvent(new Event('storage'));
+      }
+      
       billModal.remove();
+      alert('Payment submitted! Waiting for Waiter verification...');
       renderFeedbackModal(session, selectedPayType);
     });
   }
@@ -753,14 +776,17 @@ ${formattedBillText}
       const reviewText = document.getElementById('cust-review-text')?.value || '';
       const feedbackObj = { rating: selectedRating, reviewText };
 
-      // Calls dbEngine to terminate session, mark table vacant (Y), and update Customer History DB
-      const res = dbEngine.terminateSession(session.session_id, paymentType, feedbackObj);
-      authService.showToast(res.message);
-      currentActiveSession = null;
-      refreshActiveSessionUI();
+      // Save feedback locally, Waiter will terminate the session upon payment receipt
+      const sessions = dbEngine.getSessions();
+      const targetSession = sessions.find(s => s.session_id === session.session_id);
+      if (targetSession) {
+         targetSession.feedback = feedbackObj;
+         dbEngine.saveSessions(sessions);
+      }
+      
+      authService.showToast('Feedback submitted! Waiter is verifying payment.');
       fbModal.remove();
-
-      alert(`Session ${session.session_id} successfully terminated!\nTable ${session.table_no} is now VACANT (Y).\n\nThank you for dining with RestaurantOS!`);
+      refreshActiveSessionUI();
     });
   }
 
