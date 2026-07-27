@@ -1,140 +1,140 @@
-# 🍳 RestaurantOS — Enterprise Restaurant Operating System & Risk-Free Payment Enclave
+﻿# 🍳 RestaurantOS — Restaurant Operating System & Payment Enclave
 
-> **Built with ❤️ by Team HexCore for Hackathons & Next-Gen Hospitality Tech**
+> A lightweight restaurant operations suite with static frontend billing plus an optional Supabase-backed Express API.
 
-[![Vercel Deployment](https://img.shields.io/badge/Deployment-Vercel-success?style=flat-square&logo=vercel)](https://vercel.com)
 [![License-MIT](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
 [![Vanilla JS](https://img.shields.io/badge/Stack-HTML5%20%7C%20CSS3%20%7C%20Vanilla%20ES6+-orange?style=flat-square&logo=javascript)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
-[![Gemini AI](https://img.shields.io/badge/AI-Google%20Gemini%202.5-8E75FF?style=flat-square&logo=google)](https://ai.google.dev)
 [![Supabase DB](https://img.shields.io/badge/Database-PostgreSQL%20%2F%20Supabase-3ECF8E?style=flat-square&logo=supabase)](https://supabase.com)
 
 ---
 
-## 💡 What is RestaurantOS?
+## Overview
 
-**RestaurantOS** is an ultra-fast, zero-overhead, full-stack Restaurant Operating System designed to bridge table ordering, point-of-sale management, kitchen operations, and checkout security into a single cohesive web application.
+RestaurantOS is a browser-first restaurant management experience that combines:
 
-Built without heavy bloated frameworks, RestaurantOS runs on pure, modern **HTML5, Vanilla ES6+ JavaScript, and Custom CSS3 Design Tokens**. It features an interactive **3D Credit Card Payment Visualizer**, **Real-time Kitchen Display System (KDS)**, **POS Order Dispatcher**, and **Google Gemini AI Menu Pairing Intelligence**.
+- static checkout/payment enclave UI,
+- waiter-facing POS terminal,
+- kitchen display workflow,
+- authentication and menu APIs,
+- Supabase integration for data storage and role-based access.
 
----
-
-## ✨ Core Features & Modules
-
-### 1. 💳 Risk-Free Payment Gateway Enclave
-* **Interactive 3D Card Visualizer**: Card automatically flips 180° when focusing on the CVV input field.
-* **Auto Card Brand Detection**: Real-time identification of Visa, Mastercard, Amex, and Discover card prefixes.
-* **Luhn Algorithm Checksum**: Validates card numbers locally before submitting payload.
-* **Simulated 3D Secure OTP Challenge**: Realistic 2-Factor authentication modal (Passcode: `123456`).
-* **Instant Printable Receipt**: Generates unique transaction IDs (`REST-TXN-84920491-TEST`), printable layout, and celebration confetti.
-* **Sandbox Test Presets**: 1-click test buttons for **Success**, **3DS OTP Challenge**, and **Decline** scenarios.
-
-### 2. 🖥️ Point-of-Sale (POS) Order Terminal
-* **Table Selector Sync**: Assign orders to specific dining tables (Table 01 to Table 06).
-* **Category Pill Navigation**: Instant filtering across Starters, Mains & Steaks, Cocktails, and Desserts.
-* **Live Order Cart**: Real-time subtotal, 8.5% tax calculations, and quantity adjustments.
-* **Kitchen Order Dispatcher**: Sends active tickets directly to the Kitchen KDS with a single click.
-
-### 3. 👨‍🍳 Kitchen Display System (KDS)
-* **Real-time Order Polling**: Kitchen chefs receive live tickets without page reloads.
-* **Color-Coded Status Badges**: `NEW` (Amber), `PREPARING` (Blue), and `READY` (Green).
-* **1-Click Ticket Progression**: Chefs update ticket states from cooking to served in real time.
-
-### 4. 🧠 Gemini AI Menu Intelligence & Analytics
-* **AI Beverage & Side Pairings**: Suggests complementary drinks and sides based on flavor profiles (e.g., Wagyu Sliders paired with Smoked Old Fashioned).
-* **Executive Sales Analytics**: Displays daily gross revenue, check averages, and payment approval metrics.
-* **Smart Revenue Tips**: Gemini AI analyzes peak dining hours and suggests promotional menu bundles.
-
-### 5. 🔑 Google Authentication & User Profile Manager (OAuth 2.0)
-* **Google Identity Services (GIS) Integration**: Seamless Google OAuth 2.0 Sign-In across all pages and views.
-* **Google Profile & Avatar Sync**: Displays user's Google display name, email, avatar image, and verified badge in the navigation bar.
-* **Role-Based Access Control (RBAC)**: Switch between **Customer**, **Waiter**, **Kitchen**, and **Manager** roles dynamically.
-* **Session Persistence**: Maintains Google user session state in `localStorage` across page navigations.
+The frontend is built with pure HTML, CSS, and Vanilla ES6+ JavaScript. The optional backend server is implemented in Express and lives under `server/`.
 
 ---
 
+## Key Capabilities
 
-## 🏗️ System Architecture & Workflow
-
-```mermaid
-flowchart TD
-    A["Waitstaff POS Terminal (src/views/pos.html)"] -->|Dispatches Order| B["Database Engine & Fallback (src/services/supabaseClient.js)"]
-    B -->|Live Ticket Stream| C["Kitchen KDS Dashboard (src/views/kds.html)"]
-    A -->|Checkout Request| D["Payment Enclave (index.html)"]
-    D -->|Luhn & 3DS Check| E["Payment State Machine (src/services/paymentEngine.js)"]
-    E -->|Approved Transaction| F["Printable Receipt & Confetti (src/app.js)"]
-    B -->|Order Metrics| G["Gemini AI Analytics (src/views/analytics.html)"]
-```
+- Payment enclave with card visualization, brand detection, local Luhn validation, and 3DS-style OTP flow
+- POS interface with table selection, order cart, tax calculation, and kitchen dispatch
+- Kitchen Display System (KDS) with order status tracking and chef workflow
+- Supabase-backed menu and auth service for users, roles, and protected endpoints
+- Google OAuth and identity integration support
+- Environment config sample in `.env.example`
 
 ---
 
-## 📂 Project Directory Structure
+## Repository Structure
 
 ```
 RestaurantOS/
 ├── .env.example                # Environment configuration template
 ├── .gitignore                  # Git exclusion rules for node_modules & secrets
-├── index.html                  # Payment Gateway Enclave & Card Visualizer UI
-├── package.json                # Project manifest & npm scripts
-├── README.md                   # Hackathon Documentation
+├── index.html                  # Frontend payment enclave landing page
+├── package.json                # Frontend npm scripts and dependency manifest
+├── README.md                   # Project documentation
+├── server/                     # Express backend API server
+│   ├── Dockerfile             # Optional backend container setup
+│   ├── index.js               # Express server entrypoint and API routes
+│   └── package.json           # Backend dependencies and scripts
 └── src/
-    ├── app.js                  # Main Application Controller & Event Listeners
-    ├── controllers/
-    │   ├── kdsController.js    # Kitchen KDS Ticket Polling & Status Progression
-    │   └── posController.js    # POS Cart Management & Order Dispatcher
-    ├── db/
-    │   └── schema.sql          # PostgreSQL / Supabase Relational Database Schema & RLS
-    ├── services/
-    │   ├── geminiService.js    # Gemini AI Pairing & Sales Analytics Service
-    │   ├── menuService.js      # Menu Filtering, Search & Tax Calculations
-    │   ├── paymentEngine.js    # Payment Processing State Machine & 3DS OTP
-    │   └── supabaseClient.js   # Database Connection Client & In-Memory Fallback
-    ├── styles/
-    │   ├── components.css      # 3D Card, Modals & Component Stylesheet
-    │   ├── pos.css             # POS Grid, Food Cards & Cart Sidebar Stylesheet
-    │   └── tokens.css          # Design System CSS Variables & Theme Palette
-    └── views/
-        ├── analytics.html      # Executive Sales Analytics & AI Insights View
-        ├── kds.html            # Kitchen Display System View for Chefs
-        └── pos.html            # Waitstaff POS Terminal View
+    ├── app.js                  # Main frontend application logic
+    ├── controllers/            # Frontend controllers for POS and KDS
+    ├── db/                     # SQL schema and seed files
+    ├── services/               # Frontend service utilities and data clients
+    ├── styles/                 # CSS stylesheets and token definitions
+    └── views/                  # HTML view templates for app modules
 ```
 
 ---
 
-## ⚡ Quickstart & Local Setup
+## Local Setup
 
-### 1. Clone & Navigate
+### Frontend only
+
 ```bash
-git clone https://github.com/amritanshushaw-cpu/RestaurantOS.git
 cd RestaurantOS
-```
-
-### 2. Run Local Development Server
-```bash
+npm install
 npm run dev
 ```
-Open **`http://localhost:3000`** in your browser!
+
+Open `http://localhost:3000`.
+
+### Full stack with backend
+
+```bash
+cd RestaurantOS/server
+npm install
+cd ..
+cp .env.example .env
+```
+
+Update `.env` values for:
+
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `GOOGLE_CLIENT_ID`
+- `GEMINI_API_KEY`
+
+Start the backend API:
+
+```bash
+cd server
+npm run dev
+```
+
+The backend listens on `http://localhost:4000` by default.
 
 ---
 
-## 🌐 Production Deployment
+## Backend API Overview
 
-This project is optimized for 1-click deployment on **Vercel**:
+The Express server includes:
 
-1. Import `amritanshushaw-cpu/RestaurantOS` into [Vercel](https://vercel.com/new).
-2. Click **Deploy**.
-3. Live production link will be generated automatically in ~10 seconds!
+- `/api/health` — service and database health check
+- `/api/auth/signup` — create an account
+- `/api/auth/signin` — sign in with email/password
+- `/api/auth/signout` — sign out
+- `/api/auth/me` — get profile data
+- `/api/auth/me/role` — manager-only role updates
+- `/api/menu` — public menu fetch
+- manager-only endpoints for menu item CRUD
 
----
-
-## 👥 Developed by Team HexCore
-
-| Name | Role |
-|---|---|
-| **Saptak Sarathi Chakraborty** | Full-Stack Architect & Backend Engine |
-| **Shrinivas Ghosh** | System Design & Database Infrastructure |
-| **Amritanshu Shaw** | UI/UX Systems & Payment Enclave Specialist |
-| **Ritam Karmakar** | Frontend Engineering & KDS Workflow |
+Auth middleware enforces JWT-based Supabase authentication and role-based access control.
 
 ---
 
-*Made with pride by Team HexCore.* 🚀
+## Environment Variables
+
+Copy `.env.example` to `.env` and configure your environment. Key settings include:
+
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `GOOGLE_CLIENT_ID`
+- `GEMINI_API_KEY`
+- `PAYMENT_MODE`
+
+---
+
+## Notes
+
+- The frontend can run standalone as a static site.
+- The backend is optional but enables API-based auth, protected routes, and server-managed menu operations.
+- Database schema files and sample seeds are available in `src/db/`.
+
+---
+
+## License
+
+MIT License. See `LICENSE`.
