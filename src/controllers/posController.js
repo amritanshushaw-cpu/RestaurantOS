@@ -78,17 +78,13 @@ document.addEventListener('DOMContentLoaded', () => {
       if (o.status === 'NEW') {
         btnAction = 'ACCEPT'; btnLabel = 'Accept Order'; btnBg = 'var(--color-warning)';
       } else if (o.status === 'ACCEPTED') {
-        if (o.chef_id) {
-          btnAction = 'SEND'; btnLabel = 'Send to Kitchen'; btnBg = '#3b82f6';
-        } else {
-          btnLabel = 'Waiting for Chef Login...'; btnBg = 'transparent';
-        }
-      } else if (o.status === 'SENT_TO_KITCHEN') {
+        btnAction = 'SEND'; btnLabel = 'Send to Kitchen'; btnBg = '#3b82f6';
+      } else if (o.status === 'SENT_TO_KITCHEN' || o.status === 'PREPARING') {
         btnLabel = 'Cooking in Kitchen...'; btnBg = 'transparent';
       } else if (o.status === 'READY') {
-        btnAction = 'COLLECT'; btnLabel = 'Collect Order'; btnBg = '#f59e0b';
+        btnAction = 'COLLECT'; btnLabel = 'Collect from Kitchen'; btnBg = '#f59e0b';
       } else if (o.status === 'COLLECTED') {
-        btnAction = 'DELIVER'; btnLabel = 'Mark as Delivered'; btnBg = '#10b981';
+        btnAction = 'DELIVER'; btnLabel = 'Order Delivered'; btnBg = '#10b981';
       }
 
       const buttonHtml = btnAction 

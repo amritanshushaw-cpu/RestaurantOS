@@ -87,9 +87,17 @@ document.addEventListener('DOMContentLoaded', () => {
       const statusClass = order.status.toLowerCase();
       card.className = `ticket-card ${statusClass}`;
 
-      let actionBtnText = 'DONE (Order Ready)';
-      let nextStatus = 'READY';
-      let btnBg = 'var(--color-success)';
+      let actionBtnText = 'Accept & Start Cooking';
+      let nextStatus = 'PREPARING';
+      let btnBg = '#3b82f6';
+      let btnColor = '#fff';
+
+      if (order.status === 'PREPARING') {
+        actionBtnText = 'Completed (Order Ready)';
+        nextStatus = 'READY';
+        btnBg = 'var(--color-success)';
+        btnColor = '#000';
+      }
 
       const itemsListHTML = order.items.map(item => `
         <li class="ticket-item">
@@ -119,9 +127,9 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
 
           <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">
-            <strong>Waiter:</strong> ${order.waiter_id || 'WAIT-01'} &nbsp;·&nbsp;
+            <strong>Waiter ID:</strong> <span style="color:#ec4899; font-weight:700;">${order.waiter_id || 'WAIT-01'}</span> &nbsp;·&nbsp;
             <strong>Customer:</strong> <span style="color: var(--color-accent-lime);">${order.customer_name || 'Guest'}</span><br/>
-            <strong>Chef:</strong> ${order.chef_id || 'Pending...'} &nbsp;·&nbsp;
+            <strong>Chef ID:</strong> ${order.chef_id || 'Pending...'} &nbsp;·&nbsp;
             <strong>Delivered Status:</strong> <span style="font-weight: 700; color: ${order.delivered === 'Y' ? '#10b981' : '#f59e0b'};">${order.delivered || 'N'}</span>
           </div>
 
@@ -132,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </ul>
         </div>
 
-        <button class="pay-btn btn-progress-ticket" style="background: ${btnBg}; color: #000; padding: 10px; font-size: 13px; margin-top: 12px;">
+        <button class="pay-btn btn-progress-ticket" style="background: ${btnBg}; color: ${btnColor}; padding: 10px; font-size: 13px; margin-top: 12px;">
           ${actionBtnText} <i class="fa-solid fa-arrow-right"></i>
         </button>
       `;
@@ -141,9 +149,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const allOrdersNow = dbEngine.getOrders();
         const target = allOrdersNow.find(x => x.id === order.id);
         if (target) {
-          target.status = 'READY';
+          target.status = nextStatus;
+          if (nextStatus === 'PREPARING' && currentUser) {
+            target.chef_id = currentUser.id;
+          }
           localStorage.setItem('rest_os_orders', JSON.stringify(allOrdersNow));
-          window.dispatchEvent(new Event('storage'));
+          try { window.dispatchEvent(new Event('storage')); } catch(e){}
           refreshKDSTickets();
         }
       });
