@@ -1021,6 +1021,84 @@ ${formattedBillText}
     });
   }
 
+  // Smooth Header Navigation & ScrollSpy
+  function initHeaderNavigation() {
+    const navLinks = document.querySelectorAll('nav.main a');
+    if (!navLinks.length) return;
+
+    navLinks.forEach((link) => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetId = link.getAttribute('href');
+
+        navLinks.forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+
+        if (targetId === '#account') {
+          if (!authService.user) {
+            if (window.entryGatewayModal) {
+              window.entryGatewayModal.renderModal(true);
+            } else {
+              authService.loginWithGoogle('Customer', window.location.href);
+            }
+          } else {
+            const authWidget = document.getElementById('sentry-google-auth-widget');
+            if (authWidget) {
+              authWidget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            authService.showToast(`Signed in as ${authService.user.name} (${authService.user.role} Role)`);
+          }
+          return;
+        }
+
+        if (targetId === '#order') {
+          const trackerPanel = document.getElementById('cust-order-tracker-panel');
+          if (trackerPanel) {
+            trackerPanel.style.display = 'block';
+            trackerPanel.style.boxShadow = '0 0 0 4px var(--color-accent-lime), 0 16px 40px rgba(0,0,0,0.8)';
+            setTimeout(() => {
+              trackerPanel.style.boxShadow = '0 12px 32px rgba(0,0,0,0.6)';
+            }, 1500);
+          }
+        }
+
+        const targetEl = document.querySelector(targetId);
+        if (targetEl) {
+          const headerOffset = 90;
+          const elementPosition = targetEl.getBoundingClientRect().top;
+          const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+          });
+        }
+      });
+    });
+
+    // ScrollSpy: Automatically highlight active section on scroll
+    const sections = [
+      { id: '#menu', el: document.querySelector('#menu') },
+      { id: '#regulars', el: document.querySelector('#regulars') },
+      { id: '#pairings', el: document.querySelector('#pairings') },
+      { id: '#order', el: document.querySelector('#order') },
+      { id: '#catering', el: document.querySelector('#catering') }
+    ].filter(s => s.el);
+
+    window.addEventListener('scroll', () => {
+      const scrollPos = window.scrollY + 120;
+      for (let i = sections.length - 1; i >= 0; i--) {
+        if (scrollPos >= sections[i].el.offsetTop) {
+          navLinks.forEach(l => l.classList.remove('active'));
+          const activeLink = document.querySelector(`nav.main a[href="${sections[i].id}"]`);
+          if (activeLink) activeLink.classList.add('active');
+          break;
+        }
+      }
+    }, { passive: true });
+  }
+
+  initHeaderNavigation();
   menuData = menuService.loadMenu() || { categories: [], items: [] };
   renderCategories();
   renderMenu();
