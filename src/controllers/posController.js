@@ -43,19 +43,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const feed = document.getElementById('waiter-order-feed');
     if (!feed || !currentUser) return;
     
-    const orders = dbEngine.getOrders().filter(o => o.waiter_id === currentUser.id && (o.status === 'NEW' || o.status === 'READY'));
-    const sessions = dbEngine.getSessions().filter(s => s.waiter_id === currentUser.id && s.status === 'PAYMENT_PENDING');
+    const isMyOrderOrUnassigned = (id) => !id || id === currentUser.id || id === 'WAITING' || id === 'WAIT-01';
+
+    const allOrders = dbEngine.getOrders();
+    const allSessions = dbEngine.getSessions();
+
+    const activeOrders = allOrders.filter(o => isMyOrderOrUnassigned(o.waiter_id) && ['NEW', 'ACCEPTED', 'SENT_TO_KITCHEN', 'READY', 'COLLECTED'].includes(o.status));
+    const activeSessions = allSessions.filter(s => isMyOrderOrUnassigned(s.waiter_id) && s.status === 'ACTIVE' && (!s.order_ids || s.order_ids.length === 0));
+    const paymentSessions = allSessions.filter(s => isMyOrderOrUnassigned(s.waiter_id) && s.status === 'PAYMENT_PENDING');
     
-    if (orders.length === 0 && sessions.length === 0) {
-      feed.innerHTML = '<div style="color: var(--text-tertiary); font-size: 13px;">No pending orders or payments for you right now.</div>';
+    if (activeOrders.length === 0 && activeSessions.length === 0 && paymentSessions.length === 0) {
+      feed.innerHTML = '<div style="color: var(--text-tertiary); font-size: 13px;">No pending orders or payments for you right now. Listening for live customer orders...</div>';
       return;
     }
     
     let html = '';
     
     // Render Order Tasks
-    const activeOrders = dbEngine.getOrders().filter(o => o.waiter_id === currentUser.id && ['NEW', 'ACCEPTED', 'SENT_TO_KITCHEN', 'READY', 'COLLECTED'].includes(o.status));
-    
     html += activeOrders.map(o => {
       let btnAction = ''; let btnLabel = ''; let btnBg = '';
       if (o.status === 'NEW') {
@@ -89,7 +93,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
     
     // Render Seated Customers (No orders yet)
-    const activeSessions = dbEngine.getSessions().filter(s => s.waiter_id === currentUser.id && s.status === 'ACTIVE' && (!s.order_ids || s.order_ids.length === 0));
     html += activeSessions.map(s => {
       return `
         <div style="background: var(--color-primary); border: 1px solid #3b82f6; padding: 12px; border-radius: 8px; min-width: 250px; border-left: 4px solid #3b82f6;">
@@ -101,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
     
     // Render Payment Tasks
-    html += sessions.map(s => {
+    html += paymentSessions.map(s => {
       return `
         <div style="background: var(--color-primary); border: 1px solid #8b5cf6; padding: 12px; border-radius: 8px; min-width: 250px; border-left: 4px solid #8b5cf6;">
           <div style="font-weight: 700; color: #fff;">${s.table_no} - Bill Payment</div>
@@ -124,7 +127,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (o) {
           if (action === 'ACCEPT') {
             o.status = 'ACCEPTED';
+            o.waiter_id = currentUser.id;
             o.chef_id = dbEngine.allotKitchen();
+            const sessionObj = dbEngine.getSessionById(o.session_id);
+            if (sessionObj) {
+              sessionObj.waiter_id = currentUser.id;
+              const allSess = dbEngine.getSessions();
+              const idx = allSess.findIndex(s => s.session_id === sessionObj.session_id);
+              if (idx !== -1) allSess[idx] = sessionObj;
+              dbEngine.saveSessions(allSess);
+            }
           } else if (action === 'SEND') {
             o.status = 'SENT_TO_KITCHEN';
           } else if (action === 'COLLECT') {

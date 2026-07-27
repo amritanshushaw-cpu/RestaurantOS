@@ -625,8 +625,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     if (!currentActiveSession.waiter_id) {
-      alert('Please wait! Searching for an available Waiter... Your order cannot be placed until a Waiter is assigned to your table. The system will auto-assign once a Waiter logs in.');
-      return;
+      const wId = dbEngine.allotWaiter();
+      if (wId) {
+        currentActiveSession.waiter_id = wId;
+        const allSess = dbEngine.getSessions();
+        const idx = allSess.findIndex(s => s.session_id === currentActiveSession.session_id);
+        if (idx !== -1) { allSess[idx].waiter_id = wId; dbEngine.saveSessions(allSess); }
+      }
     }
 
     // Submit Order to active session

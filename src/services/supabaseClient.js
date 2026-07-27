@@ -583,6 +583,7 @@ class DynamicDatabaseEngine {
 
   saveSessions(sessions) {
     localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(sessions));
+    try { window.dispatchEvent(new Event('storage')); } catch(e){}
   }
 
   getActiveSessionForCustomer(customerId) {
@@ -595,8 +596,6 @@ class DynamicDatabaseEngine {
   }
 
   // Table Booking & Session Generation Flow
-  // API Flow: Table booking try -> if not available (FULL) -> return apology
-  // -> else generate 6-digit Session ID -> allot vacant Table No & Waiter ID -> update DB -> Session continues
   startSession(customerId, customerName = 'Guest', preferredTable = null) {
     const tables = this.getTables();
     const availableTables = tables.filter(t => t.status === 'AVAILABLE' || t.status === 'CLEANING');
@@ -609,9 +608,18 @@ class DynamicDatabaseEngine {
       };
     }
 
-    const allottedTable = preferredTable
-      ? (tables.find(t => (t.id === preferredTable || t.table_number === preferredTable) && t.status === 'AVAILABLE') || availableTables[0])
-      : availableTables[0];
+    const targetDigit = preferredTable ? String(preferredTable).replace(/\D/g, '') : null;
+    let allottedTable = null;
+
+    if (preferredTable && targetDigit) {
+      allottedTable = tables.find(t => t.table_number.replace(/\D/g, '') === targetDigit && (t.status === 'AVAILABLE' || t.status === 'CLEANING'));
+      if (!allottedTable) {
+        allottedTable = tables.find(t => t.table_number.replace(/\D/g, '') === targetDigit);
+      }
+    }
+    if (!allottedTable) {
+      allottedTable = availableTables[0];
+    }
 
     const sessionId = this.generateSessionId(); // 6-digit numeric session ID
     const waiterId = this.allotWaiter();
@@ -645,14 +653,12 @@ class DynamicDatabaseEngine {
 
     // Update Table status to OCCUPIED / Vacant = N
     this.updateTableStatus(allottedTable.id, 'OCCUPIED');
-
-    // Update Customer History record
-    this.recordCustomerVisit(newSession.customer_id, todayStr);
+    try { window.dispatchEvent(new Event('storage')); } catch(e){}
 
     return {
       ok: true,
       session: newSession,
-      message: `Table ${allottedTable.table_number} booked successfully! Session ID: ${sessionId}, Waiter Allotted: ${waiterId}`
+      message: `Table ${allottedTable.table_number} booked successfully! Session ID: ${sessionId}, Waiter Allotted: ${waiterId || 'Waiting for Waiter'}`
     };
   }
 
@@ -705,6 +711,7 @@ class DynamicDatabaseEngine {
     const idx = sessions.findIndex(s => s.session_id === session.session_id);
     if (idx !== -1) sessions[idx] = session;
     this.saveSessions(sessions);
+    try { window.dispatchEvent(new Event('storage')); } catch(e){}
 
     return {
       ok: true,
