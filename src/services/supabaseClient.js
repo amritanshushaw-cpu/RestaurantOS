@@ -84,13 +84,16 @@ class DynamicDatabaseEngine {
 
   // Initialize or load state from localStorage
   initDefaultState() {
-    const APP_VERSION = 'rest_os_v2_6_clean';
+    const APP_VERSION = 'rest_os_v3_1_fresh_zero_vacant';
     if (!localStorage.getItem(APP_VERSION)) {
-      // Clean slate for new commit: wipe lingering demo data
+      // Clean slate: wipe lingering demo data and stale active sessions
       localStorage.removeItem(STORAGE_KEYS.ORDERS);
       localStorage.removeItem(STORAGE_KEYS.SESSIONS);
       localStorage.removeItem(STORAGE_KEYS.TABLES);
       localStorage.removeItem(STORAGE_KEYS.QUEUE);
+      localStorage.removeItem(STORAGE_KEYS.PAYMENTS);
+      localStorage.removeItem('rest_os_staff_presence');
+      localStorage.removeItem('rest_os_active_session');
       localStorage.setItem(APP_VERSION, 'true');
     }
     const defaultCategories = [
@@ -761,8 +764,23 @@ class DynamicDatabaseEngine {
     if (idx !== -1) sessions[idx] = session;
     this.saveSessions(sessions);
 
-    // Option A: Mark Table Number as Vacant (Y)
+    // Mark Table Number as Vacant (AVAILABLE)
     this.updateTableStatus(session.table_no, 'AVAILABLE');
+
+    // Mark orders for this session as PAID so active waiter and kitchen tickets vanish
+    const orders = this.getOrders();
+    let updatedOrders = false;
+    orders.forEach(o => {
+      if (o.session_id === session.session_id) {
+        o.status = 'PAID';
+        o.delivered = 'Y';
+        updatedOrders = true;
+      }
+    });
+    if (updatedOrders) {
+      localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+    }
+    try { window.dispatchEvent(new Event('storage')); } catch(e){}
 
     // Extract 1-word general feedback from feedback popup (e.g. sentiment emoji or text)
     let oneWordFeedback = 'Excellent';
@@ -810,12 +828,26 @@ class DynamicDatabaseEngine {
 
   clearActiveSession(customerId) {
     const sessions = this.getSessions();
-    const session = sessions.find(s => (s.customer_id === customerId || !customerId) && s.status === 'ACTIVE');
+    const session = sessions.find(s => (s.customer_id === customerId || s.customer_email === customerId || !customerId) && s.status === 'ACTIVE');
     if (session) {
       session.status = 'TERMINATED';
       session.session_end_time = new Date().toLocaleTimeString();
-      this.setTableVacancyStatus(session.table_no, 'Y');
+      this.updateTableStatus(session.table_no, 'AVAILABLE');
       this.saveSessions(sessions);
+
+      // Mark orders for this session as TERMINATED so active waiter and kitchen tickets vanish
+      const orders = this.getOrders();
+      let updatedOrders = false;
+      orders.forEach(o => {
+        if (o.session_id === session.session_id) {
+          o.status = 'TERMINATED';
+          updatedOrders = true;
+        }
+      });
+      if (updatedOrders) {
+        localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+      }
+      try { window.dispatchEvent(new Event('storage')); } catch(e){}
     }
     localStorage.removeItem('rest_os_active_session');
   }

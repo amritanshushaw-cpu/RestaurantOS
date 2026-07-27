@@ -94,15 +94,16 @@
     <div class="kds-grid" id="kds-tickets-container"></div>
   </main>
 
-  <script type="module" src="../controllers/kdsController.js"></script>
-
-    <!-- Google Identity Services & Auth Modules -->
+  <!-- Google Identity Services & Auth Modules -->
   <script src="../config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script type="module" src="../services/supabaseClient.js"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script type="module" src="../services/supabaseClient.js"></script>
   <script type="module" src="../services/authService.js"></script>
   <script type="module" src="../utils/navbarAuth.js"></script>
+
+  <!-- KDS Controller Module -->
+  <script type="module" src="../controllers/kdsController.js"></script>
 </body>
 </html>
 

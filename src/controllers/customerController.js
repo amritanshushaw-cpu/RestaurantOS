@@ -500,10 +500,21 @@ document.addEventListener('DOMContentLoaded', () => {
           <strong>Table:</strong> ${currentActiveSession.table_no} &nbsp;·&nbsp;
           <strong>Waiter Allotted:</strong> ${currentActiveSession.waiter_id || '<span style="color:var(--color-warning);">WAITING FOR WAITER...</span>'} &nbsp;·&nbsp;
           <strong>Delivered:</strong> <span id="session-delivered-flag" style="color: ${currentActiveSession.delivered === 'Y' ? '#10b981' : '#f59e0b'}; font-weight: 700;">${currentActiveSession.delivered}</span>
-          ${currentActiveSession.status === 'ACTIVE' ? `<button id="btn-generate-bill-customer" class="btn-sentry" style="margin-left: 12px; font-size: 11px; padding: 4px 8px;"><i class="fa-solid fa-file-invoice-dollar"></i> Generate Bill & Pay</button>` : `<span class="badge" style="margin-left: 12px; background: var(--color-warning); color: #000;">${currentActiveSession.status}</span>`}
+          ${currentActiveSession.status === 'ACTIVE' ? `
+            <button id="btn-generate-bill-customer" class="btn-sentry" style="margin-left: 12px; font-size: 11px; padding: 4px 8px;"><i class="fa-solid fa-file-invoice-dollar"></i> Generate Bill & Pay</button>
+            <button id="btn-leave-session-customer" class="btn-ghost-sm" style="margin-left: 8px; font-size: 11px; padding: 4px 8px; color: var(--color-accent-pink); border-color: rgba(236,72,153,0.4);"><i class="fa-solid fa-right-from-bracket"></i> Leave Session</button>
+          ` : `<span class="badge" style="margin-left: 12px; background: var(--color-warning); color: #000;">${currentActiveSession.status}</span>`}
         `;
         document.getElementById('btn-generate-bill-customer')?.addEventListener('click', () => {
            renderBillPaymentModal(currentActiveSession, null);
+        });
+        document.getElementById('btn-leave-session-customer')?.addEventListener('click', () => {
+           if (confirm('End this dining session and leave your table? Table will become vacant.')) {
+             dbEngine.clearActiveSession(custId);
+             currentActiveSession = null;
+             refreshActiveSessionUI();
+             authService.showToast('Session ended. Table is now VACANT.');
+           }
         });
       }
       if (sessionHeaderChip) {
@@ -550,7 +561,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Poll for Served / Delivered (Y/N) status updates from Server Side / Waiter
+  // Poll for Served / Delivered (Y/N) & Waiter Allotment status updates
   setInterval(() => {
     if (!currentActiveSession) return;
     const session = dbEngine.getSessionById(currentActiveSession.session_id);
@@ -563,12 +574,20 @@ document.addEventListener('DOMContentLoaded', () => {
       renderTableMatrixUI();
       alert('Payment Verified by Waiter! Session Complete. Thank you!');
       if (window.authService) {
-        window.isAppNavigation = true; // bypass beforeunload
+        window.isAppNavigation = true;
         window.authService.logout();
       }
       return;
     }
     
+    if (session.waiter_id !== currentActiveSession.waiter_id) {
+      currentActiveSession = session;
+      refreshActiveSessionUI();
+      if (session.waiter_id) {
+        authService.showToast(`🔔 Waiter Allotted: ${session.waiter_id}`);
+      }
+    }
+
     if (session.delivered !== currentActiveSession.delivered) {
       currentActiveSession = session;
       const flagEl = document.getElementById('session-delivered-flag');
@@ -580,7 +599,7 @@ document.addEventListener('DOMContentLoaded', () => {
         authService.showToast('Order SERVED! Waiter & Kitchen confirmed delivery (DB Delivered = Y).');
       }
     }
-  }, 3000);
+  }, 2000);
 
   // Timer countdown for estimated waiting time
   function startWaitingTimer(minutes = 15) {
