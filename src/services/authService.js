@@ -52,11 +52,13 @@ class AuthService {
     this.listeners = [];
     this.clientId = window.GOOGLE_CLIENT_ID || '';
     this.pendingOtpEmail = null;
+    // Guard flag — prevents cascading side-effects during logout
+    this._loggingOut = false;
     this.initSupabaseSessionSync();
 
     // Prevent accidental closing of window without warning
     window.addEventListener('beforeunload', (e) => {
-      if (this.user && !window.isAppNavigation) {
+      if (this.user && !window.isAppNavigation && !this._loggingOut) {
         e.preventDefault();
         e.returnValue = 'Are you sure you want to log out and leave this page?';
         return e.returnValue;
@@ -65,62 +67,65 @@ class AuthService {
 
     // Cross-tab auto-logout: if session changes in another tab
     window.addEventListener('storage', (e) => {
+      if (this._loggingOut) return;
       if (e.key === AUTH_STORAGE_KEY) {
         const newUser = e.newValue ? JSON.parse(e.newValue) : null;
-        if (!newUser) {
+        if (!newUser && this.user) {
           // Logged out from another tab
-          if (this.user) {
-             this.user = null;
-             window.isAppNavigation = true;
-             const prefix = window.location.pathname.includes('/views/') ? '../' : './';
-             window.location.href = `${prefix}index.html`;
-          }
-        } else if (this.user && this.user.id !== newUser.id) {
-          // A DIFFERENT session was opened (e.g. Waiter logged in over Customer)
           this.user = null;
-          window.isAppNavigation = true;
-          const prefix = window.location.pathname.includes('/views/') ? '../' : './';
-          window.location.href = `${prefix}index.html`;
+          this._redirectToLanding();
+        } else if (newUser && this.user && this.user.id !== newUser.id) {
+          // A DIFFERENT session was opened
+          this.user = null;
+          this._redirectToLanding();
         }
       }
     });
+  }
+
+  // Safe redirect helper — sets navigation flag and goes to index
+  _redirectToLanding() {
+    window.isAppNavigation = true;
+    const inViews = window.location.pathname.includes('/views/');
+    window.location.href = inViews ? '../index.html' : 'index.html';
   }
 
   // ---------------------------------------------------------------------
   // Real backend session sync
   // ---------------------------------------------------------------------
 
-  // If Supabase is configured, keep authService.user in lockstep with the
-  // real GoTrue session -- this is what makes Google OAuth, email OTP, and
-  // page refreshes all behave consistently instead of relying on a
-  // separate locally-faked login state.
   initSupabaseSessionSync() {
     if (!dbEngine.supabase || !dbEngine.hasValidSupabaseConfig()) {
       if (!dbEngine.supabase) {
-        console.info('RestaurantOS: Supabase not configured (src/config.js is empty). Running in local demo mode -- Google/OTP sign-in will show a setup notice instead of failing silently.');
+        console.info('RestaurantOS: Supabase not configured (src/config.js is empty). Running in local demo mode.');
       }
       return;
     }
 
     // Only restore session if user did NOT explicitly log out.
-    // The 'rest_os_logged_out' flag is set in logout() and cleared in saveUser() on login.
     const wasLoggedOut = sessionStorage.getItem('rest_os_logged_out');
     if (!wasLoggedOut) {
       dbEngine.supabase.auth.getSession().then(({ data }) => {
-        if (data?.session?.user && !sessionStorage.getItem('rest_os_logged_out')) {
+        if (data?.session?.user && !sessionStorage.getItem('rest_os_logged_out') && !this._loggingOut) {
           this.handleSupabaseSession(data.session);
         }
       });
     }
 
     dbEngine.supabase.auth.onAuthStateChange((event, session) => {
+      // CRITICAL: skip all state changes while logout is in progress
+      if (this._loggingOut) return;
+
       if (event === 'SIGNED_IN' && session?.user) {
-        // Only auto-login if not explicitly logged out
         if (!sessionStorage.getItem('rest_os_logged_out')) {
           this.handleSupabaseSession(session);
         }
       } else if (event === 'SIGNED_OUT') {
-        this.saveUser(null);
+        // Only process if we're not already mid-logout
+        if (this.user) {
+          this.user = null;
+          localStorage.removeItem(AUTH_STORAGE_KEY);
+        }
       }
     });
   }
@@ -185,7 +190,6 @@ class AuthService {
         window.location.href = pendingRedirect;
       }, 300);
     } else if (window.location.pathname.includes('login.html')) {
-      // Auto-redirect if we are on the login page (e.g. after OAuth or Magic Link return)
       const isSubdir = window.location.pathname.includes('/views/');
       const prefix = isSubdir ? '' : 'src/views/';
       window.isAppNavigation = true;
@@ -197,7 +201,7 @@ class AuthService {
   }
 
   // ---------------------------------------------------------------------
-  // Session state (unchanged from previous version)
+  // Session state
   // ---------------------------------------------------------------------
 
   ensureCustomerSession() {
@@ -241,6 +245,9 @@ class AuthService {
   }
 
   saveUser(user) {
+    // Skip cascading saves during logout
+    if (this._loggingOut && !user) return;
+
     this.user = user;
     if (user) {
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
@@ -331,12 +338,9 @@ class AuthService {
   async loginWithGoogle(role = 'Customer', targetUrl = null) {
     const finalTarget = targetUrl || this.getRoleRedirectUrl(role);
 
-    // Save the intended role and target redirect in localStorage so we can
-    // assign them after OAuth redirect back
     localStorage.setItem('rest_os_pending_google_role', role);
     localStorage.setItem('rest_os_pending_redirect', finalTarget);
 
-    // If Supabase is not configured, fall back to demo sign-in and redirect
     if (!dbEngine.supabase || !dbEngine.hasValidSupabaseConfig()) {
       const demoNames = {
         Customer: 'Alex Mercer', Waiter: 'Sam (Waitstaff)',
@@ -362,7 +366,6 @@ class AuthService {
       const { error } = await dbEngine.supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          // ALWAYS redirect to canonical root to prevent Vercel 308 cleanUrl redirects from dropping the #access_token hash
           redirectTo: window.location.origin + '/'
         }
       });
@@ -385,7 +388,6 @@ class AuthService {
       return { ok: false, reason: 'invalid_email' };
     }
 
-    // Demo fallback when Supabase isn't configured
     if (!dbEngine.supabase || !dbEngine.hasValidSupabaseConfig()) {
       this.pendingOtpEmail = cleanEmail;
       this.showToast(`Demo mode — use code 123456 for ${cleanEmail}`);
@@ -423,7 +425,6 @@ class AuthService {
       return { ok: false, reason: 'missing_token' };
     }
 
-    // Demo fallback when Supabase isn't configured
     if (!dbEngine.supabase || !dbEngine.hasValidSupabaseConfig()) {
       if (cleanToken !== '123456') {
         this.showToast('Invalid demo code. Use 123456.');
@@ -475,36 +476,49 @@ class AuthService {
   }
 
   // ---------------------------------------------------------------------
-  // Logout / role switching (unchanged)
+  // LOGOUT — atomic, no cascading side-effects
   // ---------------------------------------------------------------------
 
   logout() {
+    // Guard: prevent double-logout and cascading side-effects
+    if (this._loggingOut) return;
+    this._loggingOut = true;
+
     const user = this.user;
+
+    // 1. Clear restaurant session
     if (user) {
       try { dbEngine.clearActiveSession(user.email || user.id); } catch(e) {}
     }
-    this.saveUser(null);
 
-    // Mark explicit logout so initSupabaseSessionSync won't auto-re-login
+    // 2. Clear our own auth state (directly, no saveUser to avoid cascading events)
+    this.user = null;
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+
+    // 3. Mark explicit logout
     sessionStorage.setItem('rest_os_logged_out', '1');
 
-    // Nuke ALL Supabase SDK localStorage keys (sb-*-auth-token) to prevent
-    // the SDK from auto-restoring a dead session on the next page load
+    // 4. Nuke ALL Supabase SDK localStorage keys
     try {
-      Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
-          localStorage.removeItem(key);
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
+          keysToRemove.push(key);
         }
-      });
+      }
+      keysToRemove.forEach(k => localStorage.removeItem(k));
     } catch(e) {}
 
+    // 5. Fire Supabase signOut (fire-and-forget, don't wait)
     if (dbEngine.supabase) {
-      dbEngine.supabase.auth.signOut().catch(e => console.warn('Supabase signout notice:', e.message));
+      dbEngine.supabase.auth.signOut().catch(() => {});
     }
 
+    // 6. Show toast
     this.showToast(user ? `Signed out ${user.name}` : 'Signed out');
-    
-    // Redirect to landing page
+
+    // 7. Redirect IMMEDIATELY — no setTimeout, no cascading
     window.isAppNavigation = true;
     const inViews = window.location.pathname.includes('/views/');
     window.location.href = inViews ? '../index.html' : 'index.html';

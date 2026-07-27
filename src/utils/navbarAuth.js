@@ -76,6 +76,8 @@ class NavbarAuth {
     }
 
     if (!authService.user) {
+      // Don't redirect if logout is in progress — logout handles its own redirect
+      if (authService._loggingOut) return;
       const landingUrl = window.location.origin + '/index.html?gateway=1';
       window.isAppNavigation = true;
       window.location.href = landingUrl;
