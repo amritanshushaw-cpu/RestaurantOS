@@ -492,8 +492,11 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
 
           <div style="display: flex; gap: 12px;">
-            <button type="button" id="btn-confirm-pos-payment" class="btn-sentry" style="flex: 1; padding: 12px; font-size: 13px;">
+            <button type="button" id="btn-confirm-pos-payment" class="btn-sentry" style="flex: 2; padding: 12px; font-size: 13px;">
               Collect Payment & Vacate Table <i class="fa-solid fa-check-double"></i>
+            </button>
+            <button type="button" id="btn-reset-pos-table-orders" class="btn-ghost-sm" style="flex: 1; padding: 12px; font-size: 12px; color: var(--color-accent-pink); border: 1.5px solid rgba(236,72,153,0.5);">
+              <i class="fa-solid fa-rotate-left"></i> Reset Table
             </button>
           </div>
         </div>
@@ -507,6 +510,47 @@ document.addEventListener('DOMContentLoaded', () => {
     const dynamicArea = document.getElementById('pos-billing-dynamic-area');
     const billTitle = document.getElementById('pos-bill-title');
     let selectedPayType = 'UPI';
+
+    document.getElementById('btn-reset-pos-table-orders')?.addEventListener('click', () => {
+      const activeTable = posModal.dataset.currentTable || tableSelectEl.value;
+      const cleanNum = activeTable.replace('Table ', '').replace('tbl-', '').padStart(2, '0');
+      const stdTable = `Table ${cleanNum}`;
+      const tblId = `tbl-${cleanNum}`;
+
+      const orders = dbEngine.getOrders();
+      let updatedOrders = false;
+      orders.forEach(o => {
+        const t = String(o.table_number || o.table_id || o.table_no || '');
+        if (t === stdTable || t === tblId || t.endsWith(cleanNum)) {
+          o.status = 'COMPLETED';
+          o.delivered = 'Y';
+          updatedOrders = true;
+        }
+      });
+      if (updatedOrders) {
+        localStorage.setItem('rest_os_orders', JSON.stringify(orders));
+      }
+
+      const sessions = dbEngine.getSessions();
+      sessions.forEach(s => {
+        if (s.table_no === stdTable || s.table_no === tblId || s.table_no === activeTable) {
+          s.status = 'TERMINATED';
+        }
+      });
+      dbEngine.saveSessions(sessions);
+
+      dbEngine.updateTableStatus(stdTable, 'AVAILABLE');
+      dbEngine.updateTableStatus(tblId, 'AVAILABLE');
+
+      if (typeof activeCart !== 'undefined') {
+        activeCart = [];
+        renderCart();
+      }
+
+      authService.showToast(`✅ ${stdTable} has been reset & cleared! Table is now VACANT.`);
+      updateBillingDetails(activeTable);
+      window.dispatchEvent(new Event('storage'));
+    });
 
     function updateBillingDetails(tableStr) {
       billTitle.textContent = `Bill & Payment — ${tableStr}`;

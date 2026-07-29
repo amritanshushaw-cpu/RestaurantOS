@@ -288,6 +288,40 @@ class DynamicDatabaseEngine {
 
     if (!localStorage.getItem(STORAGE_KEYS.ORDERS)) {
       localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify([]));
+    } else {
+      // Auto-purge any legacy demo unbilled orders for Table 02
+      const currentOrders = JSON.parse(localStorage.getItem(STORAGE_KEYS.ORDERS) || '[]');
+      let cleaned = false;
+      currentOrders.forEach(o => {
+        const t = String(o.table_number || o.table_id || o.table_no || '');
+        if (t === 'Table 02' || t === 'tbl-02' || t.includes('02')) {
+          if (o.status !== 'COMPLETED' && o.status !== 'TERMINATED') {
+            o.status = 'COMPLETED';
+            cleaned = true;
+          }
+        }
+      });
+      if (cleaned) {
+        localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(currentOrders));
+      }
+    }
+
+    if (!localStorage.getItem(STORAGE_KEYS.SESSIONS)) {
+      localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify([]));
+    } else {
+      const currentSessions = JSON.parse(localStorage.getItem(STORAGE_KEYS.SESSIONS) || '[]');
+      let cleanedSess = false;
+      currentSessions.forEach(s => {
+        if (s.table_no === 'Table 02' || s.table_no === 'tbl-02') {
+          if (s.status !== 'TERMINATED' && s.status !== 'COMPLETED') {
+            s.status = 'TERMINATED';
+            cleanedSess = true;
+          }
+        }
+      });
+      if (cleanedSess) {
+        localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(currentSessions));
+      }
     }
 
     if (!localStorage.getItem(STORAGE_KEYS.QUEUE)) {
