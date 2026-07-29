@@ -583,16 +583,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const session = dbEngine.getSessionById(currentActiveSession.session_id);
     if (!session) return;
     
-    // Check if session was terminated by Waiter (Payment Accepted)
-    if (session.status === 'TERMINATED') {
+    // Check if session was terminated by Waiter or Customer Payment
+    if (!session || session.status === 'TERMINATED' || session.status === 'COMPLETED' || session.status === 'PAID') {
       currentActiveSession = null;
+      localStorage.removeItem('rest_os_active_session');
       refreshActiveSessionUI();
       renderTableMatrixUI();
-      alert('Payment Verified by Waiter! Session Complete. Thank you!');
-      if (window.authService) {
-        window.isAppNavigation = true;
-        window.authService.logout();
-      }
+      authService.showToast('✅ Payment Verified! Session terminated & table is now VACANT.');
       return;
     }
     

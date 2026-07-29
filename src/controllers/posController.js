@@ -634,23 +634,40 @@ document.addEventListener('DOMContentLoaded', () => {
       const activeTable = posModal.dataset.currentTable || tableSelectEl.value;
       const activeTotal = posModal.dataset.currentTotal || '1663.30';
 
+      const cleanNum = activeTable.replace('Table ', '').replace('tbl-', '').padStart(2, '0');
+      const stdTable = `Table ${cleanNum}`;
+      const tblId = `tbl-${cleanNum}`;
+
       const sessions = dbEngine.getSessions();
-      const targetSession = sessions.find(s => s.table_no === activeTable && s.status !== 'TERMINATED');
+      const targetSession = sessions.find(s => 
+        (s.table_no === stdTable || s.table_no === tblId || s.table_no === activeTable) && 
+        s.status !== 'TERMINATED'
+      );
+
       if (targetSession) {
-        dbEngine.updateSessionStatus(targetSession.session_id, 'COMPLETED');
+        dbEngine.terminateSession(targetSession.session_id, selectedPayType, { rating: 5, reviewText: 'Paid & Vacated via Waiter POS' });
+      } else {
+        dbEngine.updateTableStatus(stdTable, 'AVAILABLE');
+        dbEngine.updateTableStatus(tblId, 'AVAILABLE');
       }
 
       const orders = dbEngine.getOrders();
+      let updatedOrders = false;
       orders.forEach(o => {
-        const t = String(o.table_number || o.table_id || '');
-        if (t === activeTable || t.endsWith(activeTable.replace('Table ', ''))) {
+        const t = String(o.table_number || o.table_id || o.table_no || '');
+        if (t === stdTable || t === tblId || t.endsWith(cleanNum)) {
           o.status = 'COMPLETED';
+          o.delivered = 'Y';
+          updatedOrders = true;
         }
       });
-      localStorage.setItem('rest_os_orders', JSON.stringify(orders));
+      if (updatedOrders) {
+        localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+      }
 
-      dbEngine.updateTableStatus(activeTable, 'AVAILABLE');
-      authService.showToast(`✅ Payment of ₹${activeTotal} (${selectedPayType}) recorded for ${activeTable}! Table is now VACANT.`);
+      localStorage.removeItem('rest_os_active_session');
+
+      authService.showToast(`✅ Payment of ₹${activeTotal} (${selectedPayType}) recorded for ${stdTable}! Session TERMINATED & Table is now VACANT.`);
       posModal.remove();
       window.dispatchEvent(new Event('storage'));
     });
