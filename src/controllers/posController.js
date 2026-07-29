@@ -213,11 +213,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!alertsList) return;
 
     const allOrders = dbEngine.getOrders();
-    // Exclusively real-time kitchen ready orders awaiting table delivery by waiter
-    const readyOrders = allOrders.filter(o => 
-      o.status === 'READY' &&
+    const activeKitchenOrders = allOrders.filter(o => 
+      o.status !== 'COMPLETED' && 
+      o.status !== 'PAID' && 
+      o.status !== 'CANCELLED' && 
+      o.status !== 'TERMINATED' &&
       o.delivered !== 'Y'
     );
+
+    const readyOrders = activeKitchenOrders.filter(o => o.status === 'READY');
 
     if (readyOrders.length > 0) {
       if (badge) {
@@ -234,23 +238,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     prevReadyOrderCount = readyOrders.length;
 
-    if (readyOrders.length === 0) {
+    if (activeKitchenOrders.length === 0) {
       alertsList.innerHTML = `
         <div style="grid-column: 1/-1; text-align: center; color: var(--text-tertiary); padding: 24px 12px;">
           <i class="fa-solid fa-bell-concierge" style="color: var(--color-accent-pink); font-size: 28px; display: block; margin-bottom: 10px;"></i>
-          <p style="font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 4px;">No kitchen ready orders awaiting delivery right now.</p>
-          <p style="font-size: 12px; color: var(--text-tertiary);">When Kitchen staff completes cooking an order on the KDS screen, real-time alerts will appear here instantly!</p>
+          <p style="font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 4px;">No active kitchen orders right now.</p>
+          <p style="font-size: 12px; color: var(--text-tertiary);">When customers or waiters place an order, live cooking updates and ready alerts appear here!</p>
         </div>
       `;
       return;
     }
 
-    alertsList.innerHTML = readyOrders.map(order => {
+    alertsList.innerHTML = activeKitchenOrders.map(order => {
+      const isReady = order.status === 'READY';
       const formattedTime = order.created_at ? new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now';
       const itemsList = (order.items || []).map(i => `${i.quantity}x ${i.name || i.item_name}`).join(', ') || 'Dish Items';
 
+      const borderStyle = isReady ? '1.5px solid #10b981' : '1px solid var(--border-violet)';
+      const statusText = isReady 
+        ? '<span style="color: #10b981; font-weight: 700;"><i class="fa-solid fa-circle-check"></i> READY FOR PICKUP</span>' 
+        : `<span style="color: #3b82f6; font-weight: 700;"><i class="fa-solid fa-utensils"></i> ORDER RECEIVED (${order.status})</span>`;
+
+      const actionBtnHTML = isReady ? `
+        <button type="button" class="btn-sentry btn-mark-served-notif" data-id="${order.id || order.order_number}" style="padding: 10px; font-size: 12px; width: 100%; background: #10b981; color: #000; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(16,185,129,0.3);">
+          <i class="fa-solid fa-check-double"></i> MARK SERVED & DELIVERED
+        </button>
+      ` : `
+        <button type="button" disabled style="padding: 10px; font-size: 12px; width: 100%; background: rgba(59, 130, 246, 0.12); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); font-weight: 700; border-radius: 6px; cursor: not-allowed; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          <i class="fa-solid fa-fire-burner"></i> Order Received (Cooking in Kitchen...)
+        </button>
+      `;
+
       return `
-        <div style="background: var(--color-primary); border: 1.5px solid var(--color-accent-pink); border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
+        <div style="background: var(--color-primary); border: ${borderStyle}; border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
           <div>
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 8px; margin-bottom: 8px;">
               <strong style="color: var(--color-accent-lime); font-size: 14px; font-family: var(--font-mono);">${order.order_number}</strong>
@@ -258,19 +278,17 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             
             <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">
-              <strong>Dishes Ready:</strong> <span style="color: #fff; font-weight: 600;">${itemsList}</span>
+              <strong>Dishes:</strong> <span style="color: #fff; font-weight: 600;">${itemsList}</span>
             </div>
 
             <div style="font-size: 11px; color: var(--text-tertiary);">
               <span><i class="fa-regular fa-clock"></i> ${formattedTime}</span> &nbsp;·&nbsp;
               <span><i class="fa-solid fa-user-ninja"></i> Waiter: ${order.waiter_id || 'Waitstaff'}</span> &nbsp;·&nbsp;
-              <span style="color: var(--color-accent-lime); font-weight: 700;">[Status: READY]</span>
+              ${statusText}
             </div>
           </div>
 
-          <button type="button" class="btn-sentry btn-mark-served-notif" data-id="${order.id || order.order_number}" style="padding: 8px 12px; font-size: 12px; width: 100%; background: #10b981; color: #000; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
-            <i class="fa-solid fa-check-double"></i> Mark Served & Delivered
-          </button>
+          ${actionBtnHTML}
         </div>
       `;
     }).join('');
