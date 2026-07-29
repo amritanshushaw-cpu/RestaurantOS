@@ -876,18 +876,24 @@ class DynamicDatabaseEngine {
   // Post serving -> Served confirmation to server side -> updates Delivered (Y/N) column in DB from N to Y
   markOrderServed(orderId) {
     const orders = this.getOrders();
-    const order = orders.find(o => o.id === orderId || o.order_number === orderId);
+    const order = orders.find(o => 
+      o.id === orderId || 
+      o.order_number === orderId || 
+      String(o.id) === String(orderId) ||
+      String(o.order_number) === String(orderId)
+    );
     if (!order) return { ok: false, message: 'Order not found.' };
 
     order.delivered = 'Y';
     order.status = 'PAYMENT_PENDING';
     localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
 
-    // Update parent session delivered status
+    // Update parent session delivered & payment pending status
     if (order.session_id) {
       const session = this.getSessionById(order.session_id);
       if (session) {
         session.delivered = 'Y';
+        session.status = 'PAYMENT_PENDING';
         const sessions = this.getSessions();
         const idx = sessions.findIndex(s => s.session_id === session.session_id);
         if (idx !== -1) sessions[idx] = session;
@@ -897,8 +903,7 @@ class DynamicDatabaseEngine {
     }
 
     this.broadcastOrderSync(order);
-
-    return { ok: true, order, message: `Order ${order.order_number} marked as SERVED! DB updated Delivered = Y.` };
+    return { ok: true, order, message: `Order ${order.order_number} marked as SERVED!` };
   }
 
   // Session Termination & Bill Receipt Flow

@@ -276,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
         borderStyle = '1.5px solid #10b981';
         statusText = `<span style="color: #10b981; font-weight: 700;"><i class="fa-solid fa-circle-check"></i> READY FOR PICKUP</span>`;
         actionBtnHTML = `
-          <button type="button" class="btn-sentry btn-mark-served-notif" data-id="${order.id || order.order_number}" style="padding: 10px; font-size: 12px; width: 100%; background: #10b981; color: #000; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(16,185,129,0.3);">
+          <button type="button" class="btn-sentry btn-mark-served-notif" data-id="${order.id || order.order_number}" data-table="${tableStr}" style="padding: 10px; font-size: 12px; width: 100%; background: #10b981; color: #000; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(16,185,129,0.3);">
             <i class="fa-solid fa-check-double"></i> MARK SERVED & DELIVERED
           </button>
         `;
@@ -307,17 +307,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
 
     alertsList.querySelectorAll('.btn-mark-served-notif').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         const orderId = btn.getAttribute('data-id');
+        const tableStr = btn.getAttribute('data-table');
+        
         dbEngine.markOrderServed(orderId);
-        authService.showToast(`✅ Order marked SERVED! Payment Pending status activated.`);
+        authService.showToast(`✅ Order marked SERVED to ${tableStr}! Launching Billing Terminal...`);
+        
         renderKitchenReadyNotifications();
         window.dispatchEvent(new Event('storage'));
+
+        setTimeout(() => {
+          openWaiterBillPaymentModal(tableStr);
+        }, 150);
       });
     });
 
     alertsList.querySelectorAll('.btn-generate-bill-notif').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         const tableStr = btn.getAttribute('data-table');
         openWaiterBillPaymentModal(tableStr);
       });
