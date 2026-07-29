@@ -432,92 +432,50 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function openWaiterBillPaymentModal() {
-    const sessions = dbEngine.getSessions();
-    const orders = dbEngine.getOrders();
-    const currentTableStr = selectedTable || (tableSelect ? tableSelect.options[tableSelect.selectedIndex].text.split(' (')[0] : 'Table 02');
-
-    let targetSession = sessions.find(s => s.table_no === currentTableStr && s.status !== 'TERMINATED');
-    if (!targetSession) {
-      targetSession = sessions.find(s => s.status !== 'TERMINATED');
-    }
-
-    const tableOrders = orders.filter(o => o.table_number === currentTableStr || (targetSession && o.session_id === targetSession.session_id));
-    
-    let billItems = [];
-    if (activeCart.length > 0) {
-      billItems = [...activeCart];
-    } else if (tableOrders.length > 0) {
-      tableOrders.forEach(o => {
-        if (o.items && Array.isArray(o.items)) billItems.push(...o.items);
-      });
-    }
-
-    const subtotal = billItems.reduce((sum, item) => sum + (parseFloat(item.price || 0) * (item.quantity || 1)), 0) || (targetSession ? parseFloat(targetSession.total_session_amount || 1584.10) : 1584.10);
-    const tax = parseFloat((subtotal * 0.05).toFixed(2));
-    const total = parseFloat((subtotal + tax).toFixed(2));
+  function openWaiterBillPaymentModal(initialTable) {
+    const defaultTable = initialTable || selectedTable || (tableSelect ? tableSelect.options[tableSelect.selectedIndex].text.split(' (')[0] : 'Table 01');
 
     const existingModal = document.getElementById('pos-payment-bill-modal');
     if (existingModal) existingModal.remove();
 
     const modalHtml = `
       <div id="pos-payment-bill-modal" class="entry-gateway-backdrop" style="z-index: 10000; display: flex; align-items: center; justify-content: center;">
-        <div class="entry-modal-card" style="max-width: 580px; width: 95%; padding: 32px; text-align: left; background: var(--color-ink-deep); border: 1.5px solid var(--color-accent-lime); box-shadow: 0 24px 60px rgba(0,0,0,0.8);">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-violet); padding-bottom: 14px;">
+        <div class="entry-modal-card" style="max-width: 600px; width: 95%; padding: 28px; text-align: left; background: var(--color-ink-deep); border: 1.5px solid var(--color-accent-lime); box-shadow: 0 24px 60px rgba(0,0,0,0.8);">
+          
+          <!-- Header Bar -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-violet); padding-bottom: 12px;">
             <div>
               <div style="font-size: 11px; font-weight: 700; color: var(--color-accent-lime); text-transform: uppercase; letter-spacing: 0.5px;">
                 <i class="fa-solid fa-file-invoice-dollar"></i> Waiter Billing Terminal
               </div>
-              <h2 style="font-size: 22px; font-weight: 700; color: #fff; margin: 4px 0 0;">Bill & Payment — ${currentTableStr}</h2>
+              <h2 id="pos-bill-title" style="font-size: 22px; font-weight: 700; color: #fff; margin: 4px 0 0;">Bill & Payment — ${defaultTable}</h2>
             </div>
             <button type="button" id="btn-close-pos-bill" style="background: transparent; border: none; color: var(--text-tertiary); font-size: 24px; cursor: pointer;">&times;</button>
           </div>
 
-          <div style="background: var(--color-primary); border: 1px solid var(--border-violet); padding: 12px 16px; border-radius: var(--radius-md); font-size: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-            <div><strong>Table:</strong> ${currentTableStr}</div>
-            <div><strong>Session ID:</strong> <span class="mono">${targetSession ? targetSession.session_id : 'SESS-' + Math.floor(100000 + Math.random() * 900000)}</span></div>
-            <div><strong>Waiter ID:</strong> ${currentUser ? currentUser.name : 'Waitstaff'}</div>
+          <!-- Select Table Picker -->
+          <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-violet); padding: 10px 14px; border-radius: var(--radius-md);">
+            <label for="pos-billing-table-select" style="font-size: 12px; font-weight: 700; color: var(--color-accent-lime); text-transform: uppercase; white-space: nowrap;">
+              <i class="fa-solid fa-chair"></i> Choose Table:
+            </label>
+            <select id="pos-billing-table-select" style="flex: 1; background: var(--color-primary); border: 1px solid var(--border-violet); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: 700; font-family: var(--font-sans); outline: none;">
+              <option value="Table 01" ${defaultTable.includes('01') ? 'selected' : ''}>Table 01 (2 Seats · Patio)</option>
+              <option value="Table 02" ${defaultTable.includes('02') ? 'selected' : ''}>Table 02 (4 Seats · Main Hall)</option>
+              <option value="Table 03" ${defaultTable.includes('03') ? 'selected' : ''}>Table 03 (4 Seats · Main Hall)</option>
+              <option value="Table 04" ${defaultTable.includes('04') ? 'selected' : ''}>Table 04 (6 Seats · VIP Booth)</option>
+              <option value="Table 05" ${defaultTable.includes('05') ? 'selected' : ''}>Table 05 (2 Seats · Patio)</option>
+              <option value="Table 06" ${defaultTable.includes('06') ? 'selected' : ''}>Table 06 (8 Seats · Main Hall)</option>
+              <option value="Table 07" ${defaultTable.includes('07') ? 'selected' : ''}>Table 07 (2 Seats · Terrace)</option>
+              <option value="Table 08" ${defaultTable.includes('08') ? 'selected' : ''}>Table 08 (4 Seats · Main Hall)</option>
+              <option value="Table 09" ${defaultTable.includes('09') ? 'selected' : ''}>Table 09 (6 Seats · VIP Booth)</option>
+              <option value="Table 10" ${defaultTable.includes('10') ? 'selected' : ''}>Table 10 (8 Seats · Terrace)</option>
+            </select>
           </div>
 
-          <div style="max-height: 180px; overflow-y: auto; margin-bottom: 16px; border: 1px solid var(--border-violet); border-radius: 8px; padding: 10px;">
-            <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
-              <thead>
-                <tr style="border-bottom: 1px solid var(--border-violet); color: var(--text-tertiary);">
-                  <th style="padding: 6px;">Item</th>
-                  <th style="padding: 6px; text-align: center;">Qty</th>
-                  <th style="padding: 6px; text-align: right;">Price</th>
-                  <th style="padding: 6px; text-align: right;">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${billItems.length > 0 ? billItems.map(item => `
-                  <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                    <td style="padding: 6px; color: #fff; font-weight: 600;">${item.name || item.item_name}</td>
-                    <td style="padding: 6px; text-align: center;">${item.quantity || 1}</td>
-                    <td style="padding: 6px; text-align: right; font-family: var(--font-mono);">₹${Number(item.price).toFixed(2)}</td>
-                    <td style="padding: 6px; text-align: right; font-family: var(--font-mono); color: var(--color-accent-lime);">₹${(Number(item.price) * (item.quantity || 1)).toFixed(2)}</td>
-                  </tr>
-                `).join('') : `
-                  <tr>
-                    <td colspan="4" style="padding: 12px; text-align: center; color: var(--text-tertiary);">Standard Dining Check for ${currentTableStr}</td>
-                  </tr>
-                `}
-              </tbody>
-            </table>
-          </div>
+          <!-- Dynamic Billing Area Container -->
+          <div id="pos-billing-dynamic-area"></div>
 
-          <div style="background: rgba(194, 239, 78, 0.05); border: 1px solid rgba(194, 239, 78, 0.2); padding: 14px; border-radius: var(--radius-md); margin-bottom: 20px;">
-            <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">
-              <span>Subtotal:</span> <strong style="color: #fff; font-family: var(--font-mono);">₹${subtotal.toFixed(2)}</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">
-              <span>Taxes & Service (5% GST):</span> <strong style="color: #fff; font-family: var(--font-mono);">₹${tax.toFixed(2)}</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; color: var(--color-accent-lime); border-top: 1px dashed rgba(194, 239, 78, 0.3); padding-top: 8px; margin-top: 6px;">
-              <span>Grand Total:</span> <span style="font-family: var(--font-mono);">₹${total.toFixed(2)}</span>
-            </div>
-          </div>
-
+          <!-- Select Payment Mode -->
           <div style="margin-bottom: 20px;">
             <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 10px;">Select Received Payment Mode:</label>
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
@@ -545,7 +503,122 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.insertAdjacentHTML('beforeend', modalHtml);
 
     const posModal = document.getElementById('pos-payment-bill-modal');
+    const tableSelectEl = document.getElementById('pos-billing-table-select');
+    const dynamicArea = document.getElementById('pos-billing-dynamic-area');
+    const billTitle = document.getElementById('pos-bill-title');
     let selectedPayType = 'UPI';
+
+    function updateBillingDetails(tableStr) {
+      billTitle.textContent = `Bill & Payment — ${tableStr}`;
+      
+      const sessions = dbEngine.getSessions();
+      const orders = dbEngine.getOrders();
+      const cleanNum = tableStr.replace('Table ', '').replace('tbl-', '').padStart(2, '0');
+      const stdTable = `Table ${cleanNum}`;
+      const tblId = `tbl-${cleanNum}`;
+
+      const targetSession = sessions.find(s => 
+        (s.table_no === stdTable || s.table_no === tblId) && s.status !== 'TERMINATED'
+      ) || sessions.find(s => s.status === 'ACTIVE');
+
+      const matchingOrders = orders.filter(o => {
+        if (o.status === 'CANCELLED') return false;
+        const t = String(o.table_number || o.table_id || o.table_no || '');
+        return t === stdTable || t === tblId || t.endsWith(cleanNum) || (targetSession && o.session_id === targetSession.session_id);
+      });
+
+      let billItems = [];
+      matchingOrders.forEach(o => {
+        if (Array.isArray(o.items) && o.items.length > 0) {
+          o.items.forEach(item => {
+            const existing = billItems.find(i => (i.id && i.id === item.id) || i.name === (item.name || item.item_name));
+            if (existing) {
+              existing.quantity = (existing.quantity || 1) + (item.quantity || 1);
+            } else {
+              billItems.push({
+                id: item.id || `item-${Date.now()}`,
+                name: item.name || item.item_name || 'Dish Item',
+                price: parseFloat(item.price || 0),
+                quantity: item.quantity || 1
+              });
+            }
+          });
+        }
+      });
+
+      let subtotal = 0;
+      if (billItems.length > 0) {
+        subtotal = billItems.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+      } else if (matchingOrders.length > 0) {
+        subtotal = matchingOrders.reduce((sum, o) => sum + parseFloat(o.total || o.subtotal || 0), 0);
+      } else if (targetSession && targetSession.total_session_amount) {
+        subtotal = parseFloat(targetSession.total_session_amount);
+      } else {
+        subtotal = 1584.10;
+      }
+
+      const tax = parseFloat((subtotal * 0.05).toFixed(2));
+      const total = parseFloat((subtotal + tax).toFixed(2));
+
+      dynamicArea.innerHTML = `
+        <div style="background: var(--color-primary); border: 1px solid var(--border-violet); padding: 12px 16px; border-radius: var(--radius-md); font-size: 12px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+          <div><strong>Table:</strong> ${stdTable}</div>
+          <div><strong>Session ID:</strong> <span class="mono">${targetSession ? targetSession.session_id : 'SESS-' + Math.floor(100000 + Math.random() * 900000)}</span></div>
+          <div><strong>Customer:</strong> ${targetSession ? (targetSession.customer_name || 'Signed Guest') : 'Customer'}</div>
+          <div><strong>Waiter:</strong> ${currentUser ? currentUser.name : 'Waitstaff'}</div>
+        </div>
+
+        <div style="max-height: 180px; overflow-y: auto; margin-bottom: 16px; border: 1px solid var(--border-violet); border-radius: 8px; padding: 10px; background: rgba(0,0,0,0.2);">
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+            <thead>
+              <tr style="border-bottom: 1px solid var(--border-violet); color: var(--text-tertiary);">
+                <th style="padding: 6px;">Item</th>
+                <th style="padding: 6px; text-align: center;">Qty</th>
+                <th style="padding: 6px; text-align: right;">Price</th>
+                <th style="padding: 6px; text-align: right;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${billItems.length > 0 ? billItems.map(item => `
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                  <td style="padding: 6px; color: #fff; font-weight: 600;">${item.name}</td>
+                  <td style="padding: 6px; text-align: center;">${item.quantity}</td>
+                  <td style="padding: 6px; text-align: right; font-family: var(--font-mono);">₹${item.price.toFixed(2)}</td>
+                  <td style="padding: 6px; text-align: right; font-family: var(--font-mono); color: var(--color-accent-lime);">₹${(item.price * item.quantity).toFixed(2)}</td>
+                </tr>
+              `).join('') : `
+                <tr>
+                  <td colspan="4" style="padding: 12px; text-align: center; color: var(--text-tertiary);">
+                    No active unbilled dishes placed for ${stdTable}. Standard check estimate shown.
+                  </td>
+                </tr>
+              `}
+            </tbody>
+          </table>
+        </div>
+
+        <div style="background: rgba(194, 239, 78, 0.05); border: 1px solid rgba(194, 239, 78, 0.2); padding: 14px; border-radius: var(--radius-md); margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">
+            <span>Subtotal:</span> <strong style="color: #fff; font-family: var(--font-mono);">₹${subtotal.toFixed(2)}</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">
+            <span>Taxes & Service (5% GST):</span> <strong style="color: #fff; font-family: var(--font-mono);">₹${tax.toFixed(2)}</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; color: var(--color-accent-lime); border-top: 1px dashed rgba(194, 239, 78, 0.3); padding-top: 8px; margin-top: 6px;">
+            <span>Grand Total:</span> <span style="font-family: var(--font-mono);">₹${total.toFixed(2)}</span>
+          </div>
+        </div>
+      `;
+
+      posModal.dataset.currentTable = stdTable;
+      posModal.dataset.currentTotal = total.toFixed(2);
+    }
+
+    updateBillingDetails(tableSelectEl.value);
+
+    tableSelectEl.addEventListener('change', (e) => {
+      updateBillingDetails(e.target.value);
+    });
 
     posModal.querySelectorAll('.btn-pos-pay-type').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -558,11 +631,26 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-close-pos-bill')?.addEventListener('click', () => posModal.remove());
 
     document.getElementById('btn-confirm-pos-payment')?.addEventListener('click', () => {
+      const activeTable = posModal.dataset.currentTable || tableSelectEl.value;
+      const activeTotal = posModal.dataset.currentTotal || '1663.30';
+
+      const sessions = dbEngine.getSessions();
+      const targetSession = sessions.find(s => s.table_no === activeTable && s.status !== 'TERMINATED');
       if (targetSession) {
         dbEngine.updateSessionStatus(targetSession.session_id, 'COMPLETED');
       }
-      dbEngine.updateTableStatus(currentTableStr, 'AVAILABLE');
-      authService.showToast(`✅ Payment of ₹${total.toFixed(2)} (${selectedPayType}) recorded for ${currentTableStr}! Table is now VACANT.`);
+
+      const orders = dbEngine.getOrders();
+      orders.forEach(o => {
+        const t = String(o.table_number || o.table_id || '');
+        if (t === activeTable || t.endsWith(activeTable.replace('Table ', ''))) {
+          o.status = 'COMPLETED';
+        }
+      });
+      localStorage.setItem('rest_os_orders', JSON.stringify(orders));
+
+      dbEngine.updateTableStatus(activeTable, 'AVAILABLE');
+      authService.showToast(`✅ Payment of ₹${activeTotal} (${selectedPayType}) recorded for ${activeTable}! Table is now VACANT.`);
       posModal.remove();
       window.dispatchEvent(new Event('storage'));
     });
