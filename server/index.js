@@ -543,5 +543,5 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`\n🍽️  RestaurantOS API running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`🔑 Supabase:     ${process.env.SUPABASE_URL ? 'Connected (RLS Enforced)' : '❌ Not Configured'}\n`);
+  console.log(`🔑 Supabase:     ${process.env.SUPABASE_URL || '❌ not configured'}\n`);
 });

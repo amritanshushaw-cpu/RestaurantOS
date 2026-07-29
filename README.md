@@ -165,18 +165,11 @@ Auth middleware enforces JWT-based Supabase authentication and role-based access
 Copy `.env.example` to `.env` and configure your environment. Key settings include:
 
 - `SUPABASE_URL`
-- `SUPABASE_ANON_KEY` (client safe ONLY IF RLS is enforced)
-- `SUPABASE_SERVICE_ROLE_KEY` (SERVER SIDE ONLY)
-- `STRIPE_PUBLISHABLE_KEY` & `STRIPE_SECRET_KEY` (SERVER SIDE ONLY for secret key)
+- `SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
 - `GOOGLE_CLIENT_ID`
 - `GEMINI_API_KEY`
 - `PAYMENT_MODE`
-
-> [!WARNING]
-> **SECURITY & SECRET ROTATION NOTICE**
-> If any API keys, Supabase credentials, or OAuth IDs were previously hardcoded in earlier repository commits, those values remain visible in Git commit history.
-> **Mandatory Action**: Immediately rotate any previously committed Supabase API keys, Service Role Keys, Google OAuth Client IDs, and third-party API credentials in your respective provider dashboards. Always keep `.env` in `.gitignore` and consume secrets exclusively through environment variables.
-
 
 ---
 
