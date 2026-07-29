@@ -266,10 +266,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (isServed) {
         borderStyle = '1.5px solid #f59e0b';
-        statusText = `<span style="color: #f59e0b; font-weight: 700;"><i class="fa-solid fa-clock"></i> FOOD SERVED — PAYMENT PENDING</span>`;
+        statusText = `<span style="color: #f59e0b; font-weight: 700;"><i class="fa-solid fa-clock"></i> PAYMENT PENDING</span>`;
         actionBtnHTML = `
           <button type="button" class="btn-sentry btn-generate-bill-notif" data-table="${tableStr}" style="padding: 10px; font-size: 12px; width: 100%; background: #f59e0b; color: #000; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(245,158,11,0.3);">
-            <i class="fa-solid fa-file-invoice-dollar"></i> PAYMENT PENDING (GENERATE BILL & PAY)
+            <i class="fa-solid fa-file-invoice-dollar"></i> Generate Bill & Pay
           </button>
         `;
       } else if (isReady) {
@@ -314,14 +314,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const tableStr = btn.getAttribute('data-table');
         
         dbEngine.markOrderServed(orderId);
-        authService.showToast(`✅ Order marked SERVED to ${tableStr}! Launching Billing Terminal...`);
+        authService.showToast(`✅ Order marked SERVED to ${tableStr}! Status updated to PAYMENT PENDING.`);
         
         renderKitchenReadyNotifications();
         window.dispatchEvent(new Event('storage'));
-
-        setTimeout(() => {
-          openWaiterBillPaymentModal(tableStr);
-        }, 150);
       });
     });
 
