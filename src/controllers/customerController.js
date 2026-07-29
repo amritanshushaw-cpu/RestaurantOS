@@ -520,9 +520,18 @@ document.addEventListener('DOMContentLoaded', () => {
     refreshActiveSessionUI();
   }, 1000);
 
+  function getDeviceCustomerId() {
+    let devId = localStorage.getItem('rest_os_device_cust_id');
+    if (!devId) {
+      devId = `CUST-${Math.floor(1000 + Math.random() * 9000)}`;
+      localStorage.setItem('rest_os_device_cust_id', devId);
+    }
+    return devId;
+  }
+
   function refreshActiveSessionUI() {
     const currentUser = authService.user;
-    const custId = currentUser?.email || currentUser?.id || 'CUST-8021';
+    const custId = currentUser?.email || currentUser?.id || getDeviceCustomerId();
     currentActiveSession = dbEngine.getActiveSessionForCustomer(custId);
 
     if (currentActiveSession) {
@@ -630,7 +639,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (bookTableBtn) {
     bookTableBtn.addEventListener('click', () => {
       const currentUser = authService.user;
-      const custId = currentUser?.email || currentUser?.id || 'CUST-8021';
+      const custId = currentUser?.email || currentUser?.id || getDeviceCustomerId();
       const custName = currentUser?.name || 'Customer';
       const prefTable = selectedTable || 'Table 03';
 
