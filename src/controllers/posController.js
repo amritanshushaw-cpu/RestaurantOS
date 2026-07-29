@@ -182,6 +182,105 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Kitchen Notifications Tab Controller
+  const btnNotifTab = document.getElementById('btn-waiter-notif-tab');
+  const notifPanel = document.getElementById('waiter-notifications-panel');
+  const notifBadge = document.getElementById('waiter-notif-count-badge');
+  const btnCloseNotif = document.getElementById('btn-close-waiter-notif');
+  const readyAlertsList = document.getElementById('waiter-ready-alerts-list');
+
+  if (btnNotifTab && notifPanel) {
+    btnNotifTab.addEventListener('click', () => {
+      const isVisible = notifPanel.style.display !== 'none';
+      notifPanel.style.display = isVisible ? 'none' : 'block';
+      if (!isVisible) {
+        renderKitchenReadyNotifications();
+      }
+    });
+  }
+
+  if (btnCloseNotif && notifPanel) {
+    btnCloseNotif.addEventListener('click', () => {
+      notifPanel.style.display = 'none';
+    });
+  }
+
+  let prevReadyOrderCount = 0;
+
+  function renderKitchenReadyNotifications() {
+    if (!readyAlertsList) return;
+
+    const allOrders = dbEngine.getOrders();
+    const readyOrders = allOrders.filter(o => 
+      (o.status === 'READY' || o.status === 'PREPARING' || o.status === 'COLLECTED') && 
+      o.delivered !== 'Y'
+    );
+
+    if (readyOrders.length > 0) {
+      if (notifBadge) {
+        notifBadge.textContent = readyOrders.length;
+        notifBadge.style.display = 'flex';
+      }
+      if (readyOrders.length > prevReadyOrderCount) {
+        authService.showToast(`🔔 KITCHEN ALERT: ${readyOrders.length} order(s) ready for table delivery!`);
+      }
+    } else {
+      if (notifBadge) {
+        notifBadge.style.display = 'none';
+      }
+    }
+    prevReadyOrderCount = readyOrders.length;
+
+    if (readyOrders.length === 0) {
+      readyAlertsList.innerHTML = `
+        <p style="grid-column: 1/-1; text-align: center; color: var(--text-tertiary); margin: 20px 0; font-size: 13px;">
+          <i class="fa-solid fa-square-check" style="color: #10b981; font-size: 24px; display: block; margin-bottom: 8px;"></i>
+          No unserved kitchen orders right now. When Kitchen staff completes cooking, alerts appear here instantly!
+        </p>
+      `;
+      return;
+    }
+
+    readyAlertsList.innerHTML = readyOrders.map(order => {
+      const formattedTime = order.created_at ? new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now';
+      const itemsList = (order.items || []).map(i => `${i.quantity}x ${i.name || i.item_name}`).join(', ') || 'Dish Items';
+
+      return `
+        <div style="background: var(--color-primary); border: 1.5px solid var(--color-accent-pink); border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 8px; margin-bottom: 8px;">
+              <strong style="color: var(--color-accent-lime); font-size: 14px; font-family: var(--font-mono);">${order.order_number}</strong>
+              <span class="badge sandbox-badge" style="background: rgba(236,72,153,0.2); color: #ec4899; font-weight: 700;">${order.table_number || order.table_id || 'Table 01'}</span>
+            </div>
+            
+            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">
+              <strong>Dishes Ready:</strong> <span style="color: #fff; font-weight: 600;">${itemsList}</span>
+            </div>
+
+            <div style="font-size: 11px; color: var(--text-tertiary);">
+              <span><i class="fa-regular fa-clock"></i> ${formattedTime}</span> &nbsp;·&nbsp;
+              <span><i class="fa-solid fa-user-ninja"></i> Waiter: ${order.waiter_id || 'Waitstaff'}</span>
+            </div>
+          </div>
+
+          <button type="button" class="btn-sentry btn-mark-served-notif" data-id="${order.id || order.order_number}" style="padding: 8px 12px; font-size: 12px; width: 100%; background: #10b981; color: #000; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <i class="fa-solid fa-check-double"></i> Mark Served & Delivered
+          </button>
+        </div>
+      `;
+    }).join('');
+
+    readyAlertsList.querySelectorAll('.btn-mark-served-notif').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const orderId = btn.getAttribute('data-id');
+        dbEngine.markOrderServed(orderId);
+        authService.showToast(`✅ Order ${orderId} marked as SERVED & Delivered to customer!`);
+        renderKitchenReadyNotifications();
+        window.dispatchEvent(new Event('storage'));
+      });
+    });
+  }
+
   let knownAssignedTables = new Set();
   function checkWaiterTasks() {
     if (!currentUser) return;
@@ -196,6 +295,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     renderWaiterOrderTasks();
+    renderKitchenReadyNotifications();
   }
 
   setInterval(() => {
@@ -203,13 +303,13 @@ document.addEventListener('DOMContentLoaded', () => {
       dbEngine.registerStaffPresence(currentUser.id, currentUser.name, 'Waiter');
       checkWaiterTasks();
     }
-  }, 5000);
+  }, 3000);
   
   window.addEventListener('storage', (e) => {
     checkWaiterTasks();
   });
   
-  // Initialize current known tables
+  // Initialize current known tables and notifications
   if (currentUser) checkWaiterTasks();
 
   let activeCart = [];

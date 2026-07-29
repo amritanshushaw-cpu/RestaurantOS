@@ -40,6 +40,11 @@
       </div>
 
       <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+        <button id="btn-waiter-notif-tab" type="button" class="btn-sentry" style="background: rgba(236, 72, 153, 0.15); color: var(--color-accent-pink); border: 1px solid rgba(236, 72, 153, 0.5); padding: 8px 14px; font-size: 12px; text-transform: uppercase; font-weight: 700; position: relative;">
+          <i class="fa-solid fa-bell"></i> Kitchen Notifications
+          <span id="waiter-notif-count-badge" style="position: absolute; top: -6px; right: -6px; background: #ef4444; color: #fff; border-radius: 999px; width: 20px; height: 20px; font-size: 10px; font-weight: 700; display: none; align-items: center; justify-content: center;">0</span>
+        </button>
+
         <button id="btn-generate-bill-pos" type="button" class="btn-sentry" style="background: rgba(194, 239, 78, 0.15); color: var(--color-accent-lime); border: 1px solid var(--color-accent-lime); padding: 8px 14px; font-size: 12px; text-transform: uppercase; font-weight: 700;">
           <i class="fa-solid fa-file-invoice-dollar"></i> Generate Bill & Pay
         </button>
@@ -63,6 +68,29 @@
         </select>
       </div>
     </header>
+
+    <!-- Dedicated Waiter Kitchen Notifications Feed Tab Panel -->
+    <div id="waiter-notifications-panel" style="display: none; background: var(--color-ink-deep); border: 1.5px solid var(--color-accent-pink); border-radius: var(--radius-xl); padding: 20px; margin-bottom: 24px; box-shadow: 0 12px 40px rgba(0,0,0,0.5);">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid var(--border-violet); padding-bottom: 12px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="background: rgba(236,72,153,0.2); width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+            <i class="fa-solid fa-bell-concierge" style="color: var(--color-accent-pink); font-size: 18px;"></i>
+          </div>
+          <div>
+            <h3 style="font-size: 16px; font-weight: 700; color: #fff; margin: 0;">Kitchen Ready Alerts & Dispatches</h3>
+            <span style="font-size: 12px; color: var(--text-tertiary);">Live alerts sent by Kitchen Staff when dishes are ready for table serving</span>
+          </div>
+        </div>
+        <button type="button" id="btn-close-waiter-notif" style="background: transparent; border: none; color: var(--text-tertiary); font-size: 22px; cursor: pointer;">&times;</button>
+      </div>
+
+      <div id="waiter-ready-alerts-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; max-height: 280px; overflow-y: auto;">
+        <p style="grid-column: 1/-1; text-align: center; color: var(--text-tertiary); margin: 20px 0; font-size: 13px;">
+          <i class="fa-solid fa-square-check" style="color: #10b981; font-size: 24px; display: block; margin-bottom: 8px;"></i>
+          No unserved kitchen orders right now. When Kitchen staff completes cooking, alerts appear here instantly!
+        </p>
+      </div>
+    </div>
 
     <!-- POS Main Grid -->
     <div class="pos-container">
