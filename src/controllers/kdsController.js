@@ -64,22 +64,66 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Poll & Render Dynamic Tickets
+  let activeFilterTab = 'ACTIVE'; // 'ACTIVE' or 'HISTORY'
+
+  // Add KDS Filter Tabs UI if not present
+  const header = document.querySelector('.app-header');
+  if (header && !document.getElementById('kds-filter-bar')) {
+    const filterBar = document.createElement('div');
+    filterBar.id = 'kds-filter-bar';
+    filterBar.style.cssText = 'display: flex; gap: 10px; margin-top: 14px;';
+    filterBar.innerHTML = `
+      <button id="btn-kds-filter-active" class="btn-sentry active" style="padding: 8px 16px; font-size: 12px; font-weight: 700;">
+        <i class="fa-solid fa-fire"></i> Active Kitchen Orders
+      </button>
+      <button id="btn-kds-filter-history" class="btn-ghost-sm" style="padding: 8px 16px; font-size: 12px; font-weight: 700; color: var(--text-secondary);">
+        <i class="fa-solid fa-clock-rotate-left"></i> Completed History
+      </button>
+    `;
+    header.appendChild(filterBar);
+
+    document.getElementById('btn-kds-filter-active')?.addEventListener('click', () => {
+      activeFilterTab = 'ACTIVE';
+      document.getElementById('btn-kds-filter-active').className = 'btn-sentry active';
+      document.getElementById('btn-kds-filter-history').className = 'btn-ghost-sm';
+      refreshKDSTickets();
+    });
+
+    document.getElementById('btn-kds-filter-history')?.addEventListener('click', () => {
+      activeFilterTab = 'HISTORY';
+      document.getElementById('btn-kds-filter-history').className = 'btn-sentry active';
+      document.getElementById('btn-kds-filter-active').className = 'btn-ghost-sm';
+      refreshKDSTickets();
+    });
+  }
+
   function refreshKDSTickets() {
     updateWaiterFeed();
     const allOrders = dbEngine.getOrders();
-    // Kitchen sees all incoming orders: NEW, PENDING, SENT_TO_KITCHEN, and PREPARING
-    const activeOrders = allOrders.filter(o => 
-      o.status === 'NEW' || 
-      o.status === 'PENDING' || 
-      o.status === 'SENT_TO_KITCHEN' || 
-      o.status === 'PREPARING'
-    );
+    
+    let displayOrders = [];
+    if (activeFilterTab === 'ACTIVE') {
+      displayOrders = allOrders.filter(o => 
+        o.status === 'NEW' || 
+        o.status === 'PENDING' || 
+        o.status === 'SENT_TO_KITCHEN' || 
+        o.status === 'PREPARING' ||
+        o.status === 'READY'
+      );
+    } else {
+      displayOrders = allOrders.filter(o => 
+        o.status === 'COMPLETED' || 
+        o.status === 'PAID' || 
+        o.status === 'DELIVERED' ||
+        o.status === 'TERMINATED'
+      );
+    }
 
-    if (activeOrders.length === 0) {
+    if (displayOrders.length === 0) {
       ticketsContainer.innerHTML = `
         <div style="grid-column: 1 / -1; text-align: center; color: var(--text-tertiary); margin-top: 60px;">
           <i class="fa-solid fa-utensils" style="font-size: 36px; margin-bottom: 12px; color: var(--color-accent-pink);"></i>
-          <p style="font-size: 15px; font-weight: 600;">No active kitchen orders right now.</p>
+          <p style="font-size: 15px; font-weight: 600;">${activeFilterTab === 'ACTIVE' ? 'No active kitchen orders right now.' : 'No completed order history found.'}</p>
           <p style="font-size: 13px; color: var(--text-tertiary);">Orders placed by Customers or Waiters will appear here instantly!</p>
         </div>
       `;
@@ -88,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     ticketsContainer.innerHTML = '';
 
-    activeOrders.forEach(order => {
+    displayOrders.forEach(order => {
       const card = document.createElement('div');
       const statusClass = order.status.toLowerCase();
       card.className = `ticket-card ${statusClass}`;
@@ -103,6 +147,16 @@ document.addEventListener('DOMContentLoaded', () => {
         nextStatus = 'READY';
         btnBg = 'var(--color-success)';
         btnColor = '#000';
+      } else if (order.status === 'READY') {
+        actionBtnText = 'Order Ready (Awaiting Delivery)';
+        nextStatus = 'READY';
+        btnBg = 'rgba(16, 185, 129, 0.2)';
+        btnColor = '#10b981';
+      } else if (['COMPLETED', 'PAID', 'DELIVERED'].includes(order.status)) {
+        actionBtnText = 'Order Completed & Served';
+        nextStatus = order.status;
+        btnBg = 'rgba(255, 255, 255, 0.05)';
+        btnColor = 'var(--text-tertiary)';
       }
 
       const itemsListHTML = (order.items || []).map(item => `

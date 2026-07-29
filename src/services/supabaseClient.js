@@ -288,35 +288,10 @@ class DynamicDatabaseEngine {
 
     if (!localStorage.getItem(STORAGE_KEYS.ORDERS)) {
       localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify([]));
-    } else {
-      // Auto-purge any legacy demo unbilled orders for all tables (Table 01-10)
-      const currentOrders = JSON.parse(localStorage.getItem(STORAGE_KEYS.ORDERS) || '[]');
-      let cleaned = false;
-      currentOrders.forEach(o => {
-        if (o.status !== 'COMPLETED' && o.status !== 'TERMINATED' && o.status !== 'PAID') {
-          o.status = 'COMPLETED';
-          cleaned = true;
-        }
-      });
-      if (cleaned) {
-        localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(currentOrders));
-      }
     }
 
     if (!localStorage.getItem(STORAGE_KEYS.SESSIONS)) {
       localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify([]));
-    } else {
-      const currentSessions = JSON.parse(localStorage.getItem(STORAGE_KEYS.SESSIONS) || '[]');
-      let cleanedSess = false;
-      currentSessions.forEach(s => {
-        if (s.status !== 'TERMINATED' && s.status !== 'COMPLETED' && s.status !== 'PAID') {
-          s.status = 'TERMINATED';
-          cleanedSess = true;
-        }
-      });
-      if (cleanedSess) {
-        localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(currentSessions));
-      }
     }
 
     if (!localStorage.getItem(STORAGE_KEYS.QUEUE)) {
@@ -325,12 +300,6 @@ class DynamicDatabaseEngine {
 
     if (!localStorage.getItem(STORAGE_KEYS.TABLES)) {
       localStorage.setItem(STORAGE_KEYS.TABLES, JSON.stringify(this.generateDefaultTables()));
-    } else {
-      const currentTables = JSON.parse(localStorage.getItem(STORAGE_KEYS.TABLES) || '[]');
-      currentTables.forEach(t => {
-        t.status = 'AVAILABLE';
-      });
-      localStorage.setItem(STORAGE_KEYS.TABLES, JSON.stringify(currentTables));
     }
   }
 
