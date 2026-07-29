@@ -424,6 +424,150 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Waiter Section: Generate Bill & Pay Modal Engine
+  const btnGenerateBillPos = document.getElementById('btn-generate-bill-pos');
+  if (btnGenerateBillPos) {
+    btnGenerateBillPos.addEventListener('click', () => {
+      openWaiterBillPaymentModal();
+    });
+  }
+
+  function openWaiterBillPaymentModal() {
+    const sessions = dbEngine.getSessions();
+    const orders = dbEngine.getOrders();
+    const currentTableStr = selectedTable || (tableSelect ? tableSelect.options[tableSelect.selectedIndex].text.split(' (')[0] : 'Table 02');
+
+    let targetSession = sessions.find(s => s.table_no === currentTableStr && s.status !== 'TERMINATED');
+    if (!targetSession) {
+      targetSession = sessions.find(s => s.status !== 'TERMINATED');
+    }
+
+    const tableOrders = orders.filter(o => o.table_number === currentTableStr || (targetSession && o.session_id === targetSession.session_id));
+    
+    let billItems = [];
+    if (activeCart.length > 0) {
+      billItems = [...activeCart];
+    } else if (tableOrders.length > 0) {
+      tableOrders.forEach(o => {
+        if (o.items && Array.isArray(o.items)) billItems.push(...o.items);
+      });
+    }
+
+    const subtotal = billItems.reduce((sum, item) => sum + (parseFloat(item.price || 0) * (item.quantity || 1)), 0) || (targetSession ? parseFloat(targetSession.total_session_amount || 1584.10) : 1584.10);
+    const tax = parseFloat((subtotal * 0.05).toFixed(2));
+    const total = parseFloat((subtotal + tax).toFixed(2));
+
+    const existingModal = document.getElementById('pos-payment-bill-modal');
+    if (existingModal) existingModal.remove();
+
+    const modalHtml = `
+      <div id="pos-payment-bill-modal" class="entry-gateway-backdrop" style="z-index: 10000; display: flex; align-items: center; justify-content: center;">
+        <div class="entry-modal-card" style="max-width: 580px; width: 95%; padding: 32px; text-align: left; background: var(--color-ink-deep); border: 1.5px solid var(--color-accent-lime); box-shadow: 0 24px 60px rgba(0,0,0,0.8);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-violet); padding-bottom: 14px;">
+            <div>
+              <div style="font-size: 11px; font-weight: 700; color: var(--color-accent-lime); text-transform: uppercase; letter-spacing: 0.5px;">
+                <i class="fa-solid fa-file-invoice-dollar"></i> Waiter Billing Terminal
+              </div>
+              <h2 style="font-size: 22px; font-weight: 700; color: #fff; margin: 4px 0 0;">Bill & Payment — ${currentTableStr}</h2>
+            </div>
+            <button type="button" id="btn-close-pos-bill" style="background: transparent; border: none; color: var(--text-tertiary); font-size: 24px; cursor: pointer;">&times;</button>
+          </div>
+
+          <div style="background: var(--color-primary); border: 1px solid var(--border-violet); padding: 12px 16px; border-radius: var(--radius-md); font-size: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div><strong>Table:</strong> ${currentTableStr}</div>
+            <div><strong>Session ID:</strong> <span class="mono">${targetSession ? targetSession.session_id : 'SESS-' + Math.floor(100000 + Math.random() * 900000)}</span></div>
+            <div><strong>Waiter ID:</strong> ${currentUser ? currentUser.name : 'Waitstaff'}</div>
+          </div>
+
+          <div style="max-height: 180px; overflow-y: auto; margin-bottom: 16px; border: 1px solid var(--border-violet); border-radius: 8px; padding: 10px;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+              <thead>
+                <tr style="border-bottom: 1px solid var(--border-violet); color: var(--text-tertiary);">
+                  <th style="padding: 6px;">Item</th>
+                  <th style="padding: 6px; text-align: center;">Qty</th>
+                  <th style="padding: 6px; text-align: right;">Price</th>
+                  <th style="padding: 6px; text-align: right;">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${billItems.length > 0 ? billItems.map(item => `
+                  <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding: 6px; color: #fff; font-weight: 600;">${item.name || item.item_name}</td>
+                    <td style="padding: 6px; text-align: center;">${item.quantity || 1}</td>
+                    <td style="padding: 6px; text-align: right; font-family: var(--font-mono);">₹${Number(item.price).toFixed(2)}</td>
+                    <td style="padding: 6px; text-align: right; font-family: var(--font-mono); color: var(--color-accent-lime);">₹${(Number(item.price) * (item.quantity || 1)).toFixed(2)}</td>
+                  </tr>
+                `).join('') : `
+                  <tr>
+                    <td colspan="4" style="padding: 12px; text-align: center; color: var(--text-tertiary);">Standard Dining Check for ${currentTableStr}</td>
+                  </tr>
+                `}
+              </tbody>
+            </table>
+          </div>
+
+          <div style="background: rgba(194, 239, 78, 0.05); border: 1px solid rgba(194, 239, 78, 0.2); padding: 14px; border-radius: var(--radius-md); margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">
+              <span>Subtotal:</span> <strong style="color: #fff; font-family: var(--font-mono);">₹${subtotal.toFixed(2)}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">
+              <span>Taxes & Service (5% GST):</span> <strong style="color: #fff; font-family: var(--font-mono);">₹${tax.toFixed(2)}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; color: var(--color-accent-lime); border-top: 1px dashed rgba(194, 239, 78, 0.3); padding-top: 8px; margin-top: 6px;">
+              <span>Grand Total:</span> <span style="font-family: var(--font-mono);">₹${total.toFixed(2)}</span>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 20px;">
+            <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 10px;">Select Received Payment Mode:</label>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+              <button type="button" class="btn-pos-pay-type active" data-type="UPI" style="background: var(--color-primary); border: 1.5px solid var(--color-accent-lime); color: #fff; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; text-align: center;">
+                <i class="fa-solid fa-qrcode" style="color: var(--color-accent-lime);"></i><br>UPI / QR
+              </button>
+              <button type="button" class="btn-pos-pay-type" data-type="Card" style="background: var(--color-primary); border: 1.5px solid var(--border-violet); color: #fff; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; text-align: center;">
+                <i class="fa-solid fa-credit-card" style="color: var(--color-accent-pink);"></i><br>Credit/Debit Card
+              </button>
+              <button type="button" class="btn-pos-pay-type" data-type="Cash" style="background: var(--color-primary); border: 1.5px solid var(--border-violet); color: #fff; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; text-align: center;">
+                <i class="fa-solid fa-money-bill-wave" style="color: #3b82f6;"></i><br>Cash Payment
+              </button>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px;">
+            <button type="button" id="btn-confirm-pos-payment" class="btn-sentry" style="flex: 1; padding: 12px; font-size: 13px;">
+              Collect Payment & Vacate Table <i class="fa-solid fa-check-double"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    const posModal = document.getElementById('pos-payment-bill-modal');
+    let selectedPayType = 'UPI';
+
+    posModal.querySelectorAll('.btn-pos-pay-type').forEach(btn => {
+      btn.addEventListener('click', () => {
+        posModal.querySelectorAll('.btn-pos-pay-type').forEach(b => b.style.borderColor = 'var(--border-violet)');
+        btn.style.borderColor = 'var(--color-accent-lime)';
+        selectedPayType = btn.dataset.type;
+      });
+    });
+
+    document.getElementById('btn-close-pos-bill')?.addEventListener('click', () => posModal.remove());
+
+    document.getElementById('btn-confirm-pos-payment')?.addEventListener('click', () => {
+      if (targetSession) {
+        dbEngine.updateSessionStatus(targetSession.session_id, 'COMPLETED');
+      }
+      dbEngine.updateTableStatus(currentTableStr, 'AVAILABLE');
+      authService.showToast(`✅ Payment of ₹${total.toFixed(2)} (${selectedPayType}) recorded for ${currentTableStr}! Table is now VACANT.`);
+      posModal.remove();
+      window.dispatchEvent(new Event('storage'));
+    });
+  }
+
   // Initial Load
   renderCategoryPills();
   renderMenuItems('ALL');
