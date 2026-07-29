@@ -289,16 +289,13 @@ class DynamicDatabaseEngine {
     if (!localStorage.getItem(STORAGE_KEYS.ORDERS)) {
       localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify([]));
     } else {
-      // Auto-purge any legacy demo unbilled orders for Table 02
+      // Auto-purge any legacy demo unbilled orders for all tables (Table 01-10)
       const currentOrders = JSON.parse(localStorage.getItem(STORAGE_KEYS.ORDERS) || '[]');
       let cleaned = false;
       currentOrders.forEach(o => {
-        const t = String(o.table_number || o.table_id || o.table_no || '');
-        if (t === 'Table 02' || t === 'tbl-02' || t.includes('02')) {
-          if (o.status !== 'COMPLETED' && o.status !== 'TERMINATED') {
-            o.status = 'COMPLETED';
-            cleaned = true;
-          }
+        if (o.status !== 'COMPLETED' && o.status !== 'TERMINATED' && o.status !== 'PAID') {
+          o.status = 'COMPLETED';
+          cleaned = true;
         }
       });
       if (cleaned) {
@@ -312,11 +309,9 @@ class DynamicDatabaseEngine {
       const currentSessions = JSON.parse(localStorage.getItem(STORAGE_KEYS.SESSIONS) || '[]');
       let cleanedSess = false;
       currentSessions.forEach(s => {
-        if (s.table_no === 'Table 02' || s.table_no === 'tbl-02') {
-          if (s.status !== 'TERMINATED' && s.status !== 'COMPLETED') {
-            s.status = 'TERMINATED';
-            cleanedSess = true;
-          }
+        if (s.status !== 'TERMINATED' && s.status !== 'COMPLETED' && s.status !== 'PAID') {
+          s.status = 'TERMINATED';
+          cleanedSess = true;
         }
       });
       if (cleanedSess) {
@@ -330,6 +325,12 @@ class DynamicDatabaseEngine {
 
     if (!localStorage.getItem(STORAGE_KEYS.TABLES)) {
       localStorage.setItem(STORAGE_KEYS.TABLES, JSON.stringify(this.generateDefaultTables()));
+    } else {
+      const currentTables = JSON.parse(localStorage.getItem(STORAGE_KEYS.TABLES) || '[]');
+      currentTables.forEach(t => {
+        t.status = 'AVAILABLE';
+      });
+      localStorage.setItem(STORAGE_KEYS.TABLES, JSON.stringify(currentTables));
     }
   }
 
