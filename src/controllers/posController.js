@@ -208,31 +208,33 @@ document.addEventListener('DOMContentLoaded', () => {
   let prevReadyOrderCount = 0;
 
   function renderKitchenReadyNotifications() {
-    if (!readyAlertsList) return;
+    const alertsList = document.getElementById('waiter-ready-alerts-list');
+    const badge = document.getElementById('waiter-notif-count-badge');
+    if (!alertsList) return;
 
     const allOrders = dbEngine.getOrders();
     const readyOrders = allOrders.filter(o => 
-      (o.status === 'READY' || o.status === 'PREPARING' || o.status === 'COLLECTED') && 
+      (o.status === 'READY' || o.status === 'PREPARING' || o.status === 'SENT_TO_KITCHEN' || o.status === 'COLLECTED') && 
       o.delivered !== 'Y'
     );
 
     if (readyOrders.length > 0) {
-      if (notifBadge) {
-        notifBadge.textContent = readyOrders.length;
-        notifBadge.style.display = 'flex';
+      if (badge) {
+        badge.textContent = readyOrders.length;
+        badge.style.display = 'flex';
       }
       if (readyOrders.length > prevReadyOrderCount) {
         authService.showToast(`🔔 KITCHEN ALERT: ${readyOrders.length} order(s) ready for table delivery!`);
       }
     } else {
-      if (notifBadge) {
-        notifBadge.style.display = 'none';
+      if (badge) {
+        badge.style.display = 'none';
       }
     }
     prevReadyOrderCount = readyOrders.length;
 
     if (readyOrders.length === 0) {
-      readyAlertsList.innerHTML = `
+      alertsList.innerHTML = `
         <p style="grid-column: 1/-1; text-align: center; color: var(--text-tertiary); margin: 20px 0; font-size: 13px;">
           <i class="fa-solid fa-square-check" style="color: #10b981; font-size: 24px; display: block; margin-bottom: 8px;"></i>
           No unserved kitchen orders right now. When Kitchen staff completes cooking, alerts appear here instantly!
@@ -241,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    readyAlertsList.innerHTML = readyOrders.map(order => {
+    alertsList.innerHTML = readyOrders.map(order => {
       const formattedTime = order.created_at ? new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now';
       const itemsList = (order.items || []).map(i => `${i.quantity}x ${i.name || i.item_name}`).join(', ') || 'Dish Items';
 
@@ -259,7 +261,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             <div style="font-size: 11px; color: var(--text-tertiary);">
               <span><i class="fa-regular fa-clock"></i> ${formattedTime}</span> &nbsp;·&nbsp;
-              <span><i class="fa-solid fa-user-ninja"></i> Waiter: ${order.waiter_id || 'Waitstaff'}</span>
+              <span><i class="fa-solid fa-user-ninja"></i> Waiter: ${order.waiter_id || 'Waitstaff'}</span> &nbsp;·&nbsp;
+              <span style="color: var(--color-accent-lime); font-weight: 700;">[Status: ${order.status}]</span>
             </div>
           </div>
 
@@ -270,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     }).join('');
 
-    readyAlertsList.querySelectorAll('.btn-mark-served-notif').forEach(btn => {
+    alertsList.querySelectorAll('.btn-mark-served-notif').forEach(btn => {
       btn.addEventListener('click', () => {
         const orderId = btn.getAttribute('data-id');
         dbEngine.markOrderServed(orderId);
