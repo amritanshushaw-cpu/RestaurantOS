@@ -631,45 +631,55 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-close-pos-bill')?.addEventListener('click', () => posModal.remove());
 
     document.getElementById('btn-confirm-pos-payment')?.addEventListener('click', () => {
-      const activeTable = posModal.dataset.currentTable || tableSelectEl.value;
-      const activeTotal = posModal.dataset.currentTotal || '1663.30';
+      try {
+        const activeTable = posModal.dataset.currentTable || tableSelectEl.value;
+        const activeTotal = posModal.dataset.currentTotal || '1663.30';
 
-      const cleanNum = activeTable.replace('Table ', '').replace('tbl-', '').padStart(2, '0');
-      const stdTable = `Table ${cleanNum}`;
-      const tblId = `tbl-${cleanNum}`;
+        const cleanNum = activeTable.replace('Table ', '').replace('tbl-', '').padStart(2, '0');
+        const stdTable = `Table ${cleanNum}`;
+        const tblId = `tbl-${cleanNum}`;
 
-      const sessions = dbEngine.getSessions();
-      const targetSession = sessions.find(s => 
-        (s.table_no === stdTable || s.table_no === tblId || s.table_no === activeTable) && 
-        s.status !== 'TERMINATED'
-      );
+        const sessions = dbEngine.getSessions();
+        const targetSession = sessions.find(s => 
+          (s.table_no === stdTable || s.table_no === tblId || s.table_no === activeTable) && 
+          s.status !== 'TERMINATED'
+        );
 
-      if (targetSession) {
-        dbEngine.terminateSession(targetSession.session_id, selectedPayType, { rating: 5, reviewText: 'Paid & Vacated via Waiter POS' });
-      } else {
-        dbEngine.updateTableStatus(stdTable, 'AVAILABLE');
-        dbEngine.updateTableStatus(tblId, 'AVAILABLE');
-      }
-
-      const orders = dbEngine.getOrders();
-      let updatedOrders = false;
-      orders.forEach(o => {
-        const t = String(o.table_number || o.table_id || o.table_no || '');
-        if (t === stdTable || t === tblId || t.endsWith(cleanNum)) {
-          o.status = 'COMPLETED';
-          o.delivered = 'Y';
-          updatedOrders = true;
+        if (targetSession) {
+          dbEngine.terminateSession(targetSession.session_id, selectedPayType, { rating: 5, reviewText: 'Paid & Vacated via Waiter POS' });
+        } else {
+          dbEngine.updateTableStatus(stdTable, 'AVAILABLE');
+          dbEngine.updateTableStatus(tblId, 'AVAILABLE');
         }
-      });
-      if (updatedOrders) {
-        localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+
+        const orders = dbEngine.getOrders();
+        let updatedOrders = false;
+        orders.forEach(o => {
+          const t = String(o.table_number || o.table_id || o.table_no || '');
+          if (t === stdTable || t === tblId || t.endsWith(cleanNum)) {
+            o.status = 'COMPLETED';
+            o.delivered = 'Y';
+            updatedOrders = true;
+          }
+        });
+        if (updatedOrders) {
+          localStorage.setItem('rest_os_orders', JSON.stringify(orders));
+        }
+
+        localStorage.removeItem('rest_os_active_session');
+
+        if (window.authService && window.authService.showToast) {
+          window.authService.showToast(`✅ Payment of ₹${activeTotal} (${selectedPayType}) recorded for ${stdTable}! Session TERMINATED & Table is now VACANT.`);
+        } else {
+          alert(`✅ Payment of ₹${activeTotal} (${selectedPayType}) recorded for ${stdTable}! Table is now VACANT.`);
+        }
+        posModal.remove();
+        window.dispatchEvent(new Event('storage'));
+      } catch (err) {
+        console.error('Error confirming POS payment:', err);
+        posModal.remove();
+        window.dispatchEvent(new Event('storage'));
       }
-
-      localStorage.removeItem('rest_os_active_session');
-
-      authService.showToast(`✅ Payment of ₹${activeTotal} (${selectedPayType}) recorded for ${stdTable}! Session TERMINATED & Table is now VACANT.`);
-      posModal.remove();
-      window.dispatchEvent(new Event('storage'));
     });
   }
 
