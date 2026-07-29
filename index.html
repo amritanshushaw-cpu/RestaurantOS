@@ -182,13 +182,34 @@
       transition: gap 0.2s ease;
     }
 
-    .ft-link:hover {
-      gap: 10px;
+    .restaurant-info-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
     }
 
-    @media (max-width: 900px) {
+    /* Tablet Responsive Styles (640px to 1080px) */
+    @media (max-width: 1080px) {
       .hero-title { font-size: 38px; }
-      .features-grid { grid-template-columns: 1fr; }
+      .features-grid { grid-template-columns: repeat(2, 1fr); gap: 18px; }
+      .restaurant-info-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* Mobile Responsive Styles (< 640px) */
+    @media (max-width: 640px) {
+      .hero-section { padding: 30px 12px 20px; }
+      .hero-tag { font-size: 10px; padding: 6px 12px; text-align: center; justify-content: center; }
+      .hero-title { font-size: 26px; line-height: 1.25; margin-bottom: 16px; }
+      .hero-desc { font-size: 14px; margin-bottom: 24px; }
+      .portal-gateway-container { padding: 20px 14px; border-radius: 20px; }
+      .portal-gateway-header h2 { font-size: 22px; }
+      .portal-choice-card { padding: 20px 16px; border-radius: 16px; }
+      .portal-card-title { font-size: 18px; }
+      .features-grid { grid-template-columns: 1fr; gap: 16px; margin-bottom: 40px; }
+      .restaurant-info-grid { grid-template-columns: 1fr; gap: 16px; }
+      .feature-card { padding: 20px 16px; }
+      .demo-accounts-bar { padding: 16px 12px; margin-bottom: 30px; }
+      .demo-btn { width: 100%; justify-content: center; }
     }
   </style>
 </head>
@@ -228,7 +249,8 @@
           <div class="portal-pill-badge"><i class="fa-solid fa-right-to-bracket"></i> 4 APPLICATION MODES</div>
           <h2>Select Workspace Mode</h2>
           <p>Choose your workspace mode to enter</p>
-        </div>        <div class="portal-gateway-grid" style="grid-template-columns: repeat(4, 1fr); gap: 16px;">
+        </div>
+        <div class="portal-gateway-grid">
           <!-- Mode 1: Customer Mode -->
           <a href="#" data-role="Customer" data-target="src/views/customer.html" class="portal-choice-card card-customer-portal js-mode-card">
             <div class="portal-card-top">
@@ -297,7 +319,7 @@
 
       <!-- Restaurant Details, Location, Contact, History & Interactive Section -->
       <section style="margin-bottom: 40px;">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+        <div class="restaurant-info-grid">
           <!-- Restaurant Overview Card -->
           <div class="feature-card" style="border-color: rgba(255, 255, 255, 0.15);">
             <div class="feature-icon" style="color: var(--color-accent-lime);">

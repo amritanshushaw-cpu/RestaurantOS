@@ -63,7 +63,7 @@ class NavbarAuth {
       widget = document.createElement('div');
       widget.id = 'sentry-google-auth-widget';
       widget.className = 'sentry-auth-widget-container';
-      
+
       const navLinks = navbarInner.querySelector('.sentry-nav-links');
       if (navLinks) {
         navbarInner.insertBefore(widget, navLinks);
@@ -158,7 +158,7 @@ class NavbarAuth {
         window.__restOsBackInterceptorActive = true;
         // Push a state so that 'back' triggers popstate instead of leaving the page
         window.history.pushState({ locked: true }, '', window.location.href);
-        
+
         window.addEventListener('popstate', (e) => {
           const confirmLogout = confirm("Are you sure you want to logout?");
           if (confirmLogout) {
@@ -214,11 +214,11 @@ class NavbarAuth {
     } else {
       const avatarSrc = user.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.email)}`;
       const roleColor = user.role === 'Manager' ? 'var(--color-accent-violet)' :
-                        user.role === 'Kitchen' ? 'var(--color-warning)' :
-                        user.role === 'Waiter' ? 'var(--color-accent-pink)' : 'var(--color-accent-lime)';
+        user.role === 'Kitchen' ? 'var(--color-warning)' :
+          user.role === 'Waiter' ? 'var(--color-accent-pink)' : 'var(--color-accent-lime)';
 
       const isCustomer = user.role === 'Customer';
-      const staffIdStr = !isCustomer && user.id ? ` • ID: ${user.role.substring(0,3).toUpperCase()}-${user.id.substring(0,5).toUpperCase()}` : '';
+      const staffIdStr = !isCustomer && user.id ? ` • ID: ${user.role.substring(0, 3).toUpperCase()}-${user.id.substring(0, 5).toUpperCase()}` : '';
 
       widget.innerHTML = `
         <div class="google-user-profile-badge">
