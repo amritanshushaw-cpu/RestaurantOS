@@ -499,7 +499,25 @@ class DynamicDatabaseEngine {
 
   // --- TABLES ---
   getTables() {
-    return JSON.parse(localStorage.getItem(STORAGE_KEYS.TABLES) || '[]');
+    const cached = localStorage.getItem(STORAGE_KEYS.TABLES);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length >= 10) return parsed;
+    }
+    const default10Tables = [
+      { id: 'tbl-01', table_number: 'Table 01', seats: 2, section: 'Patio', status: 'AVAILABLE' },
+      { id: 'tbl-02', table_number: 'Table 02', seats: 4, section: 'Main Hall', status: 'AVAILABLE' },
+      { id: 'tbl-03', table_number: 'Table 03', seats: 4, section: 'Main Hall', status: 'AVAILABLE' },
+      { id: 'tbl-04', table_number: 'Table 04', seats: 6, section: 'VIP Booth', status: 'AVAILABLE' },
+      { id: 'tbl-05', table_number: 'Table 05', seats: 2, section: 'Patio', status: 'AVAILABLE' },
+      { id: 'tbl-06', table_number: 'Table 06', seats: 8, section: 'Main Hall', status: 'AVAILABLE' },
+      { id: 'tbl-07', table_number: 'Table 07', seats: 2, section: 'Terrace', status: 'AVAILABLE' },
+      { id: 'tbl-08', table_number: 'Table 08', seats: 4, section: 'Main Hall', status: 'AVAILABLE' },
+      { id: 'tbl-09', table_number: 'Table 09', seats: 6, section: 'VIP Booth', status: 'AVAILABLE' },
+      { id: 'tbl-10', table_number: 'Table 10', seats: 8, section: 'Terrace', status: 'AVAILABLE' }
+    ];
+    localStorage.setItem(STORAGE_KEYS.TABLES, JSON.stringify(default10Tables));
+    return default10Tables;
   }
 
   updateTableStatus(tableId, status) {
