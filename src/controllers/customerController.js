@@ -465,7 +465,7 @@ document.addEventListener('DOMContentLoaded', () => {
     tableMatrixContainer.innerHTML = '';
     
     tables.forEach(t => {
-      const isBooked = t.status !== 'AVAILABLE';
+      const isBooked = t.status === 'OCCUPIED' || t.status === 'BOOKED' || t.status === 'RESERVED';
       const isSelected = selectedTable === t.table_number;
       
       const btn = document.createElement('button');
@@ -473,19 +473,26 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.className = 'btn-sentry';
       btn.style.padding = '8px';
       btn.style.fontSize = '11px';
-      btn.style.border = isSelected ? '2px solid #fff' : '1px solid transparent';
+      btn.style.cursor = 'pointer';
+      btn.style.border = isSelected ? '2px solid #ffffff' : '1px solid transparent';
+      btn.style.boxShadow = isSelected ? '0 0 14px rgba(255,255,255,0.7)' : 'none';
       
       if (isBooked) {
         btn.style.background = 'var(--color-warning)';
         btn.style.color = '#fff';
         btn.innerHTML = `<i class="fa-solid fa-chair"></i> ${t.table_number.replace('Table ', 'T')}<br>BOOKED`;
-        btn.disabled = true;
+        btn.onclick = () => {
+          selectedTable = t.table_number;
+          if (tableSelect) tableSelect.value = t.table_number;
+          renderTableMatrixUI();
+        };
       } else {
         btn.style.background = 'var(--color-accent-lime)';
         btn.style.color = '#000';
         btn.innerHTML = `<i class="fa-solid fa-chair"></i> ${t.table_number.replace('Table ', 'T')}<br>VACANT`;
         btn.onclick = () => {
           selectedTable = t.table_number;
+          if (tableSelect) tableSelect.value = t.table_number;
           renderTableMatrixUI();
         };
       }
@@ -541,6 +548,7 @@ document.addEventListener('DOMContentLoaded', () => {
            if (confirm('End this dining session and leave your table? Table will become vacant.')) {
              dbEngine.clearActiveSession(custId);
              currentActiveSession = null;
+             selectedTable = 'Table 01';
              refreshActiveSessionUI();
              authService.showToast('Session ended. Table is now VACANT.');
            }
@@ -549,8 +557,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (sessionHeaderChip) {
         sessionHeaderChip.textContent = `SESSION: ${currentActiveSession.session_id} · ${currentActiveSession.table_no}`;
       }
-      if (tableSelect) tableSelect.value = currentActiveSession.table_no;
-      selectedTable = currentActiveSession.table_no;
+      if (!selectedTable) {
+        selectedTable = currentActiveSession.table_no;
+        if (tableSelect) tableSelect.value = selectedTable;
+      }
 
       // Render Top Table Booking Notification Bar
       const appContainer = document.querySelector('.app-container');
