@@ -75,6 +75,10 @@ class DynamicDatabaseEngine {
 
   broadcastOrderSync(order) {
     if (!order) return;
+    try {
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new CustomEvent('rest_os_order_sync', { detail: order }));
+    } catch (e) {}
     if (this.realtimeChannel) {
       try {
         this.realtimeChannel.send({
