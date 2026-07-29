@@ -73,26 +73,29 @@ document.addEventListener('DOMContentLoaded', () => {
     filterBar.id = 'kds-filter-bar';
     filterBar.style.cssText = 'display: flex; gap: 10px; margin-top: 14px;';
     filterBar.innerHTML = `
-      <button id="btn-kds-filter-active" class="btn-sentry active" style="padding: 8px 16px; font-size: 12px; font-weight: 700;">
-        <i class="fa-solid fa-fire"></i> Active Kitchen Orders
+      <button id="btn-kds-filter-active" style="padding: 8px 16px; font-size: 12px; font-weight: 700; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; background: rgba(236, 72, 153, 0.2); color: #fff; border: 1px solid var(--color-accent-pink);">
+        <i class="fa-solid fa-fire" style="color: var(--color-accent-pink); margin-right: 6px;"></i> Active Kitchen Orders
       </button>
-      <button id="btn-kds-filter-history" class="btn-ghost-sm" style="padding: 8px 16px; font-size: 12px; font-weight: 700; color: var(--text-secondary);">
-        <i class="fa-solid fa-clock-rotate-left"></i> Completed History
+      <button id="btn-kds-filter-history" style="padding: 8px 16px; font-size: 12px; font-weight: 600; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; background: rgba(255, 255, 255, 0.04); color: var(--text-secondary); border: 1px solid var(--border-violet);">
+        <i class="fa-solid fa-clock-rotate-left" style="margin-right: 6px;"></i> Completed History
       </button>
     `;
     header.appendChild(filterBar);
 
-    document.getElementById('btn-kds-filter-active')?.addEventListener('click', () => {
+    const btnActive = document.getElementById('btn-kds-filter-active');
+    const btnHistory = document.getElementById('btn-kds-filter-history');
+
+    btnActive?.addEventListener('click', () => {
       activeFilterTab = 'ACTIVE';
-      document.getElementById('btn-kds-filter-active').className = 'btn-sentry active';
-      document.getElementById('btn-kds-filter-history').className = 'btn-ghost-sm';
+      btnActive.style.cssText = 'padding: 8px 16px; font-size: 12px; font-weight: 700; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; background: rgba(236, 72, 153, 0.2); color: #fff; border: 1px solid var(--color-accent-pink);';
+      btnHistory.style.cssText = 'padding: 8px 16px; font-size: 12px; font-weight: 600; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; background: rgba(255, 255, 255, 0.04); color: var(--text-secondary); border: 1px solid var(--border-violet);';
       refreshKDSTickets();
     });
 
-    document.getElementById('btn-kds-filter-history')?.addEventListener('click', () => {
+    btnHistory?.addEventListener('click', () => {
       activeFilterTab = 'HISTORY';
-      document.getElementById('btn-kds-filter-history').className = 'btn-sentry active';
-      document.getElementById('btn-kds-filter-active').className = 'btn-ghost-sm';
+      btnHistory.style.cssText = 'padding: 8px 16px; font-size: 12px; font-weight: 700; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; background: rgba(194, 239, 78, 0.2); color: #fff; border: 1px solid var(--color-accent-lime);';
+      btnActive.style.cssText = 'padding: 8px 16px; font-size: 12px; font-weight: 600; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; background: rgba(255, 255, 255, 0.04); color: var(--text-secondary); border: 1px solid var(--border-violet);';
       refreshKDSTickets();
     });
   }
