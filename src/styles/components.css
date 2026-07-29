@@ -99,6 +99,35 @@
   flex-wrap: wrap;
 }
 
+@media (max-width: 768px) {
+  .sentry-navbar {
+    padding: 10px 16px;
+  }
+  .sentry-navbar-inner {
+    gap: 8px;
+  }
+  .sentry-brand {
+    font-size: 17px;
+  }
+  .sentry-brand .brand-logo-icon {
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+  }
+  .sentry-nav-links {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    gap: 6px;
+  }
+  .sentry-nav-links .btn-ghost-on-dark {
+    padding: 6px 10px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+}
+
 /* Sentry Buttons & Affordances */
 .btn-sentry {
   background: var(--color-on-primary);
