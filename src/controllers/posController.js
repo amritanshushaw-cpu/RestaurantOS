@@ -214,7 +214,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const allOrders = dbEngine.getOrders();
     const readyOrders = allOrders.filter(o => 
-      (o.status === 'READY' || o.status === 'PREPARING' || o.status === 'SENT_TO_KITCHEN' || o.status === 'COLLECTED') && 
+      o.status !== 'CANCELLED' && 
+      o.status !== 'TERMINATED' && 
+      o.status !== 'PAID' &&
+      o.status !== 'COMPLETED' &&
       o.delivered !== 'Y'
     );
 
@@ -235,11 +238,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (readyOrders.length === 0) {
       alertsList.innerHTML = `
-        <p style="grid-column: 1/-1; text-align: center; color: var(--text-tertiary); margin: 20px 0; font-size: 13px;">
-          <i class="fa-solid fa-square-check" style="color: #10b981; font-size: 24px; display: block; margin-bottom: 8px;"></i>
-          No unserved kitchen orders right now. When Kitchen staff completes cooking, alerts appear here instantly!
-        </p>
+        <div style="grid-column: 1/-1; text-align: center; color: var(--text-tertiary); padding: 24px 12px;">
+          <i class="fa-solid fa-bell-slash" style="color: var(--color-accent-pink); font-size: 28px; display: block; margin-bottom: 10px;"></i>
+          <p style="font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 4px;">No active kitchen orders or ready dispatches right now.</p>
+          <p style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 14px;">Place an order from the POS Menu or Customer page to see live kitchen ready alerts here!</p>
+          <button type="button" id="btn-create-sample-notif-order" class="btn-sentry" style="padding: 8px 14px; font-size: 12px; background: rgba(236,72,153,0.2); color: #ec4899; border: 1px solid rgba(236,72,153,0.5); cursor: pointer;">
+            <i class="fa-solid fa-plus-circle"></i> Create Demo Kitchen Ready Alert
+          </button>
+        </div>
       `;
+
+      document.getElementById('btn-create-sample-notif-order')?.addEventListener('click', () => {
+        const sampleOrder = dbEngine.createOrder({
+          table_number: 'Table 02',
+          table_id: 'tbl-02',
+          session_id: 'SESS-' + Math.floor(100000 + Math.random() * 900000),
+          customer_name: 'Amritanshu Shaw',
+          waiter_id: currentUser ? currentUser.name : 'Padhle BC',
+          status: 'READY',
+          delivered: 'N',
+          items: [
+            { name: 'Chettinad Chicken Curry', quantity: 2, price: 470.00 },
+            { name: 'Garlic Butter Naan', quantity: 4, price: 90.00 }
+          ]
+        });
+        authService.showToast(`✅ Demo Kitchen Order ${sampleOrder.order_number} created & marked READY!`);
+        renderKitchenReadyNotifications();
+        window.dispatchEvent(new Event('storage'));
+      });
       return;
     }
 
