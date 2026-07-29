@@ -44,22 +44,8 @@
       margin-bottom: 24px;
     }
 
-    @media (max-width: 900px) {
+    @media (max-width: 860px) {
       .metrics-grid { grid-template-columns: 1fr 1fr; }
-      .bi-grid-5 { grid-template-columns: repeat(3, 1fr) !important; }
-      .dtables-split-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
-    }
-
-    @media (max-width: 600px) {
-      .metrics-grid { grid-template-columns: 1fr; gap: 12px; }
-      .bi-grid-5 { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
-      .ai-insight-box { padding: 16px; }
-      .metric-card { padding: 14px; }
-      .metric-value { font-size: 22px; }
-    }
-
-    @media (max-width: 400px) {
-      .bi-grid-5 { grid-template-columns: 1fr !important; }
     }
   </style>
 </head>
@@ -145,7 +131,7 @@
         <span class="badge sandbox-badge" style="background: rgba(194, 239, 78, 0.15); color: var(--color-accent-lime);">AUTOMATIC ROLLING AGGREGATES</span>
       </div>
 
-      <div class="bi-grid-5" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;">
+      <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;">
         <div style="background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-md); padding: 14px;">
           <span style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600;">Daily Revenue</span>
           <div id="bi-daily-rev" style="font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--color-accent-lime); margin-top: 4px;">₹0.00</div>
@@ -204,7 +190,7 @@
       </div>
 
       <!-- D-Table 2: Table Vacancy & D-Table 3: Customer History (2 Column Grid) -->
-      <div class="dtables-split-grid" style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px;">
+      <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px;">
 
         <!-- D-Table 2: Table Vacancy -->
         <div style="background: var(--color-ink-deep); border: 1px solid var(--border-violet); border-radius: var(--radius-xl); padding: 20px;">
@@ -212,8 +198,7 @@
             <span class="badge sandbox-badge" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; font-size: 10px;">D-TABLE 2</span>
             <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 700; margin-top: 4px;">Table Vacancy Table</h3>
           </div>
-          <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
             <thead>
               <tr style="background: var(--color-primary); border-bottom: 1px solid var(--border-violet); color: var(--text-secondary); text-transform: uppercase;">
                 <th style="padding: 8px;">Table No</th>
