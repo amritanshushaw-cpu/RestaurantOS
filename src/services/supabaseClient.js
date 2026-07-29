@@ -880,7 +880,7 @@ class DynamicDatabaseEngine {
     if (!order) return { ok: false, message: 'Order not found.' };
 
     order.delivered = 'Y';
-    order.status = 'READY';
+    order.status = 'COMPLETED';
     localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
 
     // Update parent session delivered status

@@ -104,18 +104,20 @@ document.addEventListener('DOMContentLoaded', () => {
     let displayOrders = [];
     if (activeFilterTab === 'ACTIVE') {
       displayOrders = allOrders.filter(o => 
-        o.status === 'NEW' || 
+        (o.status === 'NEW' || 
         o.status === 'PENDING' || 
         o.status === 'SENT_TO_KITCHEN' || 
         o.status === 'PREPARING' ||
-        o.status === 'READY'
+        o.status === 'READY') &&
+        o.delivered !== 'Y'
       );
     } else {
       displayOrders = allOrders.filter(o => 
         o.status === 'COMPLETED' || 
         o.status === 'PAID' || 
         o.status === 'DELIVERED' ||
-        o.status === 'TERMINATED'
+        o.status === 'TERMINATED' ||
+        o.delivered === 'Y'
       );
     }
 
