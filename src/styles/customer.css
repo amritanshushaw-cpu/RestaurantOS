@@ -368,8 +368,10 @@ nav.main a:hover::after, nav.main a.active::after { width: 100%; }
 }
 @media (max-width: 880px) { .menu-cols { columns: 1; } }
 @media (max-width: 768px) {
-  .wrap, .hbar { padding-left: 18px; padding-right: 18px; }
-  nav.main, .status, .customer-greeting, .customer-page .sentry-auth-widget-container { display: none; }
+  .wrap, .hbar { padding-left: 14px; padding-right: 14px; }
+  nav.main, .status, .customer-greeting { display: none; }
+  .customer-page .sentry-auth-widget-container { display: inline-flex !important; align-items: center; }
+  .customer-header-back-link { display: inline-flex !important; }
   .mosaic { grid-template-columns: repeat(3, 1fr); gap: 7px; }
   .tile { --dx: 0 !important; --dy: 0 !important; --r: 0 !important; }
   .hero h1 { font-size: clamp(46px, 13vw, 72px); }
@@ -498,14 +500,55 @@ nav.main a:hover::after, nav.main a.active::after { width: 100%; }
   .customer-page > header .hbar {
     align-items: stretch;
     flex-direction: column;
-    gap: 14px;
+    gap: 10px;
   }
   .customer-page .logo,
   .customer-page .logo > a { min-width: 0; max-width: 100%; }
-  .customer-page .logo .name { font-size: clamp(24px, 8vw, 30px); }
-  .customer-header-actions { width: 100%; justify-content: stretch; }
-  .customer-header-back-link { display: none !important; }
-  .customer-header-actions .js-view-order { flex: 1 1 100%; min-height: 44px; justify-content: center; }
+  .customer-page .logo .name { font-size: clamp(20px, 6.5vw, 26px); }
+  .customer-header-actions {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding-top: 8px;
+    border-top: 1px dashed rgba(24, 22, 19, 0.2);
+  }
+  .customer-header-back-link {
+    display: inline-flex !important;
+    font-size: 10px;
+    padding: 5px 10px;
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    background: var(--bone);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .customer-page .sentry-auth-widget-container {
+    display: inline-flex !important;
+    margin-left: auto;
+  }
+  .customer-page .google-user-profile-badge {
+    padding: 3px 8px 3px 4px;
+    border-radius: 999px;
+    gap: 6px;
+  }
+  .customer-page .google-user-name {
+    font-size: 11px;
+    max-width: 90px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .customer-header-actions .js-view-order {
+    flex: 1 1 100%;
+    min-height: 40px;
+    justify-content: center;
+    margin-top: 4px;
+  }
 
   .hero { padding-top: 32px; }
   .hero h1 { font-size: clamp(44px, 14vw, 64px); }
