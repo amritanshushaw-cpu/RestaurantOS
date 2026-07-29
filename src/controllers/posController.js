@@ -250,31 +250,44 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     alertsList.innerHTML = activeKitchenOrders.map(order => {
+      const isServed = order.delivered === 'Y' || order.status === 'PAYMENT_PENDING' || order.status === 'SERVED';
       const isReady = order.status === 'READY';
       const formattedTime = order.created_at ? new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now';
       const itemsList = (order.items || []).map(i => `${i.quantity}x ${i.name || i.item_name}`).join(', ') || 'Dish Items';
+      const tableStr = order.table_number || order.table_id || 'Table 01';
 
-      const borderStyle = isReady ? '1.5px solid #10b981' : '1px solid var(--border-violet)';
-      const statusText = isReady 
-        ? '<span style="color: #10b981; font-weight: 700;"><i class="fa-solid fa-circle-check"></i> READY FOR PICKUP</span>' 
-        : `<span style="color: #3b82f6; font-weight: 700;"><i class="fa-solid fa-utensils"></i> ORDER RECEIVED (${order.status})</span>`;
-
-      const actionBtnHTML = isReady ? `
-        <button type="button" class="btn-sentry btn-mark-served-notif" data-id="${order.id || order.order_number}" style="padding: 10px; font-size: 12px; width: 100%; background: #10b981; color: #000; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(16,185,129,0.3);">
-          <i class="fa-solid fa-check-double"></i> MARK SERVED & DELIVERED
-        </button>
-      ` : `
+      let borderStyle = '1px solid var(--border-violet)';
+      let statusText = `<span style="color: #3b82f6; font-weight: 700;"><i class="fa-solid fa-utensils"></i> ORDER RECEIVED (${order.status})</span>`;
+      let actionBtnHTML = `
         <button type="button" disabled style="padding: 10px; font-size: 12px; width: 100%; background: rgba(59, 130, 246, 0.12); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); font-weight: 700; border-radius: 6px; cursor: not-allowed; display: flex; align-items: center; justify-content: center; gap: 6px;">
           <i class="fa-solid fa-fire-burner"></i> Order Received (Cooking in Kitchen...)
         </button>
       `;
+
+      if (isServed) {
+        borderStyle = '1.5px solid #f59e0b';
+        statusText = `<span style="color: #f59e0b; font-weight: 700;"><i class="fa-solid fa-clock"></i> FOOD SERVED — PAYMENT PENDING</span>`;
+        actionBtnHTML = `
+          <button type="button" class="btn-sentry btn-generate-bill-notif" data-table="${tableStr}" style="padding: 10px; font-size: 12px; width: 100%; background: #f59e0b; color: #000; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(245,158,11,0.3);">
+            <i class="fa-solid fa-file-invoice-dollar"></i> PAYMENT PENDING (GENERATE BILL & PAY)
+          </button>
+        `;
+      } else if (isReady) {
+        borderStyle = '1.5px solid #10b981';
+        statusText = `<span style="color: #10b981; font-weight: 700;"><i class="fa-solid fa-circle-check"></i> READY FOR PICKUP</span>`;
+        actionBtnHTML = `
+          <button type="button" class="btn-sentry btn-mark-served-notif" data-id="${order.id || order.order_number}" style="padding: 10px; font-size: 12px; width: 100%; background: #10b981; color: #000; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(16,185,129,0.3);">
+            <i class="fa-solid fa-check-double"></i> MARK SERVED & DELIVERED
+          </button>
+        `;
+      }
 
       return `
         <div style="background: var(--color-primary); border: ${borderStyle}; border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
           <div>
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 8px; margin-bottom: 8px;">
               <strong style="color: var(--color-accent-lime); font-size: 14px; font-family: var(--font-mono);">${order.order_number}</strong>
-              <span class="badge sandbox-badge" style="background: rgba(236,72,153,0.2); color: #ec4899; font-weight: 700;">${order.table_number || order.table_id || 'Table 01'}</span>
+              <span class="badge sandbox-badge" style="background: rgba(236,72,153,0.2); color: #ec4899; font-weight: 700;">${tableStr}</span>
             </div>
             
             <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">
@@ -297,9 +310,16 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.addEventListener('click', () => {
         const orderId = btn.getAttribute('data-id');
         dbEngine.markOrderServed(orderId);
-        authService.showToast(`✅ Order ${orderId} marked as SERVED & Delivered to customer!`);
+        authService.showToast(`✅ Order marked SERVED! Payment Pending status activated.`);
         renderKitchenReadyNotifications();
         window.dispatchEvent(new Event('storage'));
+      });
+    });
+
+    alertsList.querySelectorAll('.btn-generate-bill-notif').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tableStr = btn.getAttribute('data-table');
+        openWaiterBillPaymentModal(tableStr);
       });
     });
   }
