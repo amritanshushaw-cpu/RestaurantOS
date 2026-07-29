@@ -494,10 +494,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  window.addEventListener('storage', (e) => {
+  window.addEventListener('storage', () => {
     refreshActiveSessionUI();
     renderTableMatrixUI();
   });
+
+  window.addEventListener('rest_os_table_sync', () => {
+    renderTableMatrixUI();
+  });
+
+  window.addEventListener('rest_os_session_sync', () => {
+    refreshActiveSessionUI();
+    renderTableMatrixUI();
+  });
+
+  setInterval(() => {
+    renderTableMatrixUI();
+    refreshActiveSessionUI();
+  }, 1000);
 
   function refreshActiveSessionUI() {
     const currentUser = authService.user;

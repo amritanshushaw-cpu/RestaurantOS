@@ -63,6 +63,11 @@ class DynamicDatabaseEngine {
             this.handleRemoteSessionSync(payload.payload.session);
           }
         })
+        .on('broadcast', { event: 'table_sync' }, (payload) => {
+          if (payload?.payload?.tables) {
+            this.handleRemoteTableSync(payload.payload.tables);
+          }
+        })
         .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
             console.info('⚡ RestaurantOS: Multi-Device Cloud Realtime Channel Subscribed!');
@@ -92,6 +97,10 @@ class DynamicDatabaseEngine {
 
   broadcastSessionSync(session) {
     if (!session) return;
+    try {
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new CustomEvent('rest_os_session_sync', { detail: session }));
+    } catch(e) {}
     if (this.realtimeChannel) {
       try {
         this.realtimeChannel.send({
@@ -100,6 +109,23 @@ class DynamicDatabaseEngine {
           payload: { session }
         });
       } catch (e) {}
+    }
+  }
+
+  broadcastTableSync(tables) {
+    if (!tables) return;
+    try {
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new CustomEvent('rest_os_table_sync', { detail: tables }));
+    } catch(e) {}
+    if (this.realtimeChannel) {
+      try {
+        this.realtimeChannel.send({
+          type: 'broadcast',
+          event: 'table_sync',
+          payload: { tables }
+        });
+      } catch(e) {}
     }
   }
 
@@ -126,7 +152,22 @@ class DynamicDatabaseEngine {
       sessions.unshift(remoteSession);
     }
     localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(sessions));
-    try { window.dispatchEvent(new Event('storage')); } catch (e) {}
+    if (remoteSession.table_no) {
+      this.updateTableStatus(remoteSession.table_no, remoteSession.status === 'ACTIVE' ? 'OCCUPIED' : 'AVAILABLE');
+    }
+    try { 
+      window.dispatchEvent(new Event('storage')); 
+      window.dispatchEvent(new CustomEvent('rest_os_session_sync', { detail: remoteSession }));
+    } catch (e) {}
+  }
+
+  handleRemoteTableSync(remoteTables) {
+    if (!Array.isArray(remoteTables)) return;
+    localStorage.setItem(STORAGE_KEYS.TABLES, JSON.stringify(remoteTables));
+    try {
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new CustomEvent('rest_os_table_sync', { detail: remoteTables }));
+    } catch(e) {}
   }
 
   // True only when real credentials are present. This is checked by
@@ -530,10 +571,16 @@ class DynamicDatabaseEngine {
 
   updateTableStatus(tableId, status) {
     const tables = this.getTables();
-    const table = tables.find(t => t.id === tableId || t.table_number === tableId);
+    const table = tables.find(t => 
+      t.id === tableId || 
+      t.table_number === tableId || 
+      String(t.id).includes(String(tableId)) || 
+      (tableId && t.table_number.replace(/\D/g, '') === String(tableId).replace(/\D/g, ''))
+    );
     if (table) {
       table.status = status;
       localStorage.setItem(STORAGE_KEYS.TABLES, JSON.stringify(tables));
+      this.broadcastTableSync(tables);
     }
     return table;
   }
