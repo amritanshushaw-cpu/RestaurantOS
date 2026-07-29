@@ -518,13 +518,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const tblId = `tbl-${cleanNum}`;
 
       const targetSession = sessions.find(s => 
-        (s.table_no === stdTable || s.table_no === tblId) && s.status !== 'TERMINATED'
-      ) || sessions.find(s => s.status === 'ACTIVE');
+        (s.table_no === stdTable || s.table_no === tblId || s.table_no === `Table ${parseInt(cleanNum)}`) && 
+        s.status !== 'TERMINATED' && s.status !== 'COMPLETED' && s.status !== 'PAID'
+      );
 
       const matchingOrders = orders.filter(o => {
-        if (o.status === 'CANCELLED') return false;
+        if (['CANCELLED', 'COMPLETED', 'PAID', 'TERMINATED'].includes(o.status)) return false;
         const t = String(o.table_number || o.table_id || o.table_no || '');
-        return t === stdTable || t === tblId || t.endsWith(cleanNum) || (targetSession && o.session_id === targetSession.session_id);
+        const isTableMatch = t === stdTable || t === tblId || t === `Table ${parseInt(cleanNum)}`;
+        const isSessionMatch = targetSession && o.session_id === targetSession.session_id;
+        return isTableMatch || isSessionMatch;
       });
 
       let billItems = [];
@@ -546,15 +549,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
 
+      if (selectedTable === stdTable && activeCart && activeCart.length > 0 && billItems.length === 0) {
+        activeCart.forEach(item => {
+          billItems.push({
+            id: item.id,
+            name: item.name,
+            price: parseFloat(item.price || 0),
+            quantity: item.quantity || 1
+          });
+        });
+      }
+
       let subtotal = 0;
       if (billItems.length > 0) {
         subtotal = billItems.reduce((sum, i) => sum + (i.price * i.quantity), 0);
       } else if (matchingOrders.length > 0) {
         subtotal = matchingOrders.reduce((sum, o) => sum + parseFloat(o.total || o.subtotal || 0), 0);
-      } else if (targetSession && targetSession.total_session_amount) {
-        subtotal = parseFloat(targetSession.total_session_amount);
       } else {
-        subtotal = 1584.10;
+        subtotal = 0;
       }
 
       const tax = parseFloat((subtotal * 0.05).toFixed(2));
@@ -588,8 +600,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 </tr>
               `).join('') : `
                 <tr>
-                  <td colspan="4" style="padding: 12px; text-align: center; color: var(--text-tertiary);">
-                    No active unbilled dishes placed for ${stdTable}. Standard check estimate shown.
+                  <td colspan="4" style="padding: 16px; text-align: center; color: var(--text-tertiary);">
+                    <i class="fa-solid fa-circle-info" style="color: var(--color-accent-lime); margin-right: 6px;"></i> No active unbilled dishes placed for ${stdTable}. Table check is clear (₹0.00).
                   </td>
                 </tr>
               `}
