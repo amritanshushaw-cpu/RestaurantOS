@@ -338,10 +338,62 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderTableBookingTopBar() {
     const sessions = dbEngine.getSessions();
-    const activeSessions = sessions.filter(s => s.status === 'ACTIVE');
+    const orders = dbEngine.getOrders();
     const appContainer = document.querySelector('.app-container');
     let topBar = document.getElementById('waiter-top-booking-bar');
 
+    // Priority 1: Payment Pending Top Bar (Food Served -> Payment Pending)
+    const paymentPendingSessions = sessions.filter(s => s.status === 'PAYMENT_PENDING' || s.delivered === 'Y');
+    const paymentPendingOrders = orders.filter(o => (o.status === 'PAYMENT_PENDING' || o.delivered === 'Y') && o.status !== 'COMPLETED' && o.status !== 'PAID');
+
+    if (paymentPendingSessions.length > 0 || paymentPendingOrders.length > 0) {
+      const targetObj = paymentPendingSessions[0] || paymentPendingOrders[0];
+      const tableNo = targetObj.table_no || targetObj.table_number || targetObj.table_id || 'Table 01';
+      
+      if (!topBar && appContainer) {
+        topBar = document.createElement('div');
+        topBar.id = 'waiter-top-booking-bar';
+        appContainer.parentNode.insertBefore(topBar, appContainer);
+      }
+      if (topBar) {
+        topBar.style.cssText = 'max-width: 1320px; margin: 16px auto 0; padding: 0 16px;';
+        topBar.innerHTML = `
+          <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(236, 72, 153, 0.25)); border: 1.5px solid #f59e0b; border-radius: var(--radius-xl); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.6); animation: slideDown 0.3s ease;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="background: rgba(245, 158, 11, 0.25); width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i class="fa-solid fa-file-invoice-dollar" style="color: #f59e0b; font-size: 22px;"></i>
+              </div>
+              <div>
+                <h4 style="font-size: 15px; font-weight: 700; color: #fff; margin: 0 0 2px;">
+                  💳 PAYMENT PENDING: Food Served for <span style="color: #f59e0b; font-family: var(--font-mono);">${tableNo}</span>
+                </h4>
+                <span style="font-size: 12px; color: var(--text-secondary);">
+                  Customer: <strong style="color: #fff;">${targetObj.customer_name || 'Guest'}</strong> &nbsp;·&nbsp; GST Bill Ready for Settlement &nbsp;·&nbsp; <strong style="color: #f59e0b;">Action Required: Generate Bill & Collect Payment</strong>
+                </span>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <button type="button" class="btn-sentry btn-top-gen-bill" data-table="${tableNo}" style="padding: 8px 16px; font-size: 12px; background: #f59e0b; color: #000; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(245,158,11,0.4);">
+                <i class="fa-solid fa-file-invoice-dollar"></i> Generate Bill & Pay (${tableNo})
+              </button>
+              <button type="button" class="btn-sentry" onclick="this.closest('#waiter-top-booking-bar').remove()" style="padding: 6px 10px; font-size: 11px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 6px; cursor: pointer;">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+          </div>
+        `;
+
+        topBar.querySelector('.btn-top-gen-bill')?.addEventListener('click', (e) => {
+          e.preventDefault();
+          const targetTable = e.currentTarget.getAttribute('data-table');
+          openWaiterBillPaymentModal(targetTable);
+        });
+      }
+      return;
+    }
+
+    // Priority 2: Table Booked Top Bar (Active Booking)
+    const activeSessions = sessions.filter(s => s.status === 'ACTIVE');
     if (activeSessions.length > 0) {
       const latestSession = activeSessions[0];
       if (!topBar && appContainer) {
