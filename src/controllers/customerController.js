@@ -537,7 +537,42 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       if (tableSelect) tableSelect.value = currentActiveSession.table_no;
       selectedTable = currentActiveSession.table_no;
+
+      // Render Top Table Booking Notification Bar
+      const appContainer = document.querySelector('.app-container');
+      let bookingBar = document.getElementById('customer-top-booking-bar');
+      if (!bookingBar && appContainer) {
+        bookingBar = document.createElement('div');
+        bookingBar.id = 'customer-top-booking-bar';
+        appContainer.parentNode.insertBefore(bookingBar, appContainer);
+      }
+      if (bookingBar) {
+        bookingBar.style.cssText = 'max-width: 1280px; margin: 16px auto 0; padding: 0 16px;';
+        bookingBar.innerHTML = `
+          <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(236, 72, 153, 0.25)); border: 1.5px solid var(--color-accent-lime); border-radius: var(--radius-xl); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); animation: slideDown 0.3s ease;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="background: rgba(194, 239, 78, 0.2); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i class="fa-solid fa-calendar-check" style="color: var(--color-accent-lime); font-size: 20px;"></i>
+              </div>
+              <div>
+                <h4 style="font-size: 15px; font-weight: 700; color: #fff; margin: 0 0 2px;">
+                  🎉 Table Booked: <span style="color: var(--color-accent-lime); font-family: var(--font-mono);">${currentActiveSession.table_no}</span>
+                </h4>
+                <span style="font-size: 12px; color: var(--text-secondary);">
+                  Session ID: <strong style="color: #fff; font-family: var(--font-mono);">${currentActiveSession.session_id}</strong> &nbsp;·&nbsp; Waiter Allotted: <strong style="color: var(--color-accent-pink);">${currentActiveSession.waiter_id || 'Waitstaff'}</strong> &nbsp;·&nbsp; Status: <span style="color: var(--color-accent-lime); font-weight: 700;">ACTIVE (READY FOR ORDERS)</span>
+                </span>
+              </div>
+            </div>
+            <button type="button" class="btn-sentry" onclick="this.closest('#customer-top-booking-bar').remove()" style="padding: 6px 12px; font-size: 11px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 6px; cursor: pointer;">
+              <i class="fa-solid fa-xmark"></i> Dismiss
+            </button>
+          </div>
+        `;
+      }
     } else {
+      const bookingBar = document.getElementById('customer-top-booking-bar');
+      if (bookingBar) bookingBar.remove();
+
       if (sessionStatusTag) {
         sessionStatusTag.textContent = 'STATUS: NO ACTIVE SESSION (READY TO BOOK)';
         sessionStatusTag.style.color = 'var(--text-secondary)';

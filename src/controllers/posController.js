@@ -336,6 +336,47 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function renderTableBookingTopBar() {
+    const sessions = dbEngine.getSessions();
+    const activeSessions = sessions.filter(s => s.status === 'ACTIVE');
+    const appContainer = document.querySelector('.app-container');
+    let topBar = document.getElementById('waiter-top-booking-bar');
+
+    if (activeSessions.length > 0) {
+      const latestSession = activeSessions[0];
+      if (!topBar && appContainer) {
+        topBar = document.createElement('div');
+        topBar.id = 'waiter-top-booking-bar';
+        appContainer.parentNode.insertBefore(topBar, appContainer);
+      }
+      if (topBar) {
+        topBar.style.cssText = 'max-width: 1320px; margin: 16px auto 0; padding: 0 16px;';
+        topBar.innerHTML = `
+          <div style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.25), rgba(194, 239, 78, 0.25)); border: 1.5px solid var(--color-accent-pink); border-radius: var(--radius-xl); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); animation: slideDown 0.3s ease;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="background: rgba(236, 72, 153, 0.2); width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i class="fa-solid fa-bell-concierge" style="color: var(--color-accent-pink); font-size: 22px;"></i>
+              </div>
+              <div>
+                <h4 style="font-size: 15px; font-weight: 700; color: #fff; margin: 0 0 2px;">
+                  🔔 NEW TABLE BOOKED: <span style="color: var(--color-accent-lime); font-family: var(--font-mono);">${latestSession.table_no}</span>
+                </h4>
+                <span style="font-size: 12px; color: var(--text-secondary);">
+                  Customer: <strong style="color: #fff;">${latestSession.customer_name}</strong> &nbsp;·&nbsp; Session ID: <strong style="color: var(--color-accent-lime); font-family: var(--font-mono);">${latestSession.session_id}</strong> &nbsp;·&nbsp; Allotted Waiter: <strong style="color: var(--color-accent-pink);">${latestSession.waiter_id || 'Waitstaff'}</strong>
+                </span>
+              </div>
+            </div>
+            <button type="button" class="btn-sentry" onclick="this.closest('#waiter-top-booking-bar').remove()" style="padding: 6px 12px; font-size: 11px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 6px; cursor: pointer;">
+              <i class="fa-solid fa-xmark"></i> Dismiss
+            </button>
+          </div>
+        `;
+      }
+    } else if (topBar) {
+      topBar.remove();
+    }
+  }
+
   let knownAssignedTables = new Set();
   function checkWaiterTasks() {
     if (!currentUser) return;
@@ -349,6 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
     
+    renderTableBookingTopBar();
     renderWaiterOrderTasks();
     renderKitchenReadyNotifications();
   }
@@ -362,6 +404,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   window.addEventListener('storage', checkWaiterTasks);
   window.addEventListener('rest_os_order_sync', checkWaiterTasks);
+  window.addEventListener('rest_os_session_sync', checkWaiterTasks);
   
   // Initialize current known tables and notifications
   if (currentUser) checkWaiterTasks();
