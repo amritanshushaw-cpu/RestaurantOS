@@ -562,6 +562,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tableSelect) tableSelect.value = selectedTable;
       }
 
+      if (bookTableBtn) {
+        bookTableBtn.disabled = true;
+        bookTableBtn.style.opacity = '0.6';
+        bookTableBtn.style.cursor = 'not-allowed';
+        bookTableBtn.innerHTML = `<i class="fa-solid fa-lock"></i> TABLE BOOKED: ${currentActiveSession.table_no} (ACTIVE SESSION)`;
+      }
+
       // Render Top Table Booking Notification Bar
       const appContainer = document.querySelector('.app-container');
       let bookingBar = document.getElementById('customer-top-booking-bar');
@@ -594,6 +601,13 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
       }
     } else {
+      if (bookTableBtn) {
+        bookTableBtn.disabled = false;
+        bookTableBtn.style.opacity = '1';
+        bookTableBtn.style.cursor = 'pointer';
+        bookTableBtn.innerHTML = `<i class="fa-solid fa-chair"></i> BOOK TABLE & START SESSION`;
+      }
+
       const bookingBar = document.getElementById('customer-top-booking-bar');
       if (bookingBar) bookingBar.remove();
 
@@ -623,9 +637,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = dbEngine.startSession(custId, custName, prefTable);
 
       if (!res.ok) {
-        // Table Full Apology Modal
-        alert(`SORRY RESTAURANT FULL!\n\nAll tables are currently occupied. Please join our Virtual Queue to be notified when a table becomes vacant.`);
-        authService.showToast('Sorry Restaurant FULL! Table booking unavailable.');
+        if (res.reason === 'ACTIVE_SESSION_EXISTS') {
+          alert(`⚠️ ACTIVE TABLE BOOKING IN PROGRESS!\n\nYou already have ${res.session?.table_no} booked (Session ID: ${res.session?.session_id}).\n\nPlease leave your current table session before booking a new table.`);
+          authService.showToast(res.message);
+        } else {
+          alert(`SORRY RESTAURANT FULL!\n\nAll tables are currently occupied. Please join our Virtual Queue to be notified when a table becomes vacant.`);
+          authService.showToast('Sorry Restaurant FULL! Table booking unavailable.');
+        }
         return;
       }
 

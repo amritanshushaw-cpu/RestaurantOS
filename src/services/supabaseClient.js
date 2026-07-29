@@ -788,6 +788,17 @@ class DynamicDatabaseEngine {
 
   // Table Booking & Session Generation Flow
   startSession(customerId, customerName = 'Guest', preferredTable = null) {
+    // Enforce Rule: A customer can book ONLY ONE table at a time
+    const existingActiveSession = this.getActiveSessionForCustomer(customerId);
+    if (existingActiveSession) {
+      return {
+        ok: false,
+        reason: 'ACTIVE_SESSION_EXISTS',
+        session: existingActiveSession,
+        message: `⚠️ You already have an active table booking (${existingActiveSession.table_no}, Session ID: ${existingActiveSession.session_id})! Please leave your current session before booking another table.`
+      };
+    }
+
     const tables = this.getTables();
     const availableTables = tables.filter(t => t.status === 'AVAILABLE' || t.status === 'CLEANING');
 
