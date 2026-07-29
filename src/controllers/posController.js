@@ -268,9 +268,14 @@ document.addEventListener('DOMContentLoaded', () => {
         borderStyle = '1.5px solid #f59e0b';
         statusText = `<span style="color: #f59e0b; font-weight: 700;"><i class="fa-solid fa-clock"></i> PAYMENT PENDING</span>`;
         actionBtnHTML = `
-          <button type="button" class="btn-sentry btn-generate-bill-notif" data-table="${tableStr}" style="padding: 10px; font-size: 12px; width: 100%; background: #f59e0b; color: #000; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(245,158,11,0.3);">
-            <i class="fa-solid fa-file-invoice-dollar"></i> Generate Bill & Pay
-          </button>
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <div style="padding: 6px; background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.4); border-radius: 6px; font-size: 11px; font-weight: 700; text-align: center;">
+              <i class="fa-solid fa-hourglass-half"></i> Status: Payment Pending
+            </div>
+            <button type="button" class="btn-sentry btn-generate-bill-notif" data-table="${tableStr}" style="padding: 10px; font-size: 12px; width: 100%; background: #f59e0b; color: #000; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(245,158,11,0.3);">
+              <i class="fa-solid fa-file-invoice-dollar"></i> Generate Bill & Pay
+            </button>
+          </div>
         `;
       } else if (isReady) {
         borderStyle = '1.5px solid #10b981';
@@ -340,7 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
     mySessions.forEach(s => {
       if (!knownAssignedTables.has(s.table_no)) {
         knownAssignedTables.add(s.table_no);
-        alert(`🔔 WAITER TASK: Report to ${s.table_no}!\nA new customer session has started.`);
+        authService.showToast(`🔔 WAITER TASK: Report to ${s.table_no}! A new customer session has started.`);
       }
     });
     
