@@ -41,8 +41,8 @@
       </nav>
       <div class="sentry-nav-links" aria-hidden="true" hidden></div>
 
-      <div class="hright">
-        <a href="../../index.html" style="display: inline-flex; align-items: center; gap: 6px; text-decoration: none; padding: 6px 14px; border: 2px solid var(--ink); background: var(--bone); color: var(--ink); font-family: var(--mono); font-size: 11px; font-weight: 700; border-radius: 999px; transition: all 0.2s ease; white-space: nowrap;" title="Go to Main Landing Page">
+      <div class="hright customer-header-actions">
+        <a class="customer-header-back-link" href="../../index.html" style="display: inline-flex; align-items: center; gap: 6px; text-decoration: none; padding: 6px 14px; border: 2px solid var(--ink); background: var(--bone); color: var(--ink); font-family: var(--mono); font-size: 11px; font-weight: 700; border-radius: 999px; transition: all 0.2s ease; white-space: nowrap;" title="Go to Main Landing Page">
           <i class="fa-solid fa-arrow-left" style="font-size: 11px;"></i> Main Landing Page
         </a>
         <span class="status"><span class="dot" aria-hidden="true"></span>OPEN · LIVE</span>
@@ -65,7 +65,7 @@
         </div>
         <div style="display: flex; align-items: center; gap: 6px;">
           <span id="tracker-order-id-badge" style="font-size: 10px; font-family: var(--font-mono); background: rgba(194,239,78,0.15); color: var(--color-accent-lime); padding: 2px 6px; border-radius: 4px;">NO ORDER</span>
-          <button id="btn-toggle-tracker" type="button" style="background: transparent; border: none; color: var(--text-tertiary); cursor: pointer; padding: 2px 4px; font-size: 12px;" title="Minimize / Expand">
+          <button id="btn-toggle-tracker" type="button" aria-expanded="true" style="background: transparent; border: none; color: var(--text-tertiary); cursor: pointer; padding: 2px 4px; font-size: 12px;" title="Minimize / Expand">
             <i class="fa-solid fa-chevron-up"></i>
           </button>
         </div>
@@ -141,9 +141,9 @@
 
           <div class="hero-text">
             <!-- VibeAthon Table Booking & Real Session ID Banner Bar -->
-            <div id="cust-session-bar" style="background: var(--color-ink-deep); border: 1px solid var(--border-violet); border-radius: var(--radius-xl); padding: 18px 24px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
-              <div>
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+            <div id="cust-session-bar" class="customer-session-bar" style="background: var(--color-ink-deep); border: 1px solid var(--border-violet); border-radius: var(--radius-xl); padding: 18px 24px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+              <div class="customer-session-copy">
+                <div class="customer-session-status-row" style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
                   <span class="badge sandbox-badge" style="background: rgba(194, 239, 78, 0.15); color: var(--color-accent-lime); font-size: 11px; font-weight: 700; text-transform: uppercase;">
                     <i class="fa-solid fa-fingerprint"></i> REAL SESSION ENGINE
                   </span>
@@ -156,8 +156,8 @@
                 </div>
               </div>
 
-              <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                <div id="cust-table-matrix-container" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;">
+              <div class="customer-session-actions" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <div id="cust-table-matrix-container" class="customer-table-matrix" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;">
                   <!-- Dynamic Tables -->
                 </div>
                 <button type="button" id="btn-book-table-action" class="btn-sentry" style="padding: 8px 16px; font-size: 13px;">
@@ -381,7 +381,7 @@
   </footer>
 
   <div class="dock up" id="dock" aria-label="Current order dock">
-    <button class="bag js-view-order" type="button" aria-label="Open current order">
+    <button class="bag js-view-order" type="button" aria-label="Open current order" aria-controls="cust-order-drawer" aria-expanded="false">
       <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 7h12l-1 13H7L6 7z"></path><path d="M9 7a3 3 0 0 1 6 0"></path></svg><span class="cnt" id="cust-dock-count">0</span></span>
       <span class="lbl">YOUR ORDER</span>
     </button>
@@ -394,10 +394,10 @@
     </div>
     <div class="div"></div>
     <div class="tot"><div class="k">TAX IN</div><div class="v" id="cust-dock-total">₹0</div></div>
-    <button class="order js-view-order" type="button">View Order →</button>
+    <button class="order js-view-order" type="button" aria-controls="cust-order-drawer" aria-expanded="false">View Order →</button>
   </div>
 
-  <aside class="order-drawer" id="cust-order-drawer" hidden aria-labelledby="cust-order-drawer-title">
+  <aside class="order-drawer" id="cust-order-drawer" role="dialog" aria-modal="true" hidden aria-labelledby="cust-order-drawer-title">
     <div class="order-drawer-header"><h2 id="cust-order-drawer-title">Your Order</h2><button class="order-drawer-close" id="cust-order-drawer-close" type="button" aria-label="Close order">×</button></div>
     <div class="order-drawer-meta"><label for="cust-table-select">Table / pickup</label><select id="cust-table-select"><option value="Table 01">Table 01 · Patio</option><option value="Table 02" selected>Table 02 · Main Hall</option><option value="Table 03">Table 03 · Main Hall</option><option value="Table 04">Table 04 · VIP Booth</option><option value="Table 05">Table 05 · Patio</option><option value="Table 06">Table 06 · Main Hall</option></select><span class="mono" id="cust-table-badge">Table 02</span></div>
     <div class="cart-items-list" id="cust-cart-list"><p class="empty-state">Your order is empty. Choose any dish to add it here.</p></div>

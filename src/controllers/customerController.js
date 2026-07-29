@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentCategory = 'ALL';
   let selectedTable = tableSelect?.value || 'Table 02';
   let selectedTipPct = 0;
+  let lastOrderTrigger = null;
   let menuData = { categories: [], items: [] };
 
   const formatCurrency = (amount) => `₹${Number(amount || 0).toFixed(2)}`;
@@ -363,19 +364,29 @@ document.addEventListener('DOMContentLoaded', () => {
     updateBillSummaryUI();
   }
 
-  function openOrderDrawer() {
+  function openOrderDrawer(event) {
     if (!orderDrawer) return;
+    lastOrderTrigger = event?.currentTarget || null;
     orderDrawer.hidden = false;
+    document.body.classList.add('order-drawer-open');
+    document.querySelectorAll('.js-view-order').forEach((button) => button.setAttribute('aria-expanded', 'true'));
     orderDrawerClose?.focus();
   }
 
   function closeOrderDrawer() {
     if (!orderDrawer) return;
     orderDrawer.hidden = true;
+    document.body.classList.remove('order-drawer-open');
+    document.querySelectorAll('.js-view-order').forEach((button) => button.setAttribute('aria-expanded', 'false'));
+    lastOrderTrigger?.focus();
+    lastOrderTrigger = null;
   }
 
   document.querySelectorAll('.js-view-order').forEach((button) => button.addEventListener('click', openOrderDrawer));
   orderDrawerClose?.addEventListener('click', closeOrderDrawer);
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && orderDrawer && !orderDrawer.hidden) closeOrderDrawer();
+  });
   document.querySelectorAll('.js-dock-nav').forEach((button) => {
     button.addEventListener('click', () => document.getElementById(button.dataset.target)?.scrollIntoView({ behavior: 'smooth' }));
   });
@@ -700,6 +711,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let startY = 0;
     let initialLeft = 0;
     let initialTop = 0;
+    const siteHeader = document.querySelector('.customer-site-header');
+
+    const positionTrackerBelowHeader = () => {
+      if (panel.dataset.userPositioned === 'true') return;
+      const headerHeight = siteHeader?.getBoundingClientRect().height || 0;
+      panel.style.top = `${Math.max(12, Math.ceil(headerHeight + 12))}px`;
+    };
+
+    positionTrackerBelowHeader();
+    window.addEventListener('resize', positionTrackerBelowHeader);
 
     const startDrag = (clientX, clientY) => {
       isDragging = true;
@@ -726,6 +747,7 @@ document.addEventListener('DOMContentLoaded', () => {
       newLeft = Math.max(10, Math.min(newLeft, maxLeft));
       newTop = Math.max(10, Math.min(newTop, maxTop));
 
+      panel.dataset.userPositioned = 'true';
       panel.style.left = `${newLeft}px`;
       panel.style.top = `${newTop}px`;
       panel.style.right = 'auto';
@@ -764,11 +786,29 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('touchend', endDrag);
 
     if (btnToggle && body) {
+      const setTrackerCollapsed = (collapsed) => {
+        body.style.display = collapsed ? 'none' : 'flex';
+        btnToggle.setAttribute('aria-expanded', String(!collapsed));
+        btnToggle.innerHTML = collapsed
+          ? '<i class="fa-solid fa-chevron-down"></i>'
+          : '<i class="fa-solid fa-chevron-up"></i>';
+      };
+      const compactViewport = window.matchMedia('(max-width: 1024px)');
+      const syncCompactTrackerState = () => {
+        if (!btnToggle.dataset.userToggled) setTrackerCollapsed(compactViewport.matches);
+      };
+
+      syncCompactTrackerState();
+      if (typeof compactViewport.addEventListener === 'function') {
+        compactViewport.addEventListener('change', syncCompactTrackerState);
+      } else {
+        compactViewport.addListener(syncCompactTrackerState);
+      }
+
       btnToggle.addEventListener('click', (e) => {
         e.stopPropagation();
-        const isCollapsed = body.style.display === 'none';
-        body.style.display = isCollapsed ? 'flex' : 'none';
-        btnToggle.innerHTML = isCollapsed ? '<i class="fa-solid fa-chevron-up"></i>' : '<i class="fa-solid fa-chevron-down"></i>';
+        btnToggle.dataset.userToggled = 'true';
+        setTrackerCollapsed(body.style.display !== 'none');
       });
     }
   }
