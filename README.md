@@ -10,7 +10,7 @@
 
 ## Project Summary
 
-- Team Name: **Team RestaurantOS**
+- Team Name: **Team HexCore**
 - Hosted Application Link: **https://restaurant-os-woad.vercel.app**
 - Tech Stack:
   - Frontend: HTML5, CSS3, Vanilla ES6 JavaScript
