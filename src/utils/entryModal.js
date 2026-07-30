@@ -248,7 +248,7 @@ class EntryGatewayModal {
             </button>
 
             <button type="button" id="btn-signing-email" class="btn-sentry btn-sentry-sm" style="width:100%; justify-content:center; padding:12px 18px; font-size:13px; background:var(--color-primary); color:var(--text-primary); border:1px solid var(--border-violet);">
-              <i class="fa-solid fa-envelope" style="color:var(--color-accent-lime);"></i> Sign in with Email OTP
+              <i class="fa-solid fa-envelope" style="color:var(--color-accent-lime);"></i> Sign in with Email OTP <span style="font-size:10px; background:rgba(234,179,8,0.2); color:#eab308; border:1px solid rgba(234,179,8,0.4); border-radius:4px; padding:2px 6px; margin-left:6px; font-weight:700;">BETA</span>
             </button>
           </div>
 
