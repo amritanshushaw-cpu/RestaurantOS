@@ -59,6 +59,17 @@ document.addEventListener('DOMContentLoaded', () => {
   updateCustomerProfile(authService.user);
   window.addEventListener('auth:changed', (event) => updateCustomerProfile(event.detail.user));
 
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'rest_os_session_terminate_flag') {
+      alert("⚠️ NOTICE: All active table sessions have been terminated by the Restaurant Manager.");
+      window.location.reload();
+    }
+  });
+  window.addEventListener('rest_os_terminate_all_sessions', () => {
+    alert("⚠️ NOTICE: All active table sessions have been terminated by the Restaurant Manager.");
+    window.location.reload();
+  });
+
   function getVisualCategories() {
     const categories = [...(menuData.categories || [])].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
     const customerPicks = ['Butter Chicken (Murgh Makhani)', 'Steamed Truffle Edamame Dim Sum (6 pcs)', 'Dry-Aged Ribeye Steak 12oz', 'Mango Lassi Alphonso', 'Garlic Butter Naan']

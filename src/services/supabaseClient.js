@@ -640,6 +640,27 @@ class DynamicDatabaseEngine {
     return table;
   }
 
+  terminateAllActiveSessions() {
+    // 1. Reset all table statuses to AVAILABLE
+    const tables = this.getTables();
+    tables.forEach(t => { t.status = 'AVAILABLE'; });
+    localStorage.setItem(STORAGE_KEYS.TABLES, JSON.stringify(tables));
+    this.broadcastTableSync(tables);
+
+    // 2. Clear all active dining sessions stored in localStorage
+    localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify([]));
+    localStorage.removeItem('rest_os_customer_session');
+    localStorage.removeItem('rest_os_table_session');
+
+    // 3. Broadcast termination event across all open windows / devices
+    window.dispatchEvent(new CustomEvent('rest_os_terminate_all_sessions'));
+    try {
+      localStorage.setItem('rest_os_session_terminate_flag', Date.now().toString());
+    } catch(e) {}
+
+    return true;
+  }
+
   // --- PAYMENTS ---
   logPaymentAttempt(success) {
     const payments = JSON.parse(localStorage.getItem(STORAGE_KEYS.PAYMENTS) || '[]');
