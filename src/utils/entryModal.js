@@ -250,18 +250,6 @@ class EntryGatewayModal {
             <button type="button" id="btn-signing-email" class="btn-sentry btn-sentry-sm" style="width:100%; justify-content:center; padding:12px 18px; font-size:13px; background:var(--color-primary); color:var(--text-primary); border:1px solid var(--border-violet);">
               <i class="fa-solid fa-envelope" style="color:var(--color-accent-lime);"></i> Sign in with Email OTP
             </button>
-
-            <button type="button" id="btn-signing-phone" class="btn-sentry btn-sentry-sm" style="width:100%; justify-content:center; padding:12px 18px; font-size:13px; background:linear-gradient(135deg, #06b6d4, #0891b2); color:#ffffff; border:none; font-weight:700; box-shadow:0 4px 15px rgba(6, 182, 212, 0.3);">
-              <i class="fa-solid fa-mobile-screen-button" style="font-size:14px;"></i> Sign in with Mobile Number
-            </button>
-
-            <button type="button" id="btn-signing-mobile" class="btn-sentry btn-sentry-sm" style="width:100%; justify-content:center; padding:12px 18px; font-size:13px; background:linear-gradient(135deg, #25D366, #128C7E); color:#ffffff; border:none; font-weight:700; box-shadow:0 4px 15px rgba(37, 211, 102, 0.3);">
-              <i class="fa-brands fa-whatsapp" style="font-size:15px;"></i> Sign in with Real-Time WhatsApp OTP
-            </button>
-
-            <button type="button" id="btn-signing-quick" class="btn-ghost-sm" style="margin-top:4px; padding:10px; border:1px dashed var(--border-violet); border-radius:12px; color:${roleColor}; font-weight:700;">
-              <i class="fa-solid fa-bolt"></i> Quick Enter as ${roleName} Guest →
-            </button>
           </div>
 
           <div class="google-modal-footer" style="text-align:center;">
@@ -285,41 +273,6 @@ class EntryGatewayModal {
     document.getElementById('btn-signing-email')?.addEventListener('click', () => {
       modal.remove();
       openEmailAuthModal(roleName, targetUrl);
-    });
-
-    document.getElementById('btn-signing-phone')?.addEventListener('click', () => {
-      modal.remove();
-      openPhoneAuthModal(roleName, targetUrl);
-    });
-
-    document.getElementById('btn-signing-mobile')?.addEventListener('click', () => {
-      modal.remove();
-      openMobileAuthModal(roleName, targetUrl);
-    });
-
-    document.getElementById('btn-signing-quick')?.addEventListener('click', () => {
-      const demoNames = {
-        Customer: 'Alex Mercer',
-        Waiter: 'Sam (Waitstaff)',
-        Kitchen: 'Chef Marco',
-        Manager: 'Director Vance'
-      };
-
-      const user = {
-        id: 'user-' + Date.now(),
-        name: demoNames[roleName] || `${roleName} Guest`,
-        email: `${(roleName).toLowerCase()}@restaurantos.com`,
-        role: roleName,
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(roleName)}`
-      };
-
-      authService.saveUser(user);
-      authService.showToast(`Signed in as ${user.name} (${roleName} Mode). Redirecting...`);
-      modal.remove();
-      setTimeout(() => {
-        window.isAppNavigation = true;
-        window.location.href = targetUrl;
-      }, 300);
     });
   }
 }
