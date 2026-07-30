@@ -237,6 +237,42 @@
   color: var(--color-accent-lime);
 }
 
+.pay-btn {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--color-accent-lime);
+  color: var(--color-ink-deep);
+  border: none;
+  padding: 14px 20px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(194, 239, 78, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.pay-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(194, 239, 78, 0.4);
+}
+
+.pay-btn:disabled {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: var(--text-tertiary) !important;
+  border: 1px dashed var(--border-violet) !important;
+  cursor: not-allowed;
+  box-shadow: none !important;
+  opacity: 0.6;
+}
+
 /* ==========================================================================
    Mobile Friendly Responsive Engine for Waiter POS Section
    ========================================================================== */
@@ -356,6 +392,25 @@
   .pos-cart-sidebar {
     padding: 14px;
     border-radius: var(--radius-lg);
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+
+  .cart-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .cart-header h3 {
+    font-size: 14px !important;
+  }
+
+  #order-special-instructions {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .cart-item {
