@@ -489,6 +489,78 @@ class DynamicDatabaseEngine {
     return JSON.parse(localStorage.getItem(STORAGE_KEYS.ORDERS) || '[]');
   }
 
+  ensureTableSessionBooked(tableStr, order) {
+    if (!tableStr) return null;
+    const cleanNum = String(tableStr).replace('Table ', '').replace('tbl-', '').padStart(2, '0');
+    const stdTable = `Table ${cleanNum}`;
+    const tblId = `tbl-${cleanNum}`;
+
+    const sessions = this.getSessions();
+    let session = sessions.find(s => 
+      (s.table_no === stdTable || s.table_no === tblId || s.table_no === tableStr) && 
+      s.status === 'ACTIVE'
+    );
+
+    const currentUser = JSON.parse(localStorage.getItem('rest_os_google_user') || 'null');
+    const waiterId = (currentUser && (currentUser.role === 'Waiter' || currentUser.role === 'Manager')) 
+      ? `WTR-${(currentUser.name || 'STAFF').substring(0, 3).toUpperCase()}` 
+      : this.allotWaiter();
+
+    const orderNo = order.order_number || order.id || `ORD-#${Math.floor(1000 + Math.random() * 9000)}`;
+    const subtotal = parseFloat(order.subtotal || order.total || 0);
+    const total = parseFloat(order.total || 0);
+
+    if (!session) {
+      // Book a new active session for this table in the real session engine
+      session = {
+        id: `sess-${Date.now()}`,
+        date: new Date().toISOString().split('T')[0],
+        session_id: this.generateSessionId(),
+        session_start_time: new Date().toLocaleTimeString(),
+        session_end_time: null,
+        customer_id: order.customer_id || `CUST-${Math.floor(1000 + Math.random() * 9000)}`,
+        customer_name: order.customer_name || `Guest (${stdTable})`,
+        customer_email: `${stdTable.replace(/\s+/g, '').toLowerCase()}@restaurantos.com`,
+        table_no: stdTable,
+        waiter_id: waiterId,
+        order_ids: [orderNo],
+        total_order_amount: subtotal,
+        total_session_amount: total,
+        status: 'ACTIVE',
+        delivered: 'N',
+        estimated_wait_minutes: 15,
+        payment_type: null,
+        created_at: new Date().toISOString()
+      };
+      sessions.unshift(session);
+    } else {
+      if (!session.order_ids.includes(orderNo)) {
+        session.order_ids.push(orderNo);
+      }
+      session.total_order_amount = parseFloat((session.total_order_amount + subtotal).toFixed(2));
+      session.total_session_amount = parseFloat((session.total_session_amount + total).toFixed(2));
+      session.delivered = 'N';
+      if (waiterId && (!session.waiter_id || session.waiter_id === 'Waiting for Waiter')) {
+        session.waiter_id = waiterId;
+      }
+    }
+
+    this.saveSessions(sessions);
+
+    // Update Table status to OCCUPIED (Vacant = N) in real-time
+    this.updateTableStatus(stdTable, 'OCCUPIED');
+    this.updateTableStatus(tblId, 'OCCUPIED');
+
+    // Link session ID back to order
+    order.session_id = session.session_id;
+
+    // Broadcast real-time cloud session sync across all devices
+    this.broadcastSessionSync(session);
+    try { window.dispatchEvent(new Event('storage')); } catch(e){}
+
+    return session;
+  }
+
   createOrder(orderData) {
     const orders = this.getOrders();
     const newOrder = {
@@ -500,6 +572,10 @@ class DynamicDatabaseEngine {
     };
     orders.unshift(newOrder);
     localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+
+    // Ensure real session engine records table booking
+    const tableIdentifier = orderData.table_number || orderData.table_id || 'Table 02';
+    this.ensureTableSessionBooked(tableIdentifier, newOrder);
 
     // Deduct stock for order items dynamically
     this.deductInventoryForOrder(orderData.items);
