@@ -1,19 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RestaurantOS - Point of Sale (POS) & Menu Catalog</title>
-  
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;600&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <link rel="stylesheet" href="../styles/tokens.css">
   <link rel="stylesheet" href="../styles/components.css">
   <link rel="stylesheet" href="../styles/pos.css">
 </head>
+
 <body>
   <div class="bg-glow bg-glow-amber"></div>
 
@@ -26,35 +30,45 @@
       </a>
 
       <div class="sentry-nav-links">
-    </div>
+      </div>
   </header>
 
-  <main class="app-container" style="max-width: 1320px; width: 100%; box-sizing: border-box; padding: 24px 16px; overflow-x: hidden;">
+  <main class="app-container"
+    style="max-width: 1320px; width: 100%; box-sizing: border-box; padding: 24px 16px; overflow-x: hidden;">
     <!-- POS Header -->
     <header class="app-header">
       <div class="brand">
         <div class="brand-icon"><i class="fa-solid fa-cash-register"></i></div>
         <div class="brand-text">
-          <h1>Restaurant<span>OS</span> <small style="font-size: 14px; color: var(--text-secondary); font-weight: 500;">/ POS & Menu Terminal</small></h1>
+          <h1>Restaurant<span>OS</span> <small
+              style="font-size: 14px; color: var(--text-secondary); font-weight: 500;">/ POS & Menu Terminal</small>
+          </h1>
         </div>
       </div>
 
       <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-        <button id="btn-waiter-notif-tab" type="button" class="btn-sentry" style="background: rgba(236, 72, 153, 0.15); color: var(--color-accent-pink); border: 1px solid rgba(236, 72, 153, 0.5); padding: 8px 14px; font-size: 12px; text-transform: uppercase; font-weight: 700; position: relative;">
+        <button id="btn-waiter-notif-tab" type="button" class="btn-sentry"
+          style="background: rgba(236, 72, 153, 0.15); color: var(--color-accent-pink); border: 1px solid rgba(236, 72, 153, 0.5); padding: 8px 14px; font-size: 12px; text-transform: uppercase; font-weight: 700; position: relative;">
           <i class="fa-solid fa-bell"></i> Kitchen Notifications
-          <span id="waiter-notif-count-badge" style="position: absolute; top: -6px; right: -6px; background: #ef4444; color: #fff; border-radius: 999px; width: 20px; height: 20px; font-size: 10px; font-weight: 700; display: none; align-items: center; justify-content: center;">0</span>
+          <span id="waiter-notif-count-badge"
+            style="position: absolute; top: -6px; right: -6px; background: #ef4444; color: #fff; border-radius: 999px; width: 20px; height: 20px; font-size: 10px; font-weight: 700; display: none; align-items: center; justify-content: center;">0</span>
         </button>
 
-        <button id="btn-generate-bill-pos" type="button" class="btn-sentry" style="background: rgba(194, 239, 78, 0.15); color: var(--color-accent-lime); border: 1px solid var(--color-accent-lime); padding: 8px 14px; font-size: 12px; text-transform: uppercase; font-weight: 700;">
+        <button id="btn-generate-bill-pos" type="button" class="btn-sentry"
+          style="background: rgba(194, 239, 78, 0.15); color: var(--color-accent-lime); border: 1px solid var(--color-accent-lime); padding: 8px 14px; font-size: 12px; text-transform: uppercase; font-weight: 700;">
           <i class="fa-solid fa-file-invoice-dollar"></i> Generate Bill & Pay
         </button>
 
-        <button id="btn-open-add-dish" type="button" class="btn-ghost-on-dark" style="border: 1px solid var(--color-accent-lime); color: var(--color-accent-lime); padding: 8px 14px; font-size: 12px; text-transform: uppercase; font-weight: 700;">
+        <button id="btn-open-add-dish" type="button" class="btn-ghost-on-dark"
+          style="border: 1px solid var(--color-accent-lime); color: var(--color-accent-lime); padding: 8px 14px; font-size: 12px; text-transform: uppercase; font-weight: 700;">
           <i class="fa-solid fa-plus"></i> Add New Dish
         </button>
 
-        <label for="table-select" style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.2px; color: var(--text-secondary);">Target Table:</label>
-        <select id="table-select" style="background: var(--color-ink-deep); border: 1px solid var(--border-violet); color: #fff; padding: 10px 14px; border-radius: var(--radius-sm); font-size: 13px; outline: none; font-weight: 600; font-family: var(--font-sans);">
+        <label for="table-select"
+          style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.2px; color: var(--text-secondary);">Target
+          Table:</label>
+        <select id="table-select"
+          style="background: var(--color-ink-deep); border: 1px solid var(--border-violet); color: #fff; padding: 10px 14px; border-radius: var(--radius-sm); font-size: 13px; outline: none; font-weight: 600; font-family: var(--font-sans);">
           <option value="tbl-01">Table 01 (2 Seats)</option>
           <option value="tbl-02" selected>Table 02 (4 Seats)</option>
           <option value="tbl-03">Table 03 (4 Seats)</option>
@@ -70,23 +84,31 @@
     </header>
 
     <!-- Dedicated Waiter Kitchen Notifications Feed Tab Panel -->
-    <div id="waiter-notifications-panel" style="display: none; background: var(--color-ink-deep); border: 1.5px solid var(--color-accent-pink); border-radius: var(--radius-xl); padding: 20px; margin-bottom: 24px; box-shadow: 0 12px 40px rgba(0,0,0,0.5);">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid var(--border-violet); padding-bottom: 12px;">
+    <div id="waiter-notifications-panel"
+      style="display: none; background: var(--color-ink-deep); border: 1.5px solid var(--color-accent-pink); border-radius: var(--radius-xl); padding: 20px; margin-bottom: 24px; box-shadow: 0 12px 40px rgba(0,0,0,0.5);">
+      <div
+        style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid var(--border-violet); padding-bottom: 12px;">
         <div style="display: flex; align-items: center; gap: 10px;">
-          <div style="background: rgba(236,72,153,0.2); width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+          <div
+            style="background: rgba(236,72,153,0.2); width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
             <i class="fa-solid fa-bell-concierge" style="color: var(--color-accent-pink); font-size: 18px;"></i>
           </div>
           <div>
-            <h3 style="font-size: 16px; font-weight: 700; color: #fff; margin: 0;">Kitchen Ready Alerts & Dispatches</h3>
-            <span style="font-size: 12px; color: var(--text-tertiary);">Live alerts sent by Kitchen Staff when dishes are ready for table serving</span>
+            <h3 style="font-size: 16px; font-weight: 700; color: #fff; margin: 0;">Kitchen Ready Alerts & Dispatches
+            </h3>
+            <span style="font-size: 12px; color: var(--text-tertiary);">Live alerts sent by Kitchen Staff when dishes
+              are ready for table serving</span>
           </div>
         </div>
-        <button type="button" id="btn-close-waiter-notif" style="background: transparent; border: none; color: var(--text-tertiary); font-size: 22px; cursor: pointer;">&times;</button>
+        <button type="button" id="btn-close-waiter-notif"
+          style="background: transparent; border: none; color: var(--text-tertiary); font-size: 22px; cursor: pointer;">&times;</button>
       </div>
 
-      <div id="waiter-ready-alerts-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; max-height: 280px; overflow-y: auto;">
+      <div id="waiter-ready-alerts-list"
+        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; max-height: 280px; overflow-y: auto;">
         <p style="grid-column: 1/-1; text-align: center; color: var(--text-tertiary); margin: 20px 0; font-size: 13px;">
-          <i class="fa-solid fa-square-check" style="color: #10b981; font-size: 24px; display: block; margin-bottom: 8px;"></i>
+          <i class="fa-solid fa-square-check"
+            style="color: #10b981; font-size: 24px; display: block; margin-bottom: 8px;"></i>
           No unserved kitchen orders right now. When Kitchen staff completes cooking, alerts appear here instantly!
         </p>
       </div>
@@ -102,20 +124,25 @@
 
       <aside class="pos-cart-sidebar">
         <div class="cart-header">
-          <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700;"><i class="fa-solid fa-basket-shopping" style="color: var(--color-accent-lime);"></i> Active Order Cart</h3>
+          <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700;"><i
+              class="fa-solid fa-basket-shopping" style="color: var(--color-accent-lime);"></i> Active Order Cart</h3>
           <span class="badge sandbox-badge" id="active-table-badge">Table 02</span>
         </div>
 
         <div class="cart-items-list" id="cart-items-list">
-          <p style="text-align: center; color: var(--text-tertiary); margin-top: 40px; font-size: 13px;">Cart is empty. Click any food item to add.</p>
+          <p style="text-align: center; color: var(--text-tertiary); margin-top: 40px; font-size: 13px;">Cart is empty.
+            Click any food item to add.</p>
         </div>
 
         <div style="border-top: 1px solid var(--border-violet); padding-top: 16px;">
           <div style="margin-bottom: 14px;">
-            <label for="order-special-instructions" style="display: block; font-size: 11px; font-weight: 700; color: var(--color-warning); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 6px;">
+            <label for="order-special-instructions"
+              style="display: block; font-size: 11px; font-weight: 700; color: var(--color-warning); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 6px;">
               <i class="fa-solid fa-utensils"></i> Special Cooking Instructions / Chef Notes
             </label>
-            <textarea id="order-special-instructions" placeholder="e.g. Medium rare steak, extra spicy, sauce on the side, no onions..." rows="2" style="width: 100%; background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-sm); color: var(--text-primary); padding: 8px 10px; font-size: 12px; font-family: var(--font-sans); outline: none; resize: vertical;"></textarea>
+            <textarea id="order-special-instructions"
+              placeholder="e.g. Medium rare steak, extra spicy, sauce on the side, no onions..." rows="2"
+              style="width: 100%; background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-sm); color: var(--text-primary); padding: 8px 10px; font-size: 12px; font-family: var(--font-sans); outline: none; resize: vertical;"></textarea>
           </div>
 
           <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px;">
@@ -127,8 +154,11 @@
             <strong id="cart-tax" style="font-family: var(--font-mono);">₹0.00</strong>
           </div>
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
-            <span style="font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 0.2px;">Total Amount</span>
-            <span style="font-size: 24px; font-weight: 700; color: var(--color-accent-lime); font-family: var(--font-mono);" id="cart-total">₹0.00</span>
+            <span style="font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 0.2px;">Total
+              Amount</span>
+            <span
+              style="font-size: 24px; font-weight: 700; color: var(--color-accent-lime); font-family: var(--font-mono);"
+              id="cart-total">₹0.00</span>
           </div>
 
           <button type="button" class="pay-btn" id="btn-dispatch-order" disabled>
@@ -139,24 +169,91 @@
     </div>
   </main>
 
+  <!-- Floating Mobile Cart Trigger Bar (Mobile Viewport Only) -->
+  <div id="mobile-cart-trigger-bar" class="mobile-cart-floating-bar">
+    <button type="button" id="btn-open-mobile-cart" class="mobile-cart-trigger-btn" aria-label="Open Order Cart Sheet">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span class="mobile-cart-count-badge" id="mobile-cart-count">0</span>
+        <span style="font-weight: 700; font-size: 14px; color: var(--color-ink-deep); text-transform: uppercase;">View Active Cart</span>
+      </div>
+      <span style="font-family: var(--font-mono); font-weight: 800; font-size: 15px; color: var(--color-ink-deep);" id="mobile-cart-total-badge">₹0.00</span>
+    </button>
+  </div>
+
+  <!-- Mobile Cart Sheet Backdrop Overlay -->
+  <div id="mobile-cart-overlay" class="mobile-cart-backdrop"></div>
+
+
+  <!-- Mobile Cart Floating Action Button (FAB) -->
+  <button id="cart-fab-btn" type="button" aria-label="Open cart" title="Open cart">
+    <i class="fa-solid fa-basket-shopping" aria-hidden="true"></i>
+    <span id="cart-fab-badge" style="display:none;">0</span>
+  </button>
+
+  <!-- Mobile Bottom Sheet Cart Overlay -->
+  <div id="cart-bottom-sheet-overlay" aria-hidden="true"></div>
+
+  <!-- Mobile Bottom Sheet Cart Panel -->
+  <div id="cart-bottom-sheet" role="dialog" aria-modal="true" aria-label="Order cart">
+    <div class="cart-sheet-handle" aria-hidden="true"></div>
+    <div class="cart-sheet-header">
+      <h3><i class="fa-solid fa-basket-shopping" style="color: var(--color-accent-lime);" aria-hidden="true"></i> Active
+        Order Cart</h3>
+      <button type="button" class="cart-sheet-close" aria-label="Close cart">
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+      </button>
+    </div>
+    <div class="cart-sheet-body" id="cart-sheet-body">
+      <p style="text-align: center; color: var(--text-tertiary); margin-top: 20px; font-size: 13px;">Cart is empty.
+        Click any food item to add.</p>
+    </div>
+    <div class="cart-sheet-footer">
+      <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px;">
+        <span style="color: var(--text-secondary);">Subtotal</span>
+        <strong id="cart-sheet-subtotal" style="font-family: var(--font-mono);">₹0.00</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 12px;">
+        <span style="color: var(--text-secondary);">Tax (5%)</span>
+        <strong id="cart-sheet-tax" style="font-family: var(--font-mono);">₹0.00</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+        <span style="font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 0.2px;">Total
+          Amount</span>
+        <span style="font-size: 24px; font-weight: 700; color: var(--color-accent-lime); font-family: var(--font-mono);"
+          id="cart-sheet-total">₹0.00</span>
+      </div>
+      <button type="button" class="pay-btn" id="btn-dispatch-order-sheet" disabled aria-label="Send order to kitchen">
+        Send Order to Kitchen <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
+      </button>
+    </div>
+  </div>
 
   <!-- Add New Dish Modal -->
-  <div class="modal-overlay" id="add-dish-modal" style="display: none; position: fixed; inset: 0; background: rgba(15,10,24,0.85); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center;">
-    <div style="background: var(--color-ink-deep); border: 1px solid var(--border-violet); border-radius: var(--radius-xl); padding: 32px; max-width: 500px; width: 90%; box-shadow: var(--shadow-card);">
+  <div class="modal-overlay" id="add-dish-modal"
+    style="display: none; position: fixed; inset: 0; background: rgba(15,10,24,0.85); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center;">
+    <div
+      style="background: var(--color-ink-deep); border: 1px solid var(--border-violet); border-radius: var(--radius-xl); padding: 32px; max-width: 500px; width: 90%; box-shadow: var(--shadow-card);">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h3 style="font-family: var(--font-display); font-size: 20px; font-weight: 700;">Add New Menu Item</h3>
-        <button id="btn-close-add-dish" type="button" style="background: none; border: none; color: var(--text-secondary); font-size: 20px; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+        <button id="btn-close-add-dish" type="button"
+          style="background: none; border: none; color: var(--text-secondary); font-size: 20px; cursor: pointer;"><i
+            class="fa-solid fa-xmark"></i></button>
       </div>
 
       <form id="add-dish-form">
         <div class="form-group" style="margin-bottom: 16px;">
-          <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">Dish Name</label>
-          <input type="text" id="dish-name" placeholder="e.g. Chicken Tikka Masala" required style="width: 100%; padding: 10px 14px; background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-sm); color: #fff; font-family: var(--font-sans);">
+          <label
+            style="display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">Dish
+            Name</label>
+          <input type="text" id="dish-name" placeholder="e.g. Chicken Tikka Masala" required
+            style="width: 100%; padding: 10px 14px; background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-sm); color: #fff; font-family: var(--font-sans);">
         </div>
 
         <div class="form-group" style="margin-bottom: 16px;">
-          <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">Category</label>
-          <select id="dish-category" style="width: 100%; padding: 10px 14px; background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-sm); color: #fff; font-family: var(--font-sans);">
+          <label
+            style="display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">Category</label>
+          <select id="dish-category"
+            style="width: 100%; padding: 10px 14px; background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-sm); color: #fff; font-family: var(--font-sans);">
             <option value="cat-05">Indian Specialties</option>
             <option value="cat-01">Starters & Appetizers</option>
             <option value="cat-02">Mains & Steaks</option>
@@ -167,18 +264,26 @@
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
           <div>
-            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">Price (₹ INR)</label>
-            <input type="number" step="0.01" id="dish-price" placeholder="450.00" required style="width: 100%; padding: 10px 14px; background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-sm); color: #fff; font-family: var(--font-sans);">
+            <label
+              style="display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">Price
+              (₹ INR)</label>
+            <input type="number" step="0.01" id="dish-price" placeholder="450.00" required
+              style="width: 100%; padding: 10px 14px; background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-sm); color: #fff; font-family: var(--font-sans);">
           </div>
           <div>
-            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">Photo URL</label>
-            <input type="url" id="dish-photo" placeholder="https://images.unsplash.com/..." style="width: 100%; padding: 10px 14px; background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-sm); color: #fff; font-family: var(--font-sans);">
+            <label
+              style="display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">Photo
+              URL</label>
+            <input type="url" id="dish-photo" placeholder="https://images.unsplash.com/..."
+              style="width: 100%; padding: 10px 14px; background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-sm); color: #fff; font-family: var(--font-sans);">
           </div>
         </div>
 
         <div class="form-group" style="margin-bottom: 24px;">
-          <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">Description</label>
-          <input type="text" id="dish-desc" placeholder="e.g. Spiced grilled chicken in rich creamy sauce" style="width: 100%; padding: 10px 14px; background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-sm); color: #fff; font-family: var(--font-sans);">
+          <label
+            style="display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">Description</label>
+          <input type="text" id="dish-desc" placeholder="e.g. Spiced grilled chicken in rich creamy sauce"
+            style="width: 100%; padding: 10px 14px; background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-sm); color: #fff; font-family: var(--font-sans);">
         </div>
 
         <button type="submit" class="pay-btn" style="width: 100%;">+ Save Item to Menu</button>
@@ -197,5 +302,5 @@
   <!-- POS Controller Module -->
   <script type="module" src="../controllers/posController.js"></script>
 </body>
-</html>
 
+</html>

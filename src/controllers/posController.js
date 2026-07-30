@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     authService.setUserRole('Waiter');
     currentUser = authService.user;
   }
-  
+
   if (currentUser) {
     dbEngine.registerStaffPresence(currentUser.id, currentUser.name, 'Waiter');
   }
@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderWaiterOrderTasks() {
     const feed = document.getElementById('waiter-order-feed');
     if (!feed || !currentUser) return;
-    
+
     const isMyOrderOrUnassigned = (id) => !id || id === currentUser.id || id === 'WAITING' || id === 'WAIT-01';
 
     const allOrders = dbEngine.getOrders();
@@ -67,14 +67,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const activeOrders = allOrders.filter(o => isMyOrderOrUnassigned(o.waiter_id) && ['NEW', 'ACCEPTED', 'SENT_TO_KITCHEN', 'READY', 'COLLECTED'].includes(o.status));
     const activeSessions = allSessions.filter(s => isMyOrderOrUnassigned(s.waiter_id) && s.status === 'ACTIVE' && (!s.order_ids || s.order_ids.length === 0));
     const paymentSessions = allSessions.filter(s => isMyOrderOrUnassigned(s.waiter_id) && s.status === 'PAYMENT_PENDING');
-    
+
     if (activeOrders.length === 0 && activeSessions.length === 0 && paymentSessions.length === 0) {
       feed.innerHTML = '<div style="color: var(--text-tertiary); font-size: 13px;">No pending orders or payments for you right now. Listening for live customer orders...</div>';
       return;
     }
-    
+
     let html = '';
-    
+
     // Render Order Tasks
     html += activeOrders.map(o => {
       let btnAction = ''; let btnLabel = ''; let btnBg = '';
@@ -90,8 +90,8 @@ document.addEventListener('DOMContentLoaded', () => {
         btnAction = 'DELIVER'; btnLabel = 'Order Delivered'; btnBg = '#10b981';
       }
 
-      const buttonHtml = btnAction 
-        ? `<button type="button" class="btn-sentry btn-waiter-action" data-id="${o.id}" data-action="${btnAction}" aria-label="${btnLabel} for ${o.table_number || o.table_id || 'Table'}" style="width: 100%; background: ${btnBg}; color: #000; padding: 10px 14px; min-height: 44px; font-weight: 700; font-size: 13px; border-radius: 6px; cursor: pointer; border: none;">${btnLabel}</button>` 
+      const buttonHtml = btnAction
+        ? `<button type="button" class="btn-sentry btn-waiter-action" data-id="${o.id}" data-action="${btnAction}" aria-label="${btnLabel} for ${o.table_number || o.table_id || 'Table'}" style="width: 100%; background: ${btnBg}; color: #000; padding: 10px 14px; min-height: 44px; font-weight: 700; font-size: 13px; border-radius: 6px; cursor: pointer; border: none;">${btnLabel}</button>`
         : `<div style="color: var(--text-tertiary); font-size: 12px; text-align: center; padding: 10px; border: 1px dashed var(--border-violet); border-radius: 4px;">${btnLabel}</div>`;
 
       const itemsSummary = (o.items || []).map(i => `${i.quantity || 1}x ${i.name || i.item_name}`).join(', ');
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
     }).join('');
-    
+
     // Render Seated Customers (No orders yet)
     html += activeSessions.map(s => {
       return `
@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
     }).join('');
-    
+
     // Render Payment Tasks
     html += paymentSessions.map(s => {
       return `
@@ -130,9 +130,9 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
     }).join('');
-    
+
     feed.innerHTML = html;
-    
+
     feed.querySelectorAll('.btn-waiter-action').forEach(btn => {
       btn.addEventListener('click', () => {
         const orderId = btn.getAttribute('data-id');
@@ -157,8 +157,8 @@ document.addEventListener('DOMContentLoaded', () => {
           } else if (action === 'COLLECT') {
             o.status = 'COLLECTED';
           } else if (action === 'DELIVER') {
-             o.status = 'DELIVERED';
-             dbEngine.markOrderServed(orderId);
+            o.status = 'DELIVERED';
+            dbEngine.markOrderServed(orderId);
           }
           localStorage.setItem('rest_os_orders', JSON.stringify(allOrders));
           window.dispatchEvent(new Event('storage'));
@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     });
-    
+
     feed.querySelectorAll('.btn-waiter-payment').forEach(btn => {
       btn.addEventListener('click', () => {
         const sessionId = btn.getAttribute('data-session');
@@ -219,10 +219,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const allOrders = dbEngine.getOrders();
     const sessions = dbEngine.getSessions();
 
-    const activeKitchenOrders = allOrders.filter(o => 
-      o.status !== 'COMPLETED' && 
-      o.status !== 'PAID' && 
-      o.status !== 'CANCELLED' && 
+    const activeKitchenOrders = allOrders.filter(o =>
+      o.status !== 'COMPLETED' &&
+      o.status !== 'PAID' &&
+      o.status !== 'CANCELLED' &&
       o.status !== 'TERMINATED'
     );
 
@@ -387,10 +387,10 @@ document.addEventListener('DOMContentLoaded', () => {
         e.stopPropagation();
         const orderId = btn.getAttribute('data-id');
         const tableStr = btn.getAttribute('data-table');
-        
+
         dbEngine.markOrderServed(orderId);
         authService.showToast(`✅ Order marked SERVED to ${tableStr}! Status updated to PAYMENT PENDING.`);
-        
+
         renderKitchenReadyNotifications();
         window.dispatchEvent(new Event('storage'));
       });
@@ -417,14 +417,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!currentUser) return;
     const sessions = dbEngine.getSessions();
     const mySessions = sessions.filter(s => s.waiter_id === currentUser.id && s.status === 'ACTIVE');
-    
+
     mySessions.forEach(s => {
       if (!knownAssignedTables.has(s.table_no)) {
         knownAssignedTables.add(s.table_no);
         authService.showToast(`🔔 WAITER TASK: Report to ${s.table_no}! A new customer session has started.`);
       }
     });
-    
+
     renderTableBookingTopBar();
     renderWaiterOrderTasks();
     renderKitchenReadyNotifications();
@@ -436,11 +436,11 @@ document.addEventListener('DOMContentLoaded', () => {
       checkWaiterTasks();
     }
   }, 2000);
-  
+
   window.addEventListener('storage', checkWaiterTasks);
   window.addEventListener('rest_os_order_sync', checkWaiterTasks);
   window.addEventListener('rest_os_session_sync', checkWaiterTasks);
-  
+
   // Initialize current known tables and notifications
   if (currentUser) checkWaiterTasks();
 
@@ -468,7 +468,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     el.addEventListener('mouseleave', () => { isDown = false; });
-    el.addEventListener('mouseup', () => { 
+    el.addEventListener('mouseup', () => {
       setTimeout(() => { isDown = false; isDragging = false; }, 50);
     });
 
@@ -560,6 +560,112 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // =========================================================================
+  // Mobile FAB Cart & Bottom Sheet
+  // =========================================================================
+  const cartFabBtn = document.getElementById('cart-fab-btn');
+  const cartFabBadge = document.getElementById('cart-fab-badge');
+  const cartSheetOverlay = document.getElementById('cart-bottom-sheet-overlay');
+  const cartSheet = document.getElementById('cart-bottom-sheet');
+  const cartSheetBody = document.getElementById('cart-sheet-body');
+  const cartSheetClose = document.querySelector('.cart-sheet-close');
+  const cartSheetSubtotal = document.getElementById('cart-sheet-subtotal');
+  const cartSheetTax = document.getElementById('cart-sheet-tax');
+  const cartSheetTotal = document.getElementById('cart-sheet-total');
+  const btnDispatchSheet = document.getElementById('btn-dispatch-order-sheet');
+
+  function isMobileView() {
+    return window.innerWidth <= 860;
+  }
+
+  function openCartSheet() {
+    if (!cartSheet || !cartSheetOverlay) return;
+    cartSheetOverlay.style.display = 'block';
+    cartSheet.style.display = 'flex';
+    // Force reflow then add active for transition
+    requestAnimationFrame(() => {
+      cartSheetOverlay.classList.add('active');
+      cartSheet.classList.add('active');
+    });
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeCartSheet() {
+    if (!cartSheet || !cartSheetOverlay) return;
+    cartSheetOverlay.classList.remove('active');
+    cartSheet.classList.remove('active');
+    setTimeout(() => {
+      cartSheetOverlay.style.display = 'none';
+      cartSheet.style.display = 'none';
+      document.body.style.overflow = '';
+    }, 350);
+  }
+
+  // FAB click
+  if (cartFabBtn) {
+    cartFabBtn.addEventListener('click', () => {
+      if (isMobileView()) openCartSheet();
+    });
+  }
+
+  // Sheet close button
+  if (cartSheetClose) {
+    cartSheetClose.addEventListener('click', closeCartSheet);
+  }
+
+  // Overlay click to close
+  if (cartSheetOverlay) {
+    cartSheetOverlay.addEventListener('click', closeCartSheet);
+  }
+
+  // Close on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && cartSheet && cartSheet.classList.contains('active')) {
+      closeCartSheet();
+    }
+  });
+
+  // Sync desktop dispatch with sheet dispatch
+  function executeDispatch(btn) {
+    if (activeCart.length === 0 || !btn) return;
+
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Dispatching...`;
+
+    const instructionsInput = document.getElementById('order-special-instructions');
+    const specialInstructions = instructionsInput ? instructionsInput.value.trim() : '';
+
+    const totals = menuService.calculateOrderTotals(activeCart);
+    const newOrder = dbEngine.createOrder({
+      table_id: tableSelect ? tableSelect.value : 'tbl-02',
+      table_number: selectedTable,
+      items: [...activeCart],
+      subtotal: totals.subtotal,
+      tax: totals.tax,
+      total: totals.total,
+      special_instructions: specialInstructions,
+      status: 'NEW'
+    });
+
+    setTimeout(() => {
+      activeCart = [];
+      if (instructionsInput) instructionsInput.value = '';
+      updateCartUI();
+      btn.innerHTML = `Order Dispatched! <i class="fa-solid fa-check"></i>`;
+      btn.style.background = 'var(--color-accent-lime)';
+      btn.style.color = '#000';
+
+      // Close bottom sheet if mobile
+      if (isMobileView()) closeCartSheet();
+
+      setTimeout(() => {
+        btn.innerHTML = `Send Order to Kitchen <i class="fa-solid fa-paper-plane"></i>`;
+        btn.style.background = '';
+        btn.style.color = '';
+      }, 2500);
+    }, 500);
+  }
+
   // Cart Management
   function addToCart(item) {
     const existing = activeCart.find(i => i.id === item.id);
@@ -572,103 +678,171 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateCartUI() {
-    if (!cartList) return;
+    // Update desktop cart
+    if (cartList) {
+      if (activeCart.length === 0) {
+        cartList.innerHTML = `<p style="text-align: center; color: var(--text-tertiary); margin-top: 40px; font-size: 13px;">Cart is empty. Click any food item to add.</p>`;
+        if (btnDispatch) btnDispatch.disabled = true;
+        if (subtotalEl) subtotalEl.textContent = '₹0.00';
+        if (taxEl) taxEl.textContent = '₹0.00';
+        if (totalEl) totalEl.textContent = '₹0.00';
+      } else {
+        cartList.innerHTML = '';
+        activeCart.forEach((item, index) => {
+          const row = document.createElement('div');
+          row.className = 'cart-item';
+          row.innerHTML = `
+            <div>
+              <div class="cart-item-name">${item.name}</div>
+              <div style="font-size: 11px; color: var(--color-accent-lime); font-weight: 600; font-family: var(--font-mono);">₹${(item.price * item.quantity).toFixed(2)}</div>
+            </div>
+            <div class="cart-qty-controls">
+              <button type="button" class="qty-btn btn-minus" data-index="${index}" aria-label="Decrease quantity of ${item.name}">-</button>
+              <span style="font-size: 13px; font-weight: 700; width: 18px; text-align: center; font-family: var(--font-mono);" aria-live="polite">${item.quantity}</span>
+              <button type="button" class="qty-btn btn-plus" data-index="${index}" aria-label="Increase quantity of ${item.name}">+</button>
+            </div>
+          `;
+          cartList.appendChild(row);
+        });
 
-    if (activeCart.length === 0) {
-      cartList.innerHTML = `<p style="text-align: center; color: var(--text-tertiary); margin-top: 40px; font-size: 13px;">Cart is empty. Click any food item to add.</p>`;
-      if (btnDispatch) btnDispatch.disabled = true;
-      if (subtotalEl) subtotalEl.textContent = '₹0.00';
-      if (taxEl) taxEl.textContent = '₹0.00';
-      if (totalEl) totalEl.textContent = '₹0.00';
-      return;
+        cartList.querySelectorAll('.btn-minus').forEach(b => {
+          b.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const idx = parseInt(b.getAttribute('data-index'), 10);
+            if (activeCart[idx].quantity > 1) {
+              activeCart[idx].quantity -= 1;
+            } else {
+              activeCart.splice(idx, 1);
+            }
+            updateCartUI();
+          });
+        });
+
+        cartList.querySelectorAll('.btn-plus').forEach(b => {
+          b.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const idx = parseInt(b.getAttribute('data-index'), 10);
+            activeCart[idx].quantity += 1;
+            updateCartUI();
+          });
+        });
+
+        const totals = menuService.calculateOrderTotals(activeCart);
+        if (subtotalEl) subtotalEl.textContent = `₹${totals.subtotal}`;
+        if (taxEl) taxEl.textContent = `₹${totals.tax}`;
+        if (totalEl) totalEl.textContent = `₹${totals.total}`;
+        if (btnDispatch) btnDispatch.disabled = false;
+      }
     }
 
-    cartList.innerHTML = '';
-    activeCart.forEach((item, index) => {
-      const row = document.createElement('div');
-      row.className = 'cart-item';
-      row.innerHTML = `
-        <div>
-          <div class="cart-item-name">${item.name}</div>
-          <div style="font-size: 11px; color: var(--color-accent-lime); font-weight: 600; font-family: var(--font-mono);">₹${(item.price * item.quantity).toFixed(2)}</div>
-        </div>
-        <div class="cart-qty-controls">
-          <button type="button" class="qty-btn btn-minus" data-index="${index}">-</button>
-          <span style="font-size: 13px; font-weight: 700; width: 18px; text-align: center; font-family: var(--font-mono);">${item.quantity}</span>
-          <button type="button" class="qty-btn btn-plus" data-index="${index}">+</button>
-        </div>
-      `;
-      cartList.appendChild(row);
-    });
+    // Update FAB badge & Floating Mobile Trigger Bar
+    const itemCount = activeCart.reduce((sum, item) => sum + item.quantity, 0);
+    if (cartFabBadge) {
+      if (itemCount > 0) {
+        cartFabBadge.textContent = itemCount;
+        cartFabBadge.style.display = 'flex';
+      } else {
+        cartFabBadge.style.display = 'none';
+      }
+    }
 
-    cartList.querySelectorAll('.btn-minus').forEach(b => {
-      b.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const idx = parseInt(b.getAttribute('data-index'), 10);
-        if (activeCart[idx].quantity > 1) {
-          activeCart[idx].quantity -= 1;
-        } else {
-          activeCart.splice(idx, 1);
-        }
-        updateCartUI();
-      });
-    });
+    const mobileCartBar = document.getElementById('mobile-cart-trigger-bar');
+    const mobileCartCount = document.getElementById('mobile-cart-count');
+    const mobileCartTotal = document.getElementById('mobile-cart-total-badge');
+    const btnOpenMobileCart = document.getElementById('btn-open-mobile-cart');
+    const btnCloseMobileCart = document.getElementById('btn-close-mobile-cart');
+    const mobileCartOverlay = document.getElementById('mobile-cart-overlay');
 
-    cartList.querySelectorAll('.btn-plus').forEach(b => {
-      b.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const idx = parseInt(b.getAttribute('data-index'), 10);
-        activeCart[idx].quantity += 1;
-        updateCartUI();
-      });
-    });
+    if (btnOpenMobileCart && !btnOpenMobileCart.dataset.bound) {
+      btnOpenMobileCart.dataset.bound = 'true';
+      btnOpenMobileCart.addEventListener('click', openCartSheet);
+    }
+    if (btnCloseMobileCart && !btnCloseMobileCart.dataset.bound) {
+      btnCloseMobileCart.dataset.bound = 'true';
+      btnCloseMobileCart.addEventListener('click', closeCartSheet);
+    }
+    if (mobileCartOverlay && !mobileCartOverlay.dataset.bound) {
+      mobileCartOverlay.dataset.bound = 'true';
+      mobileCartOverlay.addEventListener('click', closeCartSheet);
+    }
 
-    const totals = menuService.calculateOrderTotals(activeCart);
-    if (subtotalEl) subtotalEl.textContent = `₹${totals.subtotal}`;
-    if (taxEl) taxEl.textContent = `₹${totals.tax}`;
-    if (totalEl) totalEl.textContent = `₹${totals.total}`;
-    if (btnDispatch) btnDispatch.disabled = false;
+    if (mobileCartBar && mobileCartCount && mobileCartTotal) {
+      if (itemCount > 0) {
+        mobileCartCount.textContent = itemCount;
+        const totals = menuService.calculateOrderTotals(activeCart);
+        mobileCartTotal.textContent = `₹${totals.total}`;
+        mobileCartBar.classList.add('visible');
+      } else {
+        mobileCartBar.classList.remove('visible');
+      }
+    }
+
+    // Update bottom sheet cart content
+    if (cartSheetBody) {
+      if (activeCart.length === 0) {
+        cartSheetBody.innerHTML = `<p style="text-align: center; color: var(--text-tertiary); margin-top: 20px; font-size: 13px;">Cart is empty. Click any food item to add.</p>`;
+        if (btnDispatchSheet) btnDispatchSheet.disabled = true;
+        if (cartSheetSubtotal) cartSheetSubtotal.textContent = '₹0.00';
+        if (cartSheetTax) cartSheetTax.textContent = '₹0.00';
+        if (cartSheetTotal) cartSheetTotal.textContent = '₹0.00';
+      } else {
+        cartSheetBody.innerHTML = '';
+        activeCart.forEach((item, index) => {
+          const row = document.createElement('div');
+          row.className = 'cart-item';
+          row.innerHTML = `
+            <div>
+              <div class="cart-item-name">${item.name}</div>
+              <div style="font-size: 11px; color: var(--color-accent-lime); font-weight: 600; font-family: var(--font-mono);">₹${(item.price * item.quantity).toFixed(2)}</div>
+            </div>
+            <div class="cart-qty-controls">
+              <button type="button" class="qty-btn btn-minus" data-index="${index}" aria-label="Decrease quantity of ${item.name}">-</button>
+              <span style="font-size: 13px; font-weight: 700; width: 18px; text-align: center; font-family: var(--font-mono);" aria-live="polite">${item.quantity}</span>
+              <button type="button" class="qty-btn btn-plus" data-index="${index}" aria-label="Increase quantity of ${item.name}">+</button>
+            </div>
+          `;
+          cartSheetBody.appendChild(row);
+        });
+
+        cartSheetBody.querySelectorAll('.btn-minus').forEach(b => {
+          b.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const idx = parseInt(b.getAttribute('data-index'), 10);
+            if (activeCart[idx].quantity > 1) {
+              activeCart[idx].quantity -= 1;
+            } else {
+              activeCart.splice(idx, 1);
+            }
+            updateCartUI();
+          });
+        });
+
+        cartSheetBody.querySelectorAll('.btn-plus').forEach(b => {
+          b.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const idx = parseInt(b.getAttribute('data-index'), 10);
+            activeCart[idx].quantity += 1;
+            updateCartUI();
+          });
+        });
+
+        const totals = menuService.calculateOrderTotals(activeCart);
+        if (cartSheetSubtotal) cartSheetSubtotal.textContent = `₹${totals.subtotal}`;
+        if (cartSheetTax) cartSheetTax.textContent = `₹${totals.tax}`;
+        if (cartSheetTotal) cartSheetTotal.textContent = `₹${totals.total}`;
+        if (btnDispatchSheet) btnDispatchSheet.disabled = false;
+      }
+    }
   }
 
 
   // Real Dynamic Order Dispatch to DB & KDS
   if (btnDispatch) {
-    btnDispatch.addEventListener('click', () => {
-      if (activeCart.length === 0) return;
+    btnDispatch.addEventListener('click', () => executeDispatch(btnDispatch));
+  }
 
-      btnDispatch.disabled = true;
-      btnDispatch.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Dispatching...`;
-
-      const instructionsInput = document.getElementById('order-special-instructions');
-      const specialInstructions = instructionsInput ? instructionsInput.value.trim() : '';
-
-      const totals = menuService.calculateOrderTotals(activeCart);
-      const newOrder = dbEngine.createOrder({
-        table_id: tableSelect ? tableSelect.value : 'tbl-02',
-        table_number: selectedTable,
-        items: [...activeCart],
-        subtotal: totals.subtotal,
-        tax: totals.tax,
-        total: totals.total,
-        special_instructions: specialInstructions,
-        status: 'NEW'
-      });
-
-      setTimeout(() => {
-        activeCart = [];
-        if (instructionsInput) instructionsInput.value = '';
-        updateCartUI();
-        btnDispatch.innerHTML = `Order Dispatched! <i class="fa-solid fa-check"></i>`;
-        btnDispatch.style.background = 'var(--color-accent-lime)';
-        btnDispatch.style.color = '#000';
-
-        setTimeout(() => {
-          btnDispatch.innerHTML = `Send Order to Kitchen <i class="fa-solid fa-paper-plane"></i>`;
-          btnDispatch.style.background = '';
-          btnDispatch.style.color = '';
-        }, 2500);
-      }, 500);
-    });
+  if (btnDispatchSheet) {
+    btnDispatchSheet.addEventListener('click', () => executeDispatch(btnDispatchSheet));
   }
 
   // Add Dish Modal Interactions
@@ -833,15 +1007,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateBillingDetails(tableStr) {
       billTitle.textContent = `Bill & Payment — ${tableStr}`;
-      
+
       const sessions = dbEngine.getSessions();
       const orders = dbEngine.getOrders();
       const cleanNum = tableStr.replace('Table ', '').replace('tbl-', '').padStart(2, '0');
       const stdTable = `Table ${cleanNum}`;
       const tblId = `tbl-${cleanNum}`;
 
-      const targetSession = sessions.find(s => 
-        (s.table_no === stdTable || s.table_no === tblId || s.table_no === `Table ${parseInt(cleanNum)}`) && 
+      const targetSession = sessions.find(s =>
+        (s.table_no === stdTable || s.table_no === tblId || s.table_no === `Table ${parseInt(cleanNum)}`) &&
         s.status !== 'TERMINATED' && s.status !== 'COMPLETED' && s.status !== 'PAID'
       );
 
@@ -1000,8 +1174,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const tblId = `tbl-${cleanNum}`;
 
             const sessions = dbEngine.getSessions();
-            const targetSession = sessions.find(s => 
-              (s.table_no === stdTable || s.table_no === tblId || s.table_no === activeTable) && 
+            const targetSession = sessions.find(s =>
+              (s.table_no === stdTable || s.table_no === tblId || s.table_no === activeTable) &&
               s.status !== 'TERMINATED'
             );
 

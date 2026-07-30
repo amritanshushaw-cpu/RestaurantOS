@@ -4,6 +4,14 @@
 
 @import './tokens.css';
 
+/* Touch-friendly custom properties */
+:root {
+  --touch-target-min: 48px;
+  --touch-target-sm: 44px;
+  --touch-gap: 12px;
+  --cart-bottom-sheet-max: 75vh;
+}
+
 .pos-container {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(280px, 350px);
@@ -14,12 +22,14 @@
   box-sizing: border-box;
 }
 
-/* Category Filter Bar */
+/* ==========================================================================
+   Category Filter Bar — Enhanced Touch
+   ========================================================================== */
 .pos-categories {
   display: flex;
   gap: 10px;
   overflow-x: auto;
-  padding-bottom: 10px;
+  padding-bottom: 12px;
   padding-right: 24px;
   margin-bottom: 20px;
   scrollbar-width: thin;
@@ -28,6 +38,7 @@
   touch-action: pan-x;
   user-select: none;
   cursor: grab;
+  scroll-snap-type: x mandatory;
 }
 
 .pos-categories:active {
@@ -55,7 +66,8 @@
 .category-pill {
   background: var(--color-primary);
   border: 1px solid var(--border-violet);
-  padding: 8px 16px;
+  padding: 10px 18px;
+  min-height: var(--touch-target-sm);
   border-radius: var(--radius-xl);
   color: var(--text-secondary);
   font-family: var(--font-sans);
@@ -67,17 +79,30 @@
   white-space: nowrap;
   flex-shrink: 0;
   user-select: none;
+  -webkit-tap-highlight-color: transparent;
   transition: all 0.2s ease;
+  scroll-snap-align: start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
 }
 
-.category-pill.active, .category-pill:hover {
+.category-pill:active {
+  transform: scale(0.95);
+}
+
+.category-pill.active,
+.category-pill:hover {
   background: var(--color-accent-lime);
   color: var(--color-ink-deep);
   border-color: var(--color-accent-lime);
   font-weight: 700;
 }
 
-/* Menu Grid */
+/* ==========================================================================
+   Menu Grid — Mobile Optimized
+   ========================================================================== */
 .pos-menu-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -96,6 +121,8 @@
   transition: all 0.2s ease;
   display: flex;
   flex-direction: column;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .food-card:hover {
@@ -104,10 +131,15 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
+.food-card:active {
+  transform: scale(0.98);
+}
+
 .food-img {
   width: 100%;
   height: 130px;
   object-fit: cover;
+  aspect-ratio: 16/9;
 }
 
 .food-details {
@@ -116,6 +148,7 @@
   flex-direction: column;
   flex: 1;
   justify-content: space-between;
+  gap: 8px;
 }
 
 .food-name {
@@ -141,6 +174,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-top: auto;
 }
 
 .food-price {
@@ -151,8 +185,10 @@
 }
 
 .add-btn {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
   border-radius: var(--radius-md);
   background: var(--color-primary);
   color: var(--color-accent-lime);
@@ -160,8 +196,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  transition: all 0.2s ease;
+  font-size: 16px;
+  transition: all 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.add-btn:active {
+  transform: scale(0.9);
+  background: var(--color-accent-lime);
+  color: var(--color-ink-deep);
+  border-color: var(--color-accent-lime);
 }
 
 .food-card:hover .add-btn {
@@ -170,7 +215,9 @@
   border-color: var(--color-accent-lime);
 }
 
-/* Cart Sidebar */
+/* ==========================================================================
+   Cart Sidebar — with Bottom Sheet support
+   ========================================================================== */
 .pos-cart-sidebar {
   background: var(--color-ink-deep);
   border: 1px solid var(--border-violet);
@@ -226,8 +273,10 @@
 }
 
 .qty-btn {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
   border-radius: var(--radius-xs);
   background: var(--color-ink-deep);
   border: 1px solid var(--border-violet);
@@ -236,8 +285,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 14px;
+  font-weight: 700;
   transition: border-color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.qty-btn:active {
+  transform: scale(0.9);
+  border-color: var(--color-accent-lime);
+  color: var(--color-accent-lime);
 }
 
 .qty-btn:hover {
@@ -251,10 +309,11 @@
   background: var(--color-accent-lime);
   color: var(--color-ink-deep);
   border: none;
-  padding: 14px 20px;
+  padding: 16px 20px;
+  min-height: var(--touch-target-min);
   border-radius: var(--radius-md);
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.3px;
@@ -265,6 +324,12 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.pay-btn:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .pay-btn:hover:not(:disabled) {
@@ -282,6 +347,281 @@
 }
 
 /* ==========================================================================
+   Mobile Cart Floating Action Button (FAB)
+   ========================================================================== */
+#cart-fab-btn {
+  display: none;
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 500;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--color-accent-lime);
+  color: var(--color-ink-deep);
+  border: none;
+  box-shadow: 0 6px 24px rgba(194, 239, 78, 0.45);
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+#cart-fab-btn:active {
+  transform: scale(0.9);
+}
+
+#cart-fab-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #ef4444;
+  color: #fff;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--color-ink-deep);
+}
+
+/* Mobile Floating Cart Trigger Bar Styles */
+.mobile-cart-floating-bar {
+  display: none;
+  position: fixed;
+  bottom: 16px;
+  left: 14px;
+  right: 14px;
+  z-index: 995;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.25s ease;
+  transform: translateY(120%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mobile-cart-floating-bar.visible {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mobile-cart-trigger-btn {
+  width: 100%;
+  background: var(--color-accent-lime);
+  color: var(--color-ink-deep);
+  border: none;
+  border-radius: var(--radius-xl);
+  padding: 14px 20px;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 10px 30px rgba(194, 239, 78, 0.45);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.mobile-cart-trigger-btn:active {
+  transform: scale(0.98);
+}
+
+.mobile-cart-count-badge {
+  background: var(--color-ink-deep);
+  color: var(--color-accent-lime);
+  font-weight: 800;
+  font-size: 13px;
+  font-family: var(--font-mono);
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-cart-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 10, 24, 0.75);
+  backdrop-filter: blur(6px);
+  z-index: 997;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.mobile-cart-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mobile-cart-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+/* ==========================================================================
+   Mobile Bottom Sheet Cart Overlay
+   ========================================================================== */
+#cart-bottom-sheet-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 998;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+#cart-bottom-sheet-overlay.active {
+  opacity: 1;
+}
+
+#cart-bottom-sheet {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  background: var(--color-ink-deep);
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  border: 1px solid var(--border-violet);
+  border-bottom: none;
+  max-height: var(--cart-bottom-sheet-max);
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#cart-bottom-sheet.active {
+  transform: translateY(0);
+}
+
+.cart-sheet-handle {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border-violet);
+  margin: 10px auto;
+  flex-shrink: 0;
+}
+
+.cart-sheet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 20px 14px;
+  border-bottom: 1px solid var(--border-violet);
+  flex-shrink: 0;
+}
+
+.cart-sheet-header h3 {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.cart-sheet-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  border: 1px solid var(--border-violet);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.cart-sheet-close:active {
+  transform: scale(0.9);
+}
+
+.cart-sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cart-sheet-footer {
+  border-top: 1px solid var(--border-violet);
+  padding: 16px 20px;
+  flex-shrink: 0;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+}
+
+/* ==========================================================================
+   Accessibility & Reduced Motion
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .food-card:hover {
+    transform: none;
+  }
+
+  #cart-bottom-sheet {
+    transition: none;
+  }
+}
+
+/* Focus-visible ring for keyboard users */
+:focus-visible {
+  outline: 2.5px solid var(--color-accent-lime) !important;
+  outline-offset: 2px !important;
+}
+
+/* Remove focus ring for mouse users */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Screen reader only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ==========================================================================
    Mobile Friendly Responsive Engine for Waiter POS Section
    ========================================================================== */
 
@@ -291,10 +631,22 @@
     min-height: auto;
     height: auto;
   }
-  
+
   .pos-cart-sidebar {
     max-height: none;
     margin-top: 16px;
+  }
+}
+
+@media (max-width: 860px) {
+
+  /* Hide desktop cart sidebar, show FAB + bottom sheet instead */
+  .pos-cart-sidebar {
+    display: none !important;
+  }
+
+  #cart-fab-btn {
+    display: flex !important;
   }
 }
 
@@ -303,17 +655,28 @@
     padding: 12px 10px !important;
   }
 
+  /* ===================================================================
+     Responsive Header — compact for mobile
+     =================================================================== */
   .app-header {
     flex-direction: column;
     align-items: stretch !important;
-    gap: 12px !important;
+    gap: 10px !important;
   }
 
   .app-header .brand {
     justify-content: center;
   }
 
-  .app-header > div {
+  .app-header .brand-text h1 {
+    font-size: 18px;
+  }
+
+  .app-header .brand-text h1 small {
+    display: none;
+  }
+
+  .app-header>div {
     display: grid !important;
     grid-template-columns: 1fr 1fr;
     gap: 8px !important;
@@ -326,13 +689,16 @@
     justify-content: center;
     font-size: 11px !important;
     padding: 10px 8px !important;
-    min-height: 40px;
+    min-height: var(--touch-target-sm);
   }
 
   .app-header label {
     display: none;
   }
 
+  /* ===================================================================
+     Category Filter Bar Mobile
+     =================================================================== */
   .pos-categories {
     display: flex;
     gap: 8px;
@@ -346,9 +712,9 @@
   }
 
   .category-pill {
-    padding: 8px 14px;
+    padding: 10px 16px;
     font-size: 11px;
-    min-height: 38px;
+    min-height: var(--touch-target-sm);
     flex-shrink: 0;
     white-space: nowrap;
     scroll-snap-align: start;
@@ -357,11 +723,16 @@
     justify-content: center;
   }
 
+  /* ===================================================================
+     Menu Grid Mobile
+     =================================================================== */
   .pos-menu-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
     max-height: none;
     padding-right: 0;
+    padding-bottom: 100px;
+    /* space for FAB */
   }
 
   .food-card {
@@ -394,67 +765,109 @@
   .add-btn {
     width: 36px;
     height: 36px;
+    min-width: 36px;
+    min-height: 36px;
     font-size: 16px;
   }
 
-  .pos-cart-sidebar {
-    padding: 14px;
-    border-radius: var(--radius-lg);
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
-    overflow: hidden !important;
-  }
-
-  .cart-header {
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .cart-header h3 {
-    font-size: 14px !important;
-  }
-
-  #order-special-instructions {
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
-  }
-
-  .cart-item {
-    padding: 12px;
-  }
-
-  .qty-btn {
-    width: 32px;
-    height: 32px;
-    font-size: 14px;
-    font-weight: 700;
-  }
-
-  .pay-btn {
-    padding: 14px;
-    font-size: 14px;
-    min-height: 48px;
-  }
-
-/* Accessibility Focus States */
-.category-pill:focus-visible,
-.add-btn:focus-visible,
-.qty-btn:focus-visible,
-.pay-btn:focus-visible,
-.app-header button:focus-visible,
-.app-header select:focus-visible {
-  outline: 2.5px solid var(--color-accent-lime) !important;
-  outline-offset: 2px !important;
-}
-
+  /* ===================================================================
+     Kitchen Notifications Panel Mobile
+     =================================================================== */
   #waiter-notifications-panel {
     padding: 14px !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    border-radius: var(--radius-lg) !important;
   }
 
   #waiter-ready-alerts-list {
     grid-template-columns: 1fr !important;
+    max-height: 60vh !important;
+  }
+
+  #waiter-ready-alerts-list button {
+    min-height: var(--touch-target-sm);
+    font-size: 12px;
+  }
+
+  /* ===================================================================
+     Waiter Task Dashboard Cards Mobile
+     =================================================================== */
+  #waiter-order-feed {
+    flex-direction: column !important;
+    gap: 10px !important;
+    max-height: 50vh;
+    overflow-y: auto !important;
+  }
+
+  #waiter-order-feed>div {
+    min-width: auto !important;
+    width: 100%;
+  }
+
+  #waiter-order-feed button {
+    min-height: var(--touch-target-sm);
+  }
+
+  /* ===================================================================
+     POS Billing Modal Mobile
+     =================================================================== */
+  #pos-payment-bill-modal .entry-modal-card {
+    width: 98% !important;
+    padding: 16px !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+  }
+
+  #pos-payment-bill-modal h2 {
+    font-size: 18px !important;
+  }
+
+  #pos-payment-bill-modal .btn-pos-pay-type {
+    padding: 12px 8px !important;
+    font-size: 11px !important;
+  }
+
+  #pos-payment-bill-modal .btn-pos-pay-type i {
+    font-size: 20px !important;
+  }
+
+  #pos-payment-bill-modal table {
+    font-size: 11px !important;
+  }
+
+  #pos-payment-bill-modal table th,
+  #pos-payment-bill-modal table td {
+    padding: 4px !important;
+  }
+
+  /* ===================================================================
+     Add Dish Modal Mobile
+     =================================================================== */
+  #add-dish-modal>div {
+    width: 95% !important;
+    padding: 20px !important;
+  }
+
+  /* ===================================================================
+     Auth/Navbar Mobile
+     =================================================================== */
+  .sentry-navbar {
+    padding: 10px 12px !important;
+  }
+
+  .sentry-navbar-inner {
+    gap: 8px !important;
+  }
+
+  .sentry-brand {
+    font-size: 16px !important;
+  }
+
+  .sentry-brand .brand-logo-icon {
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 13px !important;
   }
 }
 
@@ -474,5 +887,86 @@
 
   .food-price {
     font-size: 13px;
+  }
+
+  #cart-fab-btn {
+    width: 52px;
+    height: 52px;
+    bottom: 16px;
+    right: 16px;
+    font-size: 18px;
+  }
+
+  .cart-sheet-header {
+    padding: 4px 14px 12px;
+  }
+
+  .cart-sheet-body {
+    padding: 10px 14px;
+  }
+
+  .cart-sheet-footer {
+    padding: 12px 14px;
+  }
+
+  .pay-btn {
+    font-size: 13px;
+    padding: 14px;
+  }
+}
+
+@media (max-width: 360px) {
+  .pos-menu-grid {
+    gap: 6px;
+  }
+
+  .food-details {
+    padding: 8px;
+  }
+
+  .food-name {
+    font-size: 11px;
+  }
+
+  .food-desc {
+    font-size: 10px;
+    -webkit-line-clamp: 1;
+  }
+
+  .food-price {
+    font-size: 12px;
+  }
+
+  .add-btn {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    font-size: 14px;
+  }
+}
+
+/* ==========================================================================
+   High Contrast / Forced Colors Mode Support
+   ========================================================================== */
+@media (forced-colors: active) {
+
+  .category-pill,
+  .food-card,
+  .pos-cart-sidebar,
+  .pay-btn,
+  .btn-sentry,
+  .qty-btn,
+  .add-btn {
+    border: 1px solid ButtonText;
+  }
+
+  .pay-btn:disabled {
+    border: 1px dashed GrayText;
+  }
+
+  .category-pill.active {
+    background: Highlight;
+    color: HighlightText;
   }
 }
