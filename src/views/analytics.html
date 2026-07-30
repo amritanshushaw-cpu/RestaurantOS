@@ -32,7 +32,7 @@
 
     .metric-value {
       font-family: var(--font-mono);
-      font-size: 28px;
+      font-size: 26px;
       font-weight: 700;
       color: var(--color-accent-lime);
       margin-top: 6px;
@@ -42,12 +42,99 @@
       background: var(--color-ink-deep);
       border: 1px solid var(--border-violet);
       border-radius: var(--radius-xl);
-      padding: 28px;
+      padding: 24px;
       margin-bottom: 24px;
     }
 
-    @media (max-width: 860px) {
-      .metrics-grid { grid-template-columns: 1fr 1fr; }
+    .bi-revenue-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+
+    .plotly-charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .tables-dual-grid {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 24px;
+    }
+
+    .table-scroll-wrapper {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-x;
+      scrollbar-width: thin;
+    }
+
+    /* Mobile Friendly Responsive Engine (< 900px) */
+    @media (max-width: 900px) {
+      .plotly-charts-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      .tables-dual-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      .bi-revenue-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .app-container {
+        padding: 12px 10px !important;
+      }
+      .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+      .metric-card {
+        padding: 14px;
+      }
+      .metric-value {
+        font-size: 20px;
+      }
+      .ai-insight-box {
+        padding: 16px;
+      }
+      .bi-revenue-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+      .bi-revenue-grid > div:last-child {
+        grid-column: 1 / -1;
+      }
+      .app-header {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 12px !important;
+      }
+      .app-header > div {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        gap: 8px !important;
+      }
+      .app-header button {
+        width: 100%;
+        justify-content: center;
+        min-height: 44px;
+      }
+      #manager-live-sessions-container {
+        grid-template-columns: 1fr !important;
+      }
+      .btn-mgr-terminate-sess {
+        min-height: 44px;
+      }
     }
   </style>
 </head>
@@ -152,7 +239,7 @@
         <span class="badge sandbox-badge" style="background: rgba(194, 239, 78, 0.15); color: var(--color-accent-lime);">AUTOMATIC ROLLING AGGREGATES</span>
       </div>
 
-      <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;">
+      <div class="bi-revenue-grid">
         <div style="background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-md); padding: 14px;">
           <span style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600;">Daily Revenue</span>
           <div id="bi-daily-rev" style="font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--color-accent-lime); margin-top: 4px;">₹0.00</div>
@@ -200,7 +287,7 @@
     </div>
 
     <!-- Plotly.js Interactive BI Charts Grid -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px;">
+    <div class="plotly-charts-grid">
       <!-- Chart 1: Multi-Period Revenue Breakdown -->
       <div style="background: var(--color-ink-deep); border: 1px solid var(--border-violet); border-radius: var(--radius-xl); padding: 20px;">
         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
@@ -234,7 +321,7 @@
           </div>
           <span style="font-size: 12px; color: var(--text-secondary);">Date | Session ID | Start/End | Customer ID | Table No | Waiter ID | Order ID | Delivered | Revenue</span>
         </div>
-        <div style="overflow-x: auto;">
+        <div class="table-scroll-wrapper">
           <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
             <thead>
               <tr style="background: var(--color-primary); border-bottom: 1px solid var(--border-violet); color: var(--text-secondary); text-transform: uppercase;">
@@ -257,7 +344,7 @@
       </div>
 
       <!-- D-Table 2: Table Vacancy & D-Table 3: Customer History (2 Column Grid) -->
-      <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px;">
+      <div class="tables-dual-grid">
 
         <!-- D-Table 2: Table Vacancy -->
         <div style="background: var(--color-ink-deep); border: 1px solid var(--border-violet); border-radius: var(--radius-xl); padding: 20px;">
@@ -265,16 +352,18 @@
             <span class="badge sandbox-badge" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; font-size: 10px;">D-TABLE 2</span>
             <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 700; margin-top: 4px;">Table Vacancy Table</h3>
           </div>
-          <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
-            <thead>
-              <tr style="background: var(--color-primary); border-bottom: 1px solid var(--border-violet); color: var(--text-secondary); text-transform: uppercase;">
-                <th style="padding: 8px;">Table No</th>
-                <th style="padding: 8px;">Vacant (Y/N)</th>
-                <th style="padding: 8px;">Status</th>
-              </tr>
-            </thead>
-            <tbody id="tbl-table-vacancy-body"></tbody>
-          </table>
+          <div class="table-scroll-wrapper">
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+              <thead>
+                <tr style="background: var(--color-primary); border-bottom: 1px solid var(--border-violet); color: var(--text-secondary); text-transform: uppercase;">
+                  <th style="padding: 8px;">Table No</th>
+                  <th style="padding: 8px;">Vacant (Y/N)</th>
+                  <th style="padding: 8px;">Status</th>
+                </tr>
+              </thead>
+              <tbody id="tbl-table-vacancy-body"></tbody>
+            </table>
+          </div>
         </div>
 
         <!-- D-Table 3: Customer History -->
@@ -283,7 +372,7 @@
             <span class="badge sandbox-badge" style="background: rgba(236, 72, 153, 0.15); color: #ec4899; font-size: 10px;">D-TABLE 3</span>
             <h3 style="font-family: var(--font-display); font-size: 18px; font-weight: 700; margin-top: 4px;">Customer History Table</h3>
           </div>
-          <div style="overflow-x: auto;">
+          <div class="table-scroll-wrapper">
             <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
               <thead>
                 <tr style="background: var(--color-primary); border-bottom: 1px solid var(--border-violet); color: var(--text-secondary); text-transform: uppercase;">
