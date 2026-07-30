@@ -490,9 +490,9 @@ class AuthService {
     }
 
     if (!dbEngine.supabase || !dbEngine.hasValidSupabaseConfig()) {
-      this.pendingOtpPhone = cleanPhone;
-      this.showToast(`Demo Mode: Real-time SMS OTP request sent to ${cleanPhone}! Use demo code 654321.`);
-      return { ok: true, demoCode: '654321' };
+      const errMsg = 'Supabase credentials missing in src/config.js. Real WhatsApp Authentication requires a valid Supabase project.';
+      this.showToast(`⚠️ ${errMsg}`);
+      return { ok: false, reason: errMsg };
     }
 
     try {
@@ -509,21 +509,18 @@ class AuthService {
         if (typeof errStr !== 'string' || !errStr.trim() || errStr === '{}') {
           errStr = 'WhatsApp Provider not configured in Supabase Cloud Dashboard';
         }
-        console.warn('Supabase WhatsApp OTP Notice:', error);
-
-        // Fallback to Instant Verification Demo OTP so user is never blocked
-        this.pendingOtpPhone = cleanPhone;
-        this.showToast(`💬 WhatsApp OTP generated for ${cleanPhone}! Use verification code 654321.`);
-        return { ok: true, demoCode: '654321', notice: errStr };
+        console.error('Supabase WhatsApp OTP Error:', error);
+        this.showToast(`❌ WhatsApp OTP Error: ${errStr}`);
+        return { ok: false, reason: errStr };
       }
 
       this.pendingOtpPhone = cleanPhone;
       this.showToast(`💬 Real-Time WhatsApp OTP sent to ${cleanPhone} via Supabase Cloud!`);
       return { ok: true };
     } catch (e) {
-      this.pendingOtpPhone = cleanPhone;
-      this.showToast(`💬 WhatsApp OTP generated for ${cleanPhone}! Use verification code 654321.`);
-      return { ok: true, demoCode: '654321' };
+      console.error('WhatsApp Authentication Error:', e);
+      this.showToast(`❌ WhatsApp OTP Failed: ${e.message}`);
+      return { ok: false, reason: e.message };
     }
   }
 
@@ -536,27 +533,14 @@ class AuthService {
     localStorage.setItem('rest_os_pending_redirect', finalTarget);
 
     if (!cleanToken) {
-      this.showToast('Please enter the 6-digit SMS OTP code.');
+      this.showToast('Please enter the 6-digit WhatsApp OTP code.');
       return { ok: false, reason: 'missing_token' };
     }
 
-    // Always support instant fallback code 654321 or 123456
-    if (cleanToken === '654321' || cleanToken === '123456' || !dbEngine.supabase || !dbEngine.hasValidSupabaseConfig()) {
-      const user = {
-        id: 'phone-user-' + Date.now(),
-        name: `Mobile User (${cleanPhone.slice(-4)})`,
-        email: `${cleanPhone.replace('+', '')}@mobile.restaurantos.com`,
-        role: role,
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(cleanPhone)}`
-      };
-      this.saveUser(user);
-      this.showToast(`📱 Mobile verified for ${cleanPhone}! Redirecting to ${role} workspace…`);
-      this.pendingOtpPhone = null;
-      setTimeout(() => { 
-        window.isAppNavigation = true;
-        window.location.href = finalTarget; 
-      }, 350);
-      return { ok: true };
+    if (!dbEngine.supabase || !dbEngine.hasValidSupabaseConfig()) {
+      const errMsg = 'Supabase credentials missing in src/config.js. Cannot verify real WhatsApp OTP.';
+      this.showToast(`⚠️ ${errMsg}`);
+      return { ok: false, reason: errMsg };
     }
 
     try {
@@ -565,18 +549,21 @@ class AuthService {
         token: cleanToken,
         type: 'sms'
       });
+
       if (error || !data?.session) {
-        let errStr = error?.message || 'Invalid OTP code';
-        if (typeof errStr !== 'string' || errStr === '{}') errStr = 'Invalid OTP code';
-        this.showToast(`Verification notice: ${errStr}. Try verification code 654321.`);
+        let errStr = error?.message || 'Invalid or expired WhatsApp OTP code';
+        if (typeof errStr !== 'string' || errStr === '{}') errStr = 'Invalid or expired WhatsApp OTP code';
+        this.showToast(`❌ Verification Failed: ${errStr}`);
         return { ok: false, reason: errStr };
       }
+
       this.pendingOtpPhone = null;
       await this.handleSupabaseSession(data.session, role);
       this.closeAuthModal();
       return { ok: true };
     } catch (e) {
-      this.showToast(`SMS Verification notice. Try code 654321.`);
+      console.error('WhatsApp Verification Error:', e);
+      this.showToast(`❌ Verification Failed: ${e.message}`);
       return { ok: false, reason: e.message };
     }
   }

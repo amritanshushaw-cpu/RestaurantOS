@@ -59,7 +59,7 @@ export function openMobileAuthModal(targetRole = 'Customer', targetUrl = null) {
 
         <div class="google-modal-footer" style="text-align: center; border-top: 1px dashed var(--border-violet); padding-top: 12px; margin-top: 12px;">
           <span style="font-size: 11px; color: var(--text-tertiary);">
-            ⚡ Powered by Supabase Cloud WhatsApp Auth · Demo verification code <strong>654321</strong>
+            ⚡ Real-Time WhatsApp Authentication powered by Supabase Cloud
           </span>
         </div>
       </div>
