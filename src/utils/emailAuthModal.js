@@ -76,7 +76,7 @@ export function openEmailAuthModal(targetRole = 'Customer', targetUrl = null) {
     const btn = document.getElementById('btn-verify-otp');
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
-    const result = await authService.verifyEmailOtp(currentEmail, token);
+    const result = await authService.verifyEmailOtp(currentEmail, token, targetRole, targetUrl);
     btn.disabled = false;
     btn.innerHTML = '<i class="fa-solid fa-check"></i> Verify & sign in';
     if (result.ok) {

@@ -13,6 +13,8 @@
   <link rel="stylesheet" href="../styles/tokens.css">
   <link rel="stylesheet" href="../styles/components.css">
 
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+
   <style>
     .metrics-grid {
       display: grid;
@@ -155,6 +157,29 @@
       </div>
     </div>
 
+    <!-- Plotly.js Interactive BI Charts Grid -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px;">
+      <!-- Chart 1: Multi-Period Revenue Breakdown -->
+      <div style="background: var(--color-ink-deep); border: 1px solid var(--border-violet); border-radius: var(--radius-xl); padding: 20px;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <i class="fa-solid fa-chart-column" style="color: var(--color-accent-lime); font-size: 16px;"></i>
+          <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700; margin: 0;">Revenue Breakdown</h3>
+          <span class="badge sandbox-badge" style="margin-left: auto; font-size: 9px;">PLOTLY.JS</span>
+        </div>
+        <div id="plotly-revenue-chart" style="width: 100%; height: 320px;"></div>
+      </div>
+
+      <!-- Chart 2: Category Revenue Share Donut -->
+      <div style="background: var(--color-ink-deep); border: 1px solid var(--border-violet); border-radius: var(--radius-xl); padding: 20px;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <i class="fa-solid fa-chart-pie" style="color: #ec4899; font-size: 16px;"></i>
+          <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 700; margin: 0;">Category Revenue Share</h3>
+          <span class="badge sandbox-badge" style="margin-left: auto; font-size: 9px;">PLOTLY.JS</span>
+        </div>
+        <div id="plotly-category-chart" style="width: 100%; height: 320px;"></div>
+      </div>
+    </div>
+
     <!-- 3 SERVER-SIDE DATABASE TABLES SECTION -->
     <div style="display: flex; flex-direction: column; gap: 32px;">
 
@@ -270,6 +295,14 @@
       document.getElementById('bi-quarterly-rev').textContent = `₹${(firstRow.quarterly_revenue || (summary.grossRevenue * 90) || 0).toFixed(2)}`;
       document.getElementById('bi-annual-rev').textContent = `₹${(firstRow.annual_revenue || (summary.grossRevenue * 365) || 0).toFixed(2)}`;
 
+      // Render Plotly.js Interactive BI Charts (real-time update)
+      const biDaily = firstRow.daily_revenue || summary.grossRevenue || 0;
+      const biWeekly = firstRow.weekly_revenue || (summary.grossRevenue * 7) || 0;
+      const biMonthly = firstRow.monthly_revenue || (summary.grossRevenue * 30) || 0;
+      const biQuarterly = firstRow.quarterly_revenue || (summary.grossRevenue * 90) || 0;
+      const biAnnual = firstRow.annual_revenue || (summary.grossRevenue * 365) || 0;
+      renderPlotlyBICharts(biDaily, biWeekly, biMonthly, biQuarterly, biAnnual);
+
       // Render D-Table 1: Main Data Table
       const mainTbody = document.getElementById('tbl-main-data-body');
       if (mainTbody) {
@@ -359,6 +392,112 @@
         renderAnalytics();
       }
     });
+
+    // ─── Plotly.js BI Charts Rendering ──────────────────────────
+    function renderPlotlyBICharts(daily, weekly, monthly, quarterly, annual) {
+      if (typeof Plotly === 'undefined') return;
+
+      const darkLayout = {
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        font: { family: 'JetBrains Mono, monospace', size: 11, color: '#a1a1aa' },
+        margin: { t: 20, r: 20, b: 50, l: 60 },
+        xaxis: {
+          gridcolor: 'rgba(255,255,255,0.05)',
+          linecolor: 'rgba(255,255,255,0.1)',
+          tickfont: { size: 10 }
+        },
+        yaxis: {
+          gridcolor: 'rgba(255,255,255,0.05)',
+          linecolor: 'rgba(255,255,255,0.1)',
+          tickprefix: '₹',
+          tickfont: { size: 10 }
+        },
+        showlegend: true,
+        legend: { orientation: 'h', y: -0.2, font: { size: 10 } },
+        hoverlabel: { bgcolor: '#1e1b2e', bordercolor: '#c2ef4e', font: { color: '#fff', family: 'JetBrains Mono', size: 12 } }
+      };
+
+      const periods = ['Daily', 'Weekly', 'Monthly', 'Quarterly', 'Annual'];
+      const values = [daily, weekly, monthly, quarterly, annual];
+      const barColors = ['#c2ef4e', '#ffffff', '#3b82f6', '#ec4899', '#f59e0b'];
+
+      // Chart 1: Revenue Bar + Spline Trendline
+      const barTrace = {
+        x: periods,
+        y: values,
+        type: 'bar',
+        name: 'Revenue (₹)',
+        marker: {
+          color: barColors,
+          line: { color: 'rgba(255,255,255,0.1)', width: 1 }
+        },
+        hovertemplate: '<b>%{x}</b><br>₹%{y:,.2f}<extra></extra>'
+      };
+
+      const trendTrace = {
+        x: periods,
+        y: values,
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'Growth Trend',
+        line: { color: '#a78bfa', width: 3, shape: 'spline' },
+        marker: { color: '#a78bfa', size: 8 },
+        hovertemplate: '<b>%{x}</b><br>₹%{y:,.2f}<extra></extra>'
+      };
+
+      Plotly.react('plotly-revenue-chart', [barTrace, trendTrace], darkLayout, { responsive: true, displayModeBar: false });
+
+      // Chart 2: Category Revenue Share Donut
+      const orders = JSON.parse(localStorage.getItem('rest_os_orders') || '[]');
+      const categoryMap = { 'Main Course': 0, 'Starters': 0, 'Beverages': 0, 'Desserts': 0 };
+
+      orders.forEach(order => {
+        if (!order.items) return;
+        order.items.forEach(item => {
+          const cat = item.category || 'Main Course';
+          const amount = (item.price || 0) * (item.quantity || 1);
+          if (categoryMap.hasOwnProperty(cat)) {
+            categoryMap[cat] += amount;
+          } else {
+            categoryMap['Main Course'] += amount;
+          }
+        });
+      });
+
+      const catLabels = Object.keys(categoryMap);
+      const catValues = Object.values(categoryMap);
+      const hasData = catValues.some(v => v > 0);
+
+      const donutTrace = {
+        labels: catLabels,
+        values: hasData ? catValues : [1, 1, 1, 1],
+        type: 'pie',
+        hole: 0.55,
+        marker: {
+          colors: ['#c2ef4e', '#3b82f6', '#f59e0b', '#ec4899'],
+          line: { color: '#1e1b2e', width: 2 }
+        },
+        textinfo: hasData ? 'label+percent' : 'label',
+        textfont: { size: 11, color: '#fff' },
+        hovertemplate: hasData ? '<b>%{label}</b><br>₹%{value:,.2f}<br>%{percent}<extra></extra>' : '<b>%{label}</b><br>No data yet<extra></extra>',
+        opacity: hasData ? 1 : 0.4
+      };
+
+      const donutLayout = {
+        ...darkLayout,
+        showlegend: true,
+        legend: { orientation: 'h', y: -0.15, font: { size: 10, color: '#a1a1aa' } },
+        annotations: [{
+          text: hasData ? `₹${catValues.reduce((a, b) => a + b, 0).toLocaleString('en-IN')}` : 'No Data',
+          showarrow: false,
+          font: { size: 16, color: '#c2ef4e', family: 'JetBrains Mono' },
+          x: 0.5, y: 0.5
+        }]
+      };
+
+      Plotly.react('plotly-category-chart', [donutTrace], donutLayout, { responsive: true, displayModeBar: false });
+    }
 
     window.addEventListener('storage', renderAnalytics);
     window.addEventListener('rest_os_analytics_reset', renderAnalytics);

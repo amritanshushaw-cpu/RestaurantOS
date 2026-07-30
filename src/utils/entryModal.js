@@ -10,6 +10,7 @@
 import { authService } from '../services/authService.js';
 import { openEmailAuthModal } from './emailAuthModal.js';
 import { openMobileAuthModal } from './mobileAuthModal.js';
+import { openPhoneAuthModal } from './phoneAuthModal.js';
 
 class EntryGatewayModal {
   constructor() {
@@ -250,6 +251,10 @@ class EntryGatewayModal {
               <i class="fa-solid fa-envelope" style="color:var(--color-accent-lime);"></i> Sign in with Email OTP
             </button>
 
+            <button type="button" id="btn-signing-phone" class="btn-sentry btn-sentry-sm" style="width:100%; justify-content:center; padding:12px 18px; font-size:13px; background:linear-gradient(135deg, #06b6d4, #0891b2); color:#ffffff; border:none; font-weight:700; box-shadow:0 4px 15px rgba(6, 182, 212, 0.3);">
+              <i class="fa-solid fa-mobile-screen-button" style="font-size:14px;"></i> Sign in with Mobile Number
+            </button>
+
             <button type="button" id="btn-signing-mobile" class="btn-sentry btn-sentry-sm" style="width:100%; justify-content:center; padding:12px 18px; font-size:13px; background:linear-gradient(135deg, #25D366, #128C7E); color:#ffffff; border:none; font-weight:700; box-shadow:0 4px 15px rgba(37, 211, 102, 0.3);">
               <i class="fa-brands fa-whatsapp" style="font-size:15px;"></i> Sign in with Real-Time WhatsApp OTP
             </button>
@@ -280,6 +285,11 @@ class EntryGatewayModal {
     document.getElementById('btn-signing-email')?.addEventListener('click', () => {
       modal.remove();
       openEmailAuthModal(roleName, targetUrl);
+    });
+
+    document.getElementById('btn-signing-phone')?.addEventListener('click', () => {
+      modal.remove();
+      openPhoneAuthModal(roleName, targetUrl);
     });
 
     document.getElementById('btn-signing-mobile')?.addEventListener('click', () => {

@@ -123,7 +123,12 @@
         <div class="divider-line"></div>
       </div>
 
-      <!-- Option 2: Real-Time WhatsApp OTP Sign In -->
+      <!-- Option 2a: SMS OTP Sign In -->
+      <button type="button" class="btn-sentry" id="btn-sms-otp-signin" style="width: 100%; padding: 13px; margin-bottom: 12px; background: linear-gradient(135deg, #06b6d4, #0891b2); color: #ffffff; border: none; font-weight: 700; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.35); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <i class="fa-solid fa-mobile-screen-button" style="font-size: 15px;"></i> Sign in with Mobile SMS OTP
+      </button>
+
+      <!-- Option 2b: Real-Time WhatsApp OTP Sign In -->
       <button type="button" class="btn-sentry" id="btn-mobile-otp-signin" style="width: 100%; padding: 13px; margin-bottom: 12px; background: linear-gradient(135deg, #25D366, #128C7E); color: #ffffff; border: none; font-weight: 700; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.35); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
         <i class="fa-brands fa-whatsapp" style="font-size: 16px;"></i> Sign in with Real-Time WhatsApp OTP
       </button>
@@ -146,6 +151,7 @@
   <script type="module">
     import { authService } from '../services/authService.js';
     import { openMobileAuthModal } from '../utils/mobileAuthModal.js';
+    import { openPhoneAuthModal } from '../utils/phoneAuthModal.js';
 
     document.addEventListener('DOMContentLoaded', () => {
       const urlParams = new URLSearchParams(window.location.search);
@@ -160,7 +166,12 @@
         authService.loginWithGoogle(activeRole);
       });
 
-      // Option 2: Mobile Phone OTP Sign In
+      // Option 2a: SMS OTP Sign In
+      document.getElementById('btn-sms-otp-signin')?.addEventListener('click', () => {
+        openPhoneAuthModal(activeRole);
+      });
+
+      // Option 2b: WhatsApp OTP Sign In
       document.getElementById('btn-mobile-otp-signin')?.addEventListener('click', () => {
         openMobileAuthModal(activeRole);
       });

@@ -5,6 +5,7 @@
 
 import { authService } from '../services/authService.js';
 import { openEmailAuthModal } from './emailAuthModal.js';
+import { openPhoneAuthModal } from './phoneAuthModal.js';
 import { entryGatewayModal } from './entryModal.js';
 
 class NavbarAuth {
@@ -197,6 +198,9 @@ class NavbarAuth {
             </svg>
             <span>Sign in with Google</span>
           </button>
+          <button id="btn-navbar-phone-auth" class="btn-ghost-sm" type="button" style="padding: 6px 12px; font-size: 12px; border: 1px solid rgba(6, 182, 212, 0.5); color: #06b6d4;" title="Sign in with Mobile OTP">
+            <i class="fa-solid fa-mobile-screen-button"></i> Mobile OTP
+          </button>
           <button id="btn-navbar-open-space" class="btn-ghost-sm" type="button" style="padding: 6px 12px; font-size: 12px; border: 1px solid var(--border-violet);">
             <span>Choose Mode</span>
           </button>
@@ -206,6 +210,10 @@ class NavbarAuth {
       const googleBtn = widget.querySelector('#btn-navbar-google-oauth');
       if (googleBtn) {
         googleBtn.addEventListener('click', () => authService.loginWithGoogle('Customer'));
+      }
+      const phoneBtn = widget.querySelector('#btn-navbar-phone-auth');
+      if (phoneBtn) {
+        phoneBtn.addEventListener('click', () => openPhoneAuthModal('Customer'));
       }
       const openBtn = widget.querySelector('#btn-navbar-open-space');
       if (openBtn) {
