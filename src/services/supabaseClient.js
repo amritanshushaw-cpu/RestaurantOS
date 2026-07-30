@@ -1321,10 +1321,44 @@ Payment Options:
   }
 
   // D-Table 3 (Customer History Engine)
+  // D-Table 3 (Customer History Engine)
   getCustomerHistory() {
+    const storedHistory = JSON.parse(localStorage.getItem(STORAGE_KEYS.CUSTOMER_HISTORY) || '[]');
     const sessions = this.getSessions();
+    const orders = this.getOrders();
+    const currentUser = JSON.parse(localStorage.getItem('rest_os_google_user') || 'null');
     const map = {};
 
+    // 1. Seed with active signed-in user if available
+    if (currentUser && currentUser.role === 'Customer') {
+      const cid = `CUST-${(currentUser.name || 'USER').substring(0, 4).toUpperCase()}`;
+      map[cid] = {
+        customer_id: cid,
+        customer_name: currentUser.name || 'Signed Customer',
+        dates_visited: [new Date().toISOString().split('T')[0]],
+        bill_per_visit: [],
+        total_bill: 0,
+        visit_count: 1,
+        general_one_word_feedback: 'EXCELLENT'
+      };
+    }
+
+    // 2. Load stored customer history
+    storedHistory.forEach(c => {
+      if (c && c.customer_id) {
+        map[c.customer_id] = {
+          customer_id: c.customer_id,
+          customer_name: c.customer_name || c.name || 'Guest',
+          dates_visited: Array.isArray(c.dates_visited) ? [...c.dates_visited] : [c.dates_visited || new Date().toISOString().split('T')[0]],
+          bill_per_visit: Array.isArray(c.bill_per_visit) ? [...c.bill_per_visit] : [parseFloat(c.total_bill || 0)],
+          total_bill: parseFloat(c.total_bill || 0),
+          visit_count: c.visit_count || 1,
+          general_one_word_feedback: c.general_one_word_feedback || 'EXCELLENT'
+        };
+      }
+    });
+
+    // 3. Aggregate from sessions
     sessions.forEach(s => {
       const cid = s.customer_id || 'CUST-8021';
       const cName = s.customer_name || 'Guest';
@@ -1337,17 +1371,45 @@ Payment Options:
           customer_id: cid,
           customer_name: cName,
           dates_visited: [date],
-          bill_per_visit: [bill],
+          bill_per_visit: bill > 0 ? [bill] : [],
           total_bill: bill,
           visit_count: 1,
           general_one_word_feedback: feedback
         };
       } else {
-        map[cid].dates_visited.push(date);
-        map[cid].bill_per_visit.push(bill);
-        map[cid].total_bill += bill;
-        map[cid].visit_count += 1;
-        if (feedback) map[cid].general_one_word_feedback = feedback;
+        if (!map[cid].dates_visited.includes(date)) map[cid].dates_visited.push(date);
+        if (bill > 0) map[cid].bill_per_visit.push(bill);
+        map[cid].total_bill = parseFloat((map[cid].total_bill + bill).toFixed(2));
+        map[cid].visit_count = Math.max(map[cid].visit_count, map[cid].bill_per_visit.length, 1);
+        if (feedback && feedback !== 'Pending') map[cid].general_one_word_feedback = feedback;
+      }
+    });
+
+    // 4. Aggregate from orders
+    orders.forEach(o => {
+      if (o.status !== 'CANCELLED') {
+        const cid = o.customer_id || (o.customer_name ? `CUST-${o.customer_name.substring(0, 4).toUpperCase()}` : (o.table_number ? `CUST-${o.table_number.replace('Table ', '')}` : 'CUST-WALKIN'));
+        const cName = o.customer_name || (o.table_number ? `Guest (${o.table_number})` : 'Walk-in Customer');
+        const date = o.created_at ? new Date(o.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+        const bill = parseFloat(o.total || o.subtotal || 0);
+
+        if (!map[cid]) {
+          map[cid] = {
+            customer_id: cid,
+            customer_name: cName,
+            dates_visited: [date],
+            bill_per_visit: [bill],
+            total_bill: bill,
+            visit_count: 1,
+            general_one_word_feedback: 'EXCELLENT'
+          };
+        } else {
+          if (!map[cid].dates_visited.includes(date)) map[cid].dates_visited.push(date);
+          if (bill > 0 && !map[cid].bill_per_visit.includes(bill)) {
+            map[cid].bill_per_visit.push(bill);
+            map[cid].total_bill = parseFloat((map[cid].total_bill + bill).toFixed(2));
+          }
+        }
       }
     });
 
@@ -1362,14 +1424,25 @@ Payment Options:
       return [];
     }
 
-    return history.map(h => ({
-      customer_id: h.customer_name && h.customer_name !== 'Guest' ? `${h.customer_name} (${h.customer_id})` : h.customer_id,
-      dates_visited: Array.isArray(h.dates_visited) ? Array.from(new Set(h.dates_visited)).join(', ') : h.dates_visited,
-      bill_per_visit: Array.isArray(h.bill_per_visit) ? h.bill_per_visit.map(b => `₹${Number(b).toFixed(2)}`).join(', ') : `₹${Number(h.total_bill || 0).toFixed(2)}`,
-      total_bill: parseFloat((h.total_bill || 0).toFixed(2)),
-      visit_count: h.visit_count || 1,
-      general_one_word_feedback: String(h.general_one_word_feedback || 'EXCELLENT').toUpperCase()
-    }));
+    return history.map(h => {
+      const dates = Array.isArray(h.dates_visited) ? Array.from(new Set(h.dates_visited)).join(', ') : (h.dates_visited || 'Today');
+      const bills = Array.isArray(h.bill_per_visit) && h.bill_per_visit.length > 0
+        ? h.bill_per_visit.map(b => `₹${Number(b || 0).toFixed(2)}`).join(', ')
+        : `₹${Number(h.total_bill || 0).toFixed(2)}`;
+      
+      const cidDisplay = h.customer_name && h.customer_name !== 'Guest' && h.customer_name !== h.customer_id
+        ? `${h.customer_name} (${h.customer_id})`
+        : h.customer_id;
+
+      return {
+        customer_id: cidDisplay,
+        dates_visited: dates,
+        bill_per_visit: bills,
+        total_bill: parseFloat((h.total_bill || 0).toFixed(2)),
+        visit_count: h.visit_count || (Array.isArray(h.bill_per_visit) && h.bill_per_visit.length > 0 ? h.bill_per_visit.length : 1),
+        general_one_word_feedback: String(h.general_one_word_feedback || 'EXCELLENT').toUpperCase()
+      };
+    });
   }
 }
 
