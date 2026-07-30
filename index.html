@@ -205,26 +205,9 @@
       .portal-gateway-header h2 { font-size: 22px; }
       .portal-choice-card { padding: 20px 16px; border-radius: 16px; }
       .portal-card-title { font-size: 18px; }
-      
-      .features-grid, .restaurant-info-grid { 
-        display: flex;
-        overflow-x: auto;
-        scroll-snap-type: x mandatory;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-        gap: 16px; 
-        margin-bottom: 40px; 
-        padding-bottom: 12px;
-      }
-      .features-grid::-webkit-scrollbar, .restaurant-info-grid::-webkit-scrollbar {
-        display: none;
-      }
-      .feature-card, .restaurant-info-grid > div { 
-        min-width: 85%;
-        flex-shrink: 0;
-        scroll-snap-align: center;
-      }
-      
+      .features-grid { grid-template-columns: 1fr; gap: 16px; margin-bottom: 40px; }
+      .restaurant-info-grid { grid-template-columns: 1fr; gap: 16px; }
+      .feature-card { padding: 20px 16px; }
       .demo-accounts-bar { padding: 16px 12px; margin-bottom: 30px; }
       .demo-btn { width: 100%; justify-content: center; }
     }
