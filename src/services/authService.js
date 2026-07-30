@@ -498,28 +498,31 @@ class AuthService {
     try {
       const { error } = await dbEngine.supabase.auth.signInWithOtp({
         phone: cleanPhone,
-        options: { shouldCreateUser: true }
+        options: {
+          channel: 'whatsapp',
+          shouldCreateUser: true
+        }
       });
 
       if (error) {
         let errStr = error.message || error.msg || '';
         if (typeof errStr !== 'string' || !errStr.trim() || errStr === '{}') {
-          errStr = 'SMS Provider not configured in Supabase Cloud Dashboard';
+          errStr = 'WhatsApp Provider not configured in Supabase Cloud Dashboard';
         }
-        console.warn('Supabase SMS OTP Notice:', error);
+        console.warn('Supabase WhatsApp OTP Notice:', error);
 
         // Fallback to Instant Verification Demo OTP so user is never blocked
         this.pendingOtpPhone = cleanPhone;
-        this.showToast(`📱 SMS OTP generated for ${cleanPhone}! Use verification code 654321.`);
+        this.showToast(`💬 WhatsApp OTP generated for ${cleanPhone}! Use verification code 654321.`);
         return { ok: true, demoCode: '654321', notice: errStr };
       }
 
       this.pendingOtpPhone = cleanPhone;
-      this.showToast(`📲 Real-Time SMS OTP sent to ${cleanPhone} via Supabase Cloud!`);
+      this.showToast(`💬 Real-Time WhatsApp OTP sent to ${cleanPhone} via Supabase Cloud!`);
       return { ok: true };
     } catch (e) {
       this.pendingOtpPhone = cleanPhone;
-      this.showToast(`📱 SMS OTP generated for ${cleanPhone}! Use verification code 654321.`);
+      this.showToast(`💬 WhatsApp OTP generated for ${cleanPhone}! Use verification code 654321.`);
       return { ok: true, demoCode: '654321' };
     }
   }

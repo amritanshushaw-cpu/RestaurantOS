@@ -250,8 +250,8 @@ class EntryGatewayModal {
               <i class="fa-solid fa-envelope" style="color:var(--color-accent-lime);"></i> Sign in with Email OTP
             </button>
 
-            <button type="button" id="btn-signing-mobile" class="btn-sentry btn-sentry-sm" style="width:100%; justify-content:center; padding:12px 18px; font-size:13px; background:rgba(16, 185, 129, 0.15); color:#10b981; border:1px solid #10b981;">
-              <i class="fa-solid fa-mobile-screen-button"></i> Sign in with Real-Time Mobile OTP
+            <button type="button" id="btn-signing-mobile" class="btn-sentry btn-sentry-sm" style="width:100%; justify-content:center; padding:12px 18px; font-size:13px; background:linear-gradient(135deg, #25D366, #128C7E); color:#ffffff; border:none; font-weight:700; box-shadow:0 4px 15px rgba(37, 211, 102, 0.3);">
+              <i class="fa-brands fa-whatsapp" style="font-size:15px;"></i> Sign in with Real-Time WhatsApp OTP
             </button>
 
             <button type="button" id="btn-signing-quick" class="btn-ghost-sm" style="margin-top:4px; padding:10px; border:1px dashed var(--border-violet); border-radius:12px; color:${roleColor}; font-weight:700;">
