@@ -9,6 +9,7 @@
 
 import { authService } from '../services/authService.js';
 import { openEmailAuthModal } from './emailAuthModal.js';
+import { openMobileAuthModal } from './mobileAuthModal.js';
 
 class EntryGatewayModal {
   constructor() {
@@ -249,6 +250,10 @@ class EntryGatewayModal {
               <i class="fa-solid fa-envelope" style="color:var(--color-accent-lime);"></i> Sign in with Email OTP
             </button>
 
+            <button type="button" id="btn-signing-mobile" class="btn-sentry btn-sentry-sm" style="width:100%; justify-content:center; padding:12px 18px; font-size:13px; background:rgba(16, 185, 129, 0.15); color:#10b981; border:1px solid #10b981;">
+              <i class="fa-solid fa-mobile-screen-button"></i> Sign in with Real-Time Mobile OTP
+            </button>
+
             <button type="button" id="btn-signing-quick" class="btn-ghost-sm" style="margin-top:4px; padding:10px; border:1px dashed var(--border-violet); border-radius:12px; color:${roleColor}; font-weight:700;">
               <i class="fa-solid fa-bolt"></i> Quick Enter as ${roleName} Guest →
             </button>
@@ -275,6 +280,11 @@ class EntryGatewayModal {
     document.getElementById('btn-signing-email')?.addEventListener('click', () => {
       modal.remove();
       openEmailAuthModal(roleName, targetUrl);
+    });
+
+    document.getElementById('btn-signing-mobile')?.addEventListener('click', () => {
+      modal.remove();
+      openMobileAuthModal(roleName, targetUrl);
     });
 
     document.getElementById('btn-signing-quick')?.addEventListener('click', () => {

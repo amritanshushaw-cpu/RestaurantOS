@@ -119,11 +119,16 @@
 
       <div class="divider">
         <div class="divider-line"></div>
-        <span style="padding: 0 12px; text-transform: uppercase; color: var(--text-tertiary);">OR EMAIL SIGN IN</span>
+        <span style="padding: 0 12px; text-transform: uppercase; color: var(--text-tertiary);">OR PHONE / EMAIL OTP SIGN IN</span>
         <div class="divider-line"></div>
       </div>
 
-      <!-- Option 2: Email Sign In -->
+      <!-- Option 2: Real-Time Mobile OTP Sign In -->
+      <button type="button" class="btn-sentry" id="btn-mobile-otp-signin" style="width: 100%; padding: 12px; margin-bottom: 12px; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid #10b981; font-weight: 700;">
+        <i class="fa-solid fa-mobile-screen-button"></i> Sign in with Real-Time Mobile OTP
+      </button>
+
+      <!-- Option 3: Email Sign In -->
       <div style="display: flex; flex-direction: column; gap: 12px;">
         <input type="email" id="signin-email" placeholder="Email address" class="sentry-input-sm" required>
         <button id="btn-submit-signin" class="btn-sentry" style="width: 100%; padding: 12px; margin-top: 4px;">
@@ -140,6 +145,7 @@
 
   <script type="module">
     import { authService } from '../services/authService.js';
+    import { openMobileAuthModal } from '../utils/mobileAuthModal.js';
 
     document.addEventListener('DOMContentLoaded', () => {
       const urlParams = new URLSearchParams(window.location.search);
@@ -152,6 +158,11 @@
       // Option 1: Google Sign In
       document.getElementById('btn-google-signin')?.addEventListener('click', () => {
         authService.loginWithGoogle(activeRole);
+      });
+
+      // Option 2: Mobile Phone OTP Sign In
+      document.getElementById('btn-mobile-otp-signin')?.addEventListener('click', () => {
+        openMobileAuthModal(activeRole);
       });
 
       // Option 2: Email Sign In (OTP / Magic Link)
