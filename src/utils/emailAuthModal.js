@@ -31,7 +31,7 @@ export function openEmailAuthModal(targetRole = 'Customer', targetUrl = null) {
 
         <div id="email-auth-step-2" class="google-custom-login-box" style="display:none;">
           <div class="custom-login-inputs">
-            <input type="text" id="otp-code-input" placeholder="6-digit code" maxlength="6" class="sentry-input-sm">
+            <input type="text" id="otp-code-input" placeholder="Enter verification code" maxlength="10" class="sentry-input-sm" style="text-align: center; font-size: 18px; letter-spacing: 4px; font-weight: 700;">
             <button id="btn-verify-otp" class="btn-sentry btn-sentry-sm">
               <i class="fa-solid fa-check"></i> Verify & sign in
             </button>
