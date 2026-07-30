@@ -273,21 +273,32 @@
       // Render D-Table 1: Main Data Table
       const mainTbody = document.getElementById('tbl-main-data-body');
       if (mainTbody) {
-        mainTbody.innerHTML = mainRows.map(r => `
-          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-            <td style="padding: 10px; font-family: var(--font-mono);">${r.date}</td>
-            <td style="padding: 10px; font-family: var(--font-mono); color: var(--color-accent-lime); font-weight: 700;">${r.session_id}</td>
-            <td style="padding: 10px;">${r.session_start_time}</td>
-            <td style="padding: 10px;">${r.session_end_time}</td>
-            <td style="padding: 10px;">${r.customer_id}</td>
-            <td style="padding: 10px;">${r.table_no}</td>
-            <td style="padding: 10px;">${r.waiter_id}</td>
-            <td style="padding: 10px; font-family: var(--font-mono);">${r.order_id}</td>
-            <td style="padding: 10px;"><span style="font-weight: 700; color: ${r.delivered === 'Y' ? '#10b981' : '#f59e0b'};">${r.delivered}</span></td>
-            <td style="padding: 10px; font-family: var(--font-mono);">₹${(r.total_order_amount || 0).toFixed(2)}</td>
-            <td style="padding: 10px; font-family: var(--font-mono); color: var(--color-accent-lime); font-weight: 700;">₹${(r.total_session_amount || 0).toFixed(2)}</td>
-          </tr>
-        `).join('');
+        if (mainRows.length === 0) {
+          mainTbody.innerHTML = `
+            <tr>
+              <td colspan="11" style="text-align: center; padding: 24px; color: var(--text-tertiary);">
+                <i class="fa-solid fa-inbox" style="font-size: 24px; display: block; margin-bottom: 8px; color: var(--color-accent-lime);"></i>
+                All analytics & sales data reset. Place new orders to view live data.
+              </td>
+            </tr>
+          `;
+        } else {
+          mainTbody.innerHTML = mainRows.map(r => `
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+              <td style="padding: 10px; font-family: var(--font-mono);">${r.date}</td>
+              <td style="padding: 10px; font-family: var(--font-mono); color: var(--color-accent-lime); font-weight: 700;">${r.session_id}</td>
+              <td style="padding: 10px;">${r.session_start_time}</td>
+              <td style="padding: 10px;">${r.session_end_time}</td>
+              <td style="padding: 10px;">${r.customer_id}</td>
+              <td style="padding: 10px;">${r.table_no}</td>
+              <td style="padding: 10px;">${r.waiter_id}</td>
+              <td style="padding: 10px; font-family: var(--font-mono);">${r.order_id}</td>
+              <td style="padding: 10px;"><span style="font-weight: 700; color: ${r.delivered === 'Y' ? '#10b981' : '#f59e0b'};">${r.delivered}</span></td>
+              <td style="padding: 10px; font-family: var(--font-mono);">₹${(r.total_order_amount || 0).toFixed(2)}</td>
+              <td style="padding: 10px; font-family: var(--font-mono); color: var(--color-accent-lime); font-weight: 700;">₹${(r.total_session_amount || 0).toFixed(2)}</td>
+            </tr>
+          `).join('');
+        }
       }
 
       // Render D-Table 2: Table Vacancy
@@ -307,16 +318,26 @@
       const custRows = dbEngine.getDTableCustomerHistory();
       const custTbody = document.getElementById('tbl-customer-history-body');
       if (custTbody) {
-        custTbody.innerHTML = custRows.map(c => `
-          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-            <td style="padding: 10px; font-weight: 600; color: #fff;">${c.customer_id}</td>
-            <td style="padding: 10px; font-size: 12px; color: var(--text-secondary);">${c.dates_visited}</td>
-            <td style="padding: 10px; font-family: var(--font-mono); font-size: 12px; color: var(--color-accent-lime); font-weight: 600;">${c.bill_per_visit}</td>
-            <td style="padding: 10px; font-family: var(--font-mono); color: var(--color-accent-lime); font-weight: 700;">₹${Number(c.total_bill || 0).toFixed(2)}</td>
-            <td style="padding: 10px; text-align: center; font-weight: 700;">${c.visit_count}</td>
-            <td style="padding: 10px;"><span class="badge" style="background: rgba(194, 239, 78, 0.15); color: var(--color-accent-lime); font-weight: 700; padding: 4px 10px; border-radius: 4px;">${c.general_one_word_feedback}</span></td>
-          </tr>
-        `).join('');
+        if (custRows.length === 0) {
+          custTbody.innerHTML = `
+            <tr>
+              <td colspan="6" style="text-align: center; padding: 24px; color: var(--text-tertiary);">
+                No customer history logged yet.
+              </td>
+            </tr>
+          `;
+        } else {
+          custTbody.innerHTML = custRows.map(c => `
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+              <td style="padding: 10px; font-weight: 600; color: #fff;">${c.customer_id}</td>
+              <td style="padding: 10px; font-size: 12px; color: var(--text-secondary);">${c.dates_visited}</td>
+              <td style="padding: 10px; font-family: var(--font-mono); font-size: 12px; color: var(--color-accent-lime); font-weight: 600;">${c.bill_per_visit}</td>
+              <td style="padding: 10px; font-family: var(--font-mono); color: var(--color-accent-lime); font-weight: 700;">₹${Number(c.total_bill || 0).toFixed(2)}</td>
+              <td style="padding: 10px; text-align: center; font-weight: 700;">${c.visit_count}</td>
+              <td style="padding: 10px;"><span class="badge" style="background: rgba(194, 239, 78, 0.15); color: var(--color-accent-lime); font-weight: 700; padding: 4px 10px; border-radius: 4px;">${c.general_one_word_feedback}</span></td>
+            </tr>
+          `).join('');
+        }
       }
 
       if (summary.orderCount === 0) {

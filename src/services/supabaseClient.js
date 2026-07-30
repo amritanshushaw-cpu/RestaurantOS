@@ -1259,25 +1259,7 @@ Payment Options:
     const annualRevenue = quarterlyRevenue * 4;
 
     if (sessions.length === 0) {
-      // Return sample dynamic baseline row
-      return [{
-        date: todayStr,
-        session_id: '849201',
-        session_start_time: '12:30:00 PM',
-        session_end_time: '01:15:00 PM',
-        customer_id: 'CUST-8021',
-        table_no: 'Table 02',
-        waiter_id: 'WAIT-01 (Rahul S.)',
-        order_id: 'ORD-#1042',
-        delivered: 'Y',
-        total_order_amount: 1460.00,
-        total_session_amount: 1584.10,
-        daily_revenue: 1584.10,
-        weekly_revenue: 11088.70,
-        monthly_revenue: 46572.54,
-        quarterly_revenue: 139717.62,
-        annual_revenue: 558870.48
-      }];
+      return [];
     }
 
     return sessions.map(s => ({
@@ -1350,14 +1332,7 @@ Payment Options:
   getDTableCustomerHistory() {
     const history = this.getCustomerHistory();
     if (history.length === 0) {
-      return [{
-        customer_id: 'CUST-8021',
-        dates_visited: new Date().toISOString().split('T')[0],
-        bill_per_visit: '₹1584.10',
-        total_bill: 1584.10,
-        visit_count: 1,
-        general_one_word_feedback: 'EXCELLENT'
-      }];
+      return [];
     }
 
     return history.map(h => ({
