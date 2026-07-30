@@ -176,6 +176,29 @@
       </div>
     </div>
 
+    <!-- Real Session Engine Command Center (Manager Control Copy) -->
+    <div style="background: var(--color-ink-deep); border: 1.5px solid var(--color-accent-violet); border-radius: var(--radius-xl); padding: 24px; margin-bottom: 32px; box-shadow: 0 10px 30px rgba(167, 139, 250, 0.15);">
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <i class="fa-solid fa-server" style="color: var(--color-accent-violet); font-size: 20px;"></i>
+          <div>
+            <h3 style="font-family: var(--font-display); font-size: 20px; font-weight: 700; margin: 0; color: #fff;">Real Session Engine (Manager Command Center)</h3>
+            <p style="font-size: 12px; color: var(--text-secondary); margin: 2px 0 0;">Live active table session orchestration, waiter assignment, and session termination controls</p>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span class="badge" id="manager-session-count-badge" style="background: rgba(167, 139, 250, 0.2); color: var(--color-accent-violet); font-weight: 700; font-size: 12px; padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(167, 139, 250, 0.4);">
+            <i class="fa-solid fa-signal" style="color: #10b981;"></i> 0 Active Sessions
+          </span>
+        </div>
+      </div>
+
+      <!-- Live Active Sessions Grid -->
+      <div id="manager-live-sessions-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+        <!-- Live Session Cards Rendered Dynamically -->
+      </div>
+    </div>
+
     <!-- Plotly.js Interactive BI Charts Grid -->
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px;">
       <!-- Chart 1: Multi-Period Revenue Breakdown -->
@@ -322,6 +345,9 @@
       const biAnnual = firstRow.annual_revenue || (summary.grossRevenue * 365) || 0;
       renderPlotlyBICharts(biDaily, biWeekly, biMonthly, biQuarterly, biAnnual);
 
+      // Render Manager Real Session Engine Live Command Center
+      renderManagerSessionEngine();
+
       // Render D-Table 1: Main Data Table
       const mainTbody = document.getElementById('tbl-main-data-body');
       if (mainTbody) {
@@ -420,6 +446,75 @@
         renderAnalytics();
       }
     });
+
+    // ─── Real Session Engine Command Center Rendering ─────────────
+    function renderManagerSessionEngine() {
+      const container = document.getElementById('manager-live-sessions-container');
+      const countBadge = document.getElementById('manager-session-count-badge');
+      if (!container) return;
+
+      const sessions = dbEngine.getSessions();
+      const activeSessions = sessions.filter(s => s.status === 'ACTIVE' || s.status === 'PAYMENT_PENDING' || s.status === 'OCCUPIED');
+
+      if (countBadge) {
+        countBadge.innerHTML = `<i class="fa-solid fa-signal" style="color: #10b981;"></i> ${activeSessions.length} Active Sessions`;
+      }
+
+      if (activeSessions.length === 0) {
+        container.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 24px; background: rgba(0,0,0,0.2); border: 1px dashed var(--border-violet); border-radius: var(--radius-lg); color: var(--text-tertiary);">
+            <i class="fa-solid fa-chair" style="font-size: 24px; color: var(--color-accent-lime); display: block; margin-bottom: 8px;"></i>
+            No active table sessions running right now. Place an order on POS or Customer space to initiate a real session.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = activeSessions.map(s => {
+        const statusColor = s.status === 'PAYMENT_PENDING' ? '#f59e0b' : '#10b981';
+        return `
+          <div style="background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-lg); padding: 16px; position: relative;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <span style="font-weight: 700; font-size: 15px; color: #fff;">${s.table_no}</span>
+              <span class="badge" style="background: ${statusColor}20; color: ${statusColor}; border: 1px solid ${statusColor}40; font-size: 10px; font-weight: 700;">
+                ${s.status}
+              </span>
+            </div>
+
+            <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">
+              <strong>Session ID:</strong> <span class="mono" style="color: var(--color-accent-lime);">${s.session_id}</span>
+            </div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">
+              <strong>Customer:</strong> ${s.customer_name || s.customer_id}
+            </div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">
+              <strong>Waiter Allotted:</strong> <span style="color: var(--color-accent-pink); font-weight: 700;">${s.waiter_id || 'WTR-SAM'}</span>
+            </div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 12px;">
+              <strong>Started:</strong> ${s.session_start_time || 'Just now'} &bull; <strong>Total:</strong> <span style="font-family: var(--font-mono); color: var(--color-accent-lime); font-weight: 700;">₹${(s.total_session_amount || s.total_order_amount || 0).toFixed(2)}</span>
+            </div>
+
+            <div style="display: flex; gap: 8px;">
+              <button type="button" class="btn-mgr-terminate-sess" data-sessid="${s.session_id}" data-table="${s.table_no}" style="flex: 1; padding: 8px; font-size: 11px; font-weight: 700; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 6px; cursor: pointer;">
+                <i class="fa-solid fa-power-off"></i> Terminate Session
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      container.querySelectorAll('.btn-mgr-terminate-sess').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const sessId = btn.dataset.sessid;
+          const tableNo = btn.dataset.table;
+          if (confirm(`Terminate live session ${sessId} for ${tableNo}?`)) {
+            dbEngine.terminateSession(sessId, 'Cash', { rating: 5, reviewText: 'Terminated via Manager Session Engine' });
+            alert(`Session ${sessId} terminated. ${tableNo} is now vacant.`);
+            renderAnalytics();
+          }
+        });
+      });
+    }
 
     // ─── Plotly.js BI Charts Rendering ──────────────────────────
     function renderPlotlyBICharts(daily, weekly, monthly, quarterly, annual) {
