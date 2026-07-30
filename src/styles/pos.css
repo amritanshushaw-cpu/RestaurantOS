@@ -25,6 +25,13 @@
   scrollbar-width: thin;
   scrollbar-color: rgba(194, 239, 78, 0.35) rgba(0, 0, 0, 0.2);
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+  user-select: none;
+  cursor: grab;
+}
+
+.pos-categories:active {
+  cursor: grabbing;
 }
 
 .pos-categories::-webkit-scrollbar {
@@ -59,6 +66,7 @@
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
+  user-select: none;
   transition: all 0.2s ease;
 }
 
@@ -306,47 +314,19 @@
   }
 
   .app-header > div {
-    display: flex !important;
-    flex-wrap: nowrap !important;
-    gap: 10px !important;
-    overflow-x: auto !important;
-    white-space: nowrap !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    padding-bottom: 8px !important;
-    padding-right: 28px !important;
-    box-sizing: border-box !important;
-    -webkit-overflow-scrolling: touch !important;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(194, 239, 78, 0.35) rgba(0, 0, 0, 0.2);
-    scroll-snap-type: x mandatory;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px !important;
+    width: 100%;
   }
 
-  .app-header > div::-webkit-scrollbar {
-    height: 4px;
-  }
-
-  .app-header > div::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 4px;
-  }
-
-  .app-header > div::-webkit-scrollbar-thumb {
-    background: rgba(194, 239, 78, 0.4);
-    border-radius: 4px;
-  }
-
-  .app-header > div > button,
-  .app-header > div > select,
-  .app-header > div > .btn-sentry,
-  .app-header > div > .btn-ghost-on-dark {
-    flex-shrink: 0 !important;
-    white-space: nowrap !important;
-    width: auto !important;
-    min-height: 40px !important;
-    padding: 8px 16px !important;
+  .app-header button,
+  .app-header select {
+    width: 100%;
+    justify-content: center;
     font-size: 11px !important;
-    scroll-snap-align: start;
+    padding: 10px 8px !important;
+    min-height: 40px;
   }
 
   .app-header label {

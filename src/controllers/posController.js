@@ -450,7 +450,52 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (!menuGrid || !categoryBar) return;
 
-  // Dynamically Render Category Filter Pills
+  // Dynamically Render Category Filter Pills with Mouse Drag & Touch Sliding
+  function enableDragToSlide(el) {
+    if (!el || el.dataset.slidableInit) return;
+    el.dataset.slidableInit = 'true';
+
+    let isDown = false;
+    let startX = 0;
+    let scrollLeft = 0;
+    let isDragging = false;
+
+    el.addEventListener('mousedown', (e) => {
+      isDown = true;
+      isDragging = false;
+      startX = e.pageX - el.offsetLeft;
+      scrollLeft = el.scrollLeft;
+    });
+
+    el.addEventListener('mouseleave', () => { isDown = false; });
+    el.addEventListener('mouseup', () => { 
+      setTimeout(() => { isDown = false; isDragging = false; }, 50);
+    });
+
+    el.addEventListener('mousemove', (e) => {
+      if (!isDown) return;
+      const x = e.pageX - el.offsetLeft;
+      const walk = (x - startX) * 2;
+      if (Math.abs(walk) > 5) {
+        isDragging = true;
+        e.preventDefault();
+        el.scrollLeft = scrollLeft - walk;
+      }
+    });
+
+    // Touch events momentum sliding
+    el.addEventListener('touchstart', (e) => {
+      startX = e.touches[0].pageX - el.offsetLeft;
+      scrollLeft = el.scrollLeft;
+    }, { passive: true });
+
+    el.addEventListener('touchmove', (e) => {
+      const x = e.touches[0].pageX - el.offsetLeft;
+      const walk = (x - startX) * 1.5;
+      el.scrollLeft = scrollLeft - walk;
+    }, { passive: true });
+  }
+
   function renderCategoryPills() {
     const { categories } = menuService.loadMenu();
     categoryBar.innerHTML = `<button class="category-pill ${currentCategoryFilter === 'ALL' ? 'active' : ''}" data-cat="ALL">All Items</button>`;
@@ -462,6 +507,8 @@ document.addEventListener('DOMContentLoaded', () => {
       pill.textContent = cat.name;
       categoryBar.appendChild(pill);
     });
+
+    enableDragToSlide(categoryBar);
 
     categoryBar.querySelectorAll('.category-pill').forEach(pill => {
       pill.addEventListener('click', () => {
