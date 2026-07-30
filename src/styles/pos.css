@@ -438,6 +438,17 @@
     min-height: 48px;
   }
 
+/* Accessibility Focus States */
+.category-pill:focus-visible,
+.add-btn:focus-visible,
+.qty-btn:focus-visible,
+.pay-btn:focus-visible,
+.app-header button:focus-visible,
+.app-header select:focus-visible {
+  outline: 2.5px solid var(--color-accent-lime) !important;
+  outline-offset: 2px !important;
+}
+
   #waiter-notifications-panel {
     padding: 14px !important;
   }

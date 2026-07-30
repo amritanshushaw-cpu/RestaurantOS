@@ -91,8 +91,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const buttonHtml = btnAction 
-        ? `<button type="button" class="btn-sentry btn-waiter-action" data-id="${o.id}" data-action="${btnAction}" style="width: 100%; background: ${btnBg}; color: #000; padding: 6px;">${btnLabel}</button>` 
-        : `<div style="color: var(--text-tertiary); font-size: 12px; text-align: center; padding: 6px; border: 1px dashed var(--border-violet); border-radius: 4px;">${btnLabel}</div>`;
+        ? `<button type="button" class="btn-sentry btn-waiter-action" data-id="${o.id}" data-action="${btnAction}" aria-label="${btnLabel} for ${o.table_number || o.table_id || 'Table'}" style="width: 100%; background: ${btnBg}; color: #000; padding: 10px 14px; min-height: 44px; font-weight: 700; font-size: 13px; border-radius: 6px; cursor: pointer; border: none;">${btnLabel}</button>` 
+        : `<div style="color: var(--text-tertiary); font-size: 12px; text-align: center; padding: 10px; border: 1px dashed var(--border-violet); border-radius: 4px;">${btnLabel}</div>`;
 
       const itemsSummary = (o.items || []).map(i => `${i.quantity || 1}x ${i.name || i.item_name}`).join(', ');
 
@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div style="background: var(--color-primary); border: 1px solid #8b5cf6; padding: 12px; border-radius: 8px; min-width: 250px; border-left: 4px solid #8b5cf6;">
           <div style="font-weight: 700; color: #fff;">${s.table_no} - Bill Payment</div>
           <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">Type: ${s.payment_type} (Pending)</div>
-          <button type="button" class="btn-sentry btn-waiter-payment" data-session="${s.session_id}" data-type="${s.payment_type}" style="width: 100%; background: #8b5cf6; color: #fff; padding: 6px;">
+          <button type="button" class="btn-sentry btn-waiter-payment" data-session="${s.session_id}" data-type="${s.payment_type}" aria-label="Verify and Accept Payment for ${s.table_no}" style="width: 100%; background: #8b5cf6; color: #fff; padding: 10px 14px; min-height: 44px; font-weight: 700; font-size: 13px; border-radius: 6px; cursor: pointer; border: none;">
             Verify & Accept Payment
           </button>
         </div>
