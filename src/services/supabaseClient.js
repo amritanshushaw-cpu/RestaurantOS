@@ -994,6 +994,10 @@ class DynamicDatabaseEngine {
     if (updatedOrders) {
       localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
     }
+    
+    // Broadcast cloud sync across all devices
+    this.broadcastSessionSync(session);
+    this.broadcastTableSync(this.getTables());
     try { window.dispatchEvent(new Event('storage')); } catch(e){}
 
     // Extract 1-word general feedback from feedback popup (e.g. sentiment emoji or text)

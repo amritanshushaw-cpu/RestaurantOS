@@ -1130,17 +1130,15 @@ ${formattedBillText}
       const reviewText = document.getElementById('cust-review-text')?.value || '';
       const feedbackObj = { rating: selectedRating, reviewText };
 
-      // Save feedback locally, Waiter will terminate the session upon payment receipt
-      const sessions = dbEngine.getSessions();
-      const targetSession = sessions.find(s => s.session_id === session.session_id);
-      if (targetSession) {
-         targetSession.feedback = feedbackObj;
-         dbEngine.saveSessions(sessions);
-      }
-      
-      authService.showToast('Feedback submitted! Waiter is verifying payment.');
+      // Terminate session, mark table vacant (AVAILABLE), and record payment
+      dbEngine.terminateSession(session.session_id, paymentType, feedbackObj);
+      currentActiveSession = null;
+      selectedTable = 'Table 01';
+
+      authService.showToast(`✅ Bill paid via ${paymentType}! Session ${session.session_id} TERMINATED. Table ${session.table_no} is now VACANT.`);
       fbModal.remove();
       refreshActiveSessionUI();
+      renderTableMatrixUI();
     });
   }
 
