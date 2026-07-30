@@ -971,7 +971,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Initial Load
+  // Initial Load & Realtime Manager Reset
+  window.addEventListener('rest_os_analytics_reset', () => {
+    if (typeof activeCart !== 'undefined') {
+      activeCart = [];
+      renderCart();
+    }
+    renderTableMatrix();
+    renderKitchenReadyNotifications();
+    if (window.authService && window.authService.showToast) {
+      window.authService.showToast('🧹 Analytics & Sessions Reset by Manager! All POS state cleared.');
+    }
+  });
+
+  window.addEventListener('storage', () => {
+    renderTableMatrix();
+    renderKitchenReadyNotifications();
+  });
+
   renderCategoryPills();
   renderMenuItems('ALL');
 });

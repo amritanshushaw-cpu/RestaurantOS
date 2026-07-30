@@ -1191,6 +1191,29 @@ ${formattedBillText}
     }, { passive: true });
   }
 
+  // Realtime Manager Reset across all Customer devices
+  window.addEventListener('rest_os_analytics_reset', () => {
+    currentActiveSession = null;
+    const custId = authService.user?.email || authService.user?.id || getDeviceCustomerId();
+    dbEngine.clearActiveSession(custId);
+    selectedTable = 'Table 01';
+
+    document.getElementById('cust-payment-bill-modal')?.remove();
+    document.getElementById('cust-feedback-modal')?.remove();
+
+    refreshActiveSessionUI();
+    renderTableMatrixUI();
+
+    if (window.authService && window.authService.showToast) {
+      window.authService.showToast('🧹 Manager Reset: Your table session has been ended & analytics reset across all devices.');
+    }
+  });
+
+  window.addEventListener('storage', () => {
+    refreshActiveSessionUI();
+    renderTableMatrixUI();
+  });
+
   initHeaderNavigation();
   menuData = menuService.loadMenu() || { categories: [], items: [] };
   renderCategories();
