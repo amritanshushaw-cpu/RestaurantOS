@@ -1209,9 +1209,17 @@ ${formattedBillText}
     }
   });
 
-  window.addEventListener('storage', () => {
-    refreshActiveSessionUI();
-    renderTableMatrixUI();
+  window.addEventListener('storage', (e) => {
+    if (!e.key || e.key === 'rest_os_last_reset' || e.key === 'rest_os_sessions' || e.key === 'rest_os_tables' || e.key === 'rest_os_orders') {
+      const custId = authService.user?.email || authService.user?.id || getDeviceCustomerId();
+      const session = dbEngine.getActiveSessionForCustomer(custId);
+      if (!session) {
+        currentActiveSession = null;
+        selectedTable = 'Table 01';
+      }
+      refreshActiveSessionUI();
+      renderTableMatrixUI();
+    }
   });
 
   initHeaderNavigation();

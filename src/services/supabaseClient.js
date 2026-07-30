@@ -19,13 +19,28 @@ const STORAGE_KEYS = {
 class DynamicDatabaseEngine {
   constructor() {
     // Real credentials come from src/config.js (window.SUPABASE_URL / SUPABASE_ANON_KEY).
-    // No fake project fallback: if unset, the app runs in local-only demo
-    // mode and hasValidSupabaseConfig() reports that honestly instead of
-    // pretending to be connected to a dead placeholder project.
     this.supabaseUrl = (window.SUPABASE_URL || '').trim();
     this.supabaseAnonKey = (window.SUPABASE_ANON_KEY || '').trim();
     this.supabase = this.initSupabaseClient();
     this.initDefaultState();
+
+    if (typeof BroadcastChannel !== 'undefined') {
+      try {
+        this.localBroadcastChannel = new BroadcastChannel('restaurant_os_live_sync');
+        this.localBroadcastChannel.onmessage = (event) => {
+          const { type, payload } = event.data || {};
+          if (type === 'analytics_reset') {
+            this.handleRemoteAnalyticsReset();
+          } else if (type === 'order_sync' && payload) {
+            this.handleRemoteOrderSync(payload);
+          } else if (type === 'session_sync' && payload) {
+            this.handleRemoteSessionSync(payload);
+          } else if (type === 'table_sync' && payload) {
+            this.handleRemoteTableSync(payload);
+          }
+        };
+      } catch (e) {}
+    }
   }
 
   initSupabaseClient() {
@@ -82,10 +97,16 @@ class DynamicDatabaseEngine {
   }
 
   broadcastAnalyticsReset() {
+    localStorage.setItem('rest_os_last_reset', Date.now().toString());
     try {
       window.dispatchEvent(new Event('storage'));
       window.dispatchEvent(new CustomEvent('rest_os_analytics_reset'));
     } catch (e) {}
+    if (this.localBroadcastChannel) {
+      try {
+        this.localBroadcastChannel.postMessage({ type: 'analytics_reset', payload: { timestamp: Date.now() } });
+      } catch (e) {}
+    }
     if (this.realtimeChannel) {
       try {
         this.realtimeChannel.send({
@@ -103,6 +124,11 @@ class DynamicDatabaseEngine {
       window.dispatchEvent(new Event('storage'));
       window.dispatchEvent(new CustomEvent('rest_os_order_sync', { detail: order }));
     } catch (e) {}
+    if (this.localBroadcastChannel) {
+      try {
+        this.localBroadcastChannel.postMessage({ type: 'order_sync', payload: order });
+      } catch (e) {}
+    }
     if (this.realtimeChannel) {
       try {
         this.realtimeChannel.send({
@@ -120,6 +146,11 @@ class DynamicDatabaseEngine {
       window.dispatchEvent(new Event('storage'));
       window.dispatchEvent(new CustomEvent('rest_os_session_sync', { detail: session }));
     } catch(e) {}
+    if (this.localBroadcastChannel) {
+      try {
+        this.localBroadcastChannel.postMessage({ type: 'session_sync', payload: session });
+      } catch (e) {}
+    }
     if (this.realtimeChannel) {
       try {
         this.realtimeChannel.send({
@@ -137,6 +168,11 @@ class DynamicDatabaseEngine {
       window.dispatchEvent(new Event('storage'));
       window.dispatchEvent(new CustomEvent('rest_os_table_sync', { detail: tables }));
     } catch(e) {}
+    if (this.localBroadcastChannel) {
+      try {
+        this.localBroadcastChannel.postMessage({ type: 'table_sync', payload: tables });
+      } catch (e) {}
+    }
     if (this.realtimeChannel) {
       try {
         this.realtimeChannel.send({
@@ -666,6 +702,8 @@ class DynamicDatabaseEngine {
     localStorage.removeItem(STORAGE_KEYS.CUSTOMER_HISTORY);
     localStorage.removeItem(STORAGE_KEYS.TABLE_VACANCY);
     localStorage.removeItem('rest_os_active_session');
+    try { sessionStorage.removeItem('rest_os_active_session'); } catch (e) {}
+    localStorage.setItem('rest_os_last_reset', Date.now().toString());
 
     // Reset table statuses back to AVAILABLE
     const defaultTables = [
