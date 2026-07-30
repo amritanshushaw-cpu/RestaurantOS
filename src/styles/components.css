@@ -4,6 +4,31 @@
 
 @import './tokens.css';
 
+/* Global Master Custom Scrollbars (No native Windows scrollbars) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 10, 24, 0.6);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(167, 139, 250, 0.35);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent-lime);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(167, 139, 250, 0.35) rgba(15, 10, 24, 0.6);
+}
+
 /* Ambient Background Glows */
 .bg-glow {
   position: fixed;
