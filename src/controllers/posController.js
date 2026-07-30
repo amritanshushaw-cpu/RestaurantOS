@@ -212,24 +212,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const badge = document.getElementById('waiter-notif-count-badge');
     if (!alertsList) return;
 
+    // Remove any leftover top notification bar
+    const topBar = document.getElementById('waiter-top-booking-bar');
+    if (topBar) topBar.remove();
+
     const allOrders = dbEngine.getOrders();
+    const sessions = dbEngine.getSessions();
+
     const activeKitchenOrders = allOrders.filter(o => 
       o.status !== 'COMPLETED' && 
       o.status !== 'PAID' && 
       o.status !== 'CANCELLED' && 
-      o.status !== 'TERMINATED' &&
-      o.delivered !== 'Y'
+      o.status !== 'TERMINATED'
     );
 
-    const readyOrders = activeKitchenOrders.filter(o => o.status === 'READY');
+    const paymentPendingOrders = activeKitchenOrders.filter(o => o.delivered === 'Y' || o.status === 'PAYMENT_PENDING' || o.status === 'SERVED');
+    const readyOrders = activeKitchenOrders.filter(o => o.status === 'READY' && o.delivered !== 'Y');
+    const cookingOrders = activeKitchenOrders.filter(o => o.status !== 'READY' && o.status !== 'PAYMENT_PENDING' && o.status !== 'SERVED' && o.delivered !== 'Y');
+    const activeSessions = sessions.filter(s => s.status === 'ACTIVE');
 
-    if (readyOrders.length > 0) {
+    const totalActiveNotifs = paymentPendingOrders.length + readyOrders.length + activeSessions.length;
+
+    if (totalActiveNotifs > 0) {
       if (badge) {
-        badge.textContent = readyOrders.length;
+        badge.textContent = totalActiveNotifs;
         badge.style.display = 'flex';
       }
       if (readyOrders.length > prevReadyOrderCount) {
-        authService.showToast(`🔔 KITCHEN ALERT: ${readyOrders.length} order(s) READY for table delivery!`);
+        authService.showToast(`🔔 KITCHEN ALERT: ${readyOrders.length} order(s) READY for table delivery! Check Notifications Tab.`);
       }
     } else {
       if (badge) {
@@ -238,57 +248,92 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     prevReadyOrderCount = readyOrders.length;
 
-    if (activeKitchenOrders.length === 0) {
+    if (activeKitchenOrders.length === 0 && activeSessions.length === 0) {
       alertsList.innerHTML = `
         <div style="grid-column: 1/-1; text-align: center; color: var(--text-tertiary); padding: 24px 12px;">
           <i class="fa-solid fa-bell-concierge" style="color: var(--color-accent-pink); font-size: 28px; display: block; margin-bottom: 10px;"></i>
-          <p style="font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 4px;">No active kitchen orders right now.</p>
-          <p style="font-size: 12px; color: var(--text-tertiary);">When customers or waiters place an order, live cooking updates and ready alerts appear here!</p>
+          <p style="font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 4px;">No active notifications right now.</p>
+          <p style="font-size: 12px; color: var(--text-tertiary);">Live table bookings, kitchen ready alerts, and payment pending notifications appear here!</p>
         </div>
       `;
       return;
     }
 
-    alertsList.innerHTML = activeKitchenOrders.map(order => {
-      const isServed = order.delivered === 'Y' || order.status === 'PAYMENT_PENDING' || order.status === 'SERVED';
-      const isReady = order.status === 'READY';
+    let cardsHtml = '';
+
+    // Section 1: Payment Pending Cards (Amber Glow)
+    paymentPendingOrders.forEach(order => {
       const formattedTime = order.created_at ? new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now';
       const itemsList = (order.items || []).map(i => `${i.quantity}x ${i.name || i.item_name}`).join(', ') || 'Dish Items';
       const tableStr = order.table_number || order.table_id || 'Table 01';
 
-      let borderStyle = '1px solid var(--border-violet)';
-      let statusText = `<span style="color: #3b82f6; font-weight: 700;"><i class="fa-solid fa-utensils"></i> ORDER RECEIVED (${order.status})</span>`;
-      let actionBtnHTML = `
-        <button type="button" disabled style="padding: 10px; font-size: 12px; width: 100%; background: rgba(59, 130, 246, 0.12); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); font-weight: 700; border-radius: 6px; cursor: not-allowed; display: flex; align-items: center; justify-content: center; gap: 6px;">
-          <i class="fa-solid fa-fire-burner"></i> Order Received (Cooking in Kitchen...)
-        </button>
-      `;
-
-      if (isServed) {
-        borderStyle = '1.5px solid #f59e0b';
-        statusText = `<span style="color: #f59e0b; font-weight: 700;"><i class="fa-solid fa-clock"></i> PAYMENT PENDING</span>`;
-        actionBtnHTML = `
-          <div style="display: flex; flex-direction: column; gap: 6px;">
-            <div style="padding: 6px; background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.4); border-radius: 6px; font-size: 11px; font-weight: 700; text-align: center;">
-              <i class="fa-solid fa-hourglass-half"></i> Status: Payment Pending
+      cardsHtml += `
+        <div style="background: var(--color-primary); border: 1.5px solid #f59e0b; border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px; box-shadow: 0 4px 20px rgba(245,158,11,0.2);">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed rgba(245,158,11,0.3); padding-bottom: 8px; margin-bottom: 8px;">
+              <strong style="color: #f59e0b; font-size: 14px; font-family: var(--font-mono);">${order.order_number}</strong>
+              <span class="badge sandbox-badge" style="background: rgba(245,158,11,0.2); color: #f59e0b; font-weight: 700;">${tableStr}</span>
             </div>
-            <button type="button" class="btn-sentry btn-generate-bill-notif" data-table="${tableStr}" style="padding: 10px; font-size: 12px; width: 100%; background: #f59e0b; color: #000; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(245,158,11,0.3);">
-              <i class="fa-solid fa-file-invoice-dollar"></i> Generate Bill & Pay
-            </button>
+            
+            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">
+              <strong>Dishes Served:</strong> <span style="color: #fff; font-weight: 600;">${itemsList}</span>
+            </div>
+
+            <div style="font-size: 11px; color: var(--text-tertiary); margin-bottom: 4px;">
+              <span><i class="fa-regular fa-clock"></i> ${formattedTime}</span> &nbsp;·&nbsp;
+              <span><i class="fa-solid fa-user"></i> Customer: ${order.customer_name || 'Guest'}</span>
+            </div>
+            
+            <div style="font-size: 11px; color: #f59e0b; font-weight: 700;">
+              <i class="fa-solid fa-file-invoice-dollar"></i> PAYMENT PENDING: GST Bill Ready for Settlement
+            </div>
           </div>
-        `;
-      } else if (isReady) {
-        borderStyle = '1.5px solid #10b981';
-        statusText = `<span style="color: #10b981; font-weight: 700;"><i class="fa-solid fa-circle-check"></i> READY FOR PICKUP</span>`;
-        actionBtnHTML = `
+
+          <button type="button" class="btn-sentry btn-generate-bill-notif" data-table="${tableStr}" style="padding: 10px; font-size: 12px; width: 100%; background: #f59e0b; color: #000; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(245,158,11,0.3);">
+            <i class="fa-solid fa-file-invoice-dollar"></i> GENERATE BILL & PAY (${tableStr})
+          </button>
+        </div>
+      `;
+    });
+
+    // Section 2: Ready for Pickup Cards (Green Glow)
+    readyOrders.forEach(order => {
+      const formattedTime = order.created_at ? new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now';
+      const itemsList = (order.items || []).map(i => `${i.quantity}x ${i.name || i.item_name}`).join(', ') || 'Dish Items';
+      const tableStr = order.table_number || order.table_id || 'Table 01';
+
+      cardsHtml += `
+        <div style="background: var(--color-primary); border: 1.5px solid #10b981; border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px; box-shadow: 0 4px 20px rgba(16,185,129,0.2);">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed rgba(16,185,129,0.3); padding-bottom: 8px; margin-bottom: 8px;">
+              <strong style="color: var(--color-accent-lime); font-size: 14px; font-family: var(--font-mono);">${order.order_number}</strong>
+              <span class="badge sandbox-badge" style="background: rgba(16,185,129,0.2); color: #10b981; font-weight: 700;">${tableStr}</span>
+            </div>
+            
+            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">
+              <strong>Dishes Ready:</strong> <span style="color: #fff; font-weight: 600;">${itemsList}</span>
+            </div>
+
+            <div style="font-size: 11px; color: #10b981; font-weight: 700;">
+              <i class="fa-solid fa-circle-check"></i> READY FOR PICKUP FROM KITCHEN
+            </div>
+          </div>
+
           <button type="button" class="btn-sentry btn-mark-served-notif" data-id="${order.id || order.order_number}" data-table="${tableStr}" style="padding: 10px; font-size: 12px; width: 100%; background: #10b981; color: #000; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(16,185,129,0.3);">
             <i class="fa-solid fa-check-double"></i> MARK SERVED & DELIVERED
           </button>
-        `;
-      }
+        </div>
+      `;
+    });
 
-      return `
-        <div style="background: var(--color-primary); border: ${borderStyle}; border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
+    // Section 3: Cooking Orders (Blue Glow)
+    cookingOrders.forEach(order => {
+      const formattedTime = order.created_at ? new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now';
+      const itemsList = (order.items || []).map(i => `${i.quantity}x ${i.name || i.item_name}`).join(', ') || 'Dish Items';
+      const tableStr = order.table_number || order.table_id || 'Table 01';
+
+      cardsHtml += `
+        <div style="background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
           <div>
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 8px; margin-bottom: 8px;">
               <strong style="color: var(--color-accent-lime); font-size: 14px; font-family: var(--font-mono);">${order.order_number}</strong>
@@ -301,15 +346,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
             <div style="font-size: 11px; color: var(--text-tertiary);">
               <span><i class="fa-regular fa-clock"></i> ${formattedTime}</span> &nbsp;·&nbsp;
-              <span><i class="fa-solid fa-user-ninja"></i> Waiter: ${order.waiter_id || 'Waitstaff'}</span> &nbsp;·&nbsp;
-              ${statusText}
+              <span style="color: #3b82f6; font-weight: 700;"><i class="fa-solid fa-utensils"></i> Cooking in Kitchen...</span>
             </div>
           </div>
 
-          ${actionBtnHTML}
+          <button type="button" disabled style="padding: 10px; font-size: 12px; width: 100%; background: rgba(59, 130, 246, 0.12); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); font-weight: 700; border-radius: 6px; cursor: not-allowed; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <i class="fa-solid fa-fire-burner"></i> Cooking in Kitchen...
+          </button>
         </div>
       `;
-    }).join('');
+    });
+
+    // Section 4: Table Booking Cards (Pink Glow)
+    activeSessions.forEach(session => {
+      cardsHtml += `
+        <div style="background: var(--color-primary); border: 1.5px solid #ec4899; border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px; box-shadow: 0 4px 20px rgba(236,72,153,0.2);">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed rgba(236,72,153,0.3); padding-bottom: 8px; margin-bottom: 8px;">
+              <strong style="color: var(--color-accent-pink); font-size: 14px; font-family: var(--font-mono);">SESS-${session.session_id}</strong>
+              <span class="badge sandbox-badge" style="background: rgba(236,72,153,0.2); color: #ec4899; font-weight: 700;">${session.table_no}</span>
+            </div>
+            
+            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">
+              <strong>Customer:</strong> <span style="color: #fff; font-weight: 600;">${session.customer_name || 'Guest'}</span>
+            </div>
+
+            <div style="font-size: 11px; color: #ec4899; font-weight: 700;">
+              <i class="fa-solid fa-chair"></i> TABLE BOOKED & ACTIVE SESSION
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    alertsList.innerHTML = cardsHtml;
 
     alertsList.querySelectorAll('.btn-mark-served-notif').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -337,96 +407,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderTableBookingTopBar() {
-    const sessions = dbEngine.getSessions();
-    const orders = dbEngine.getOrders();
-    const appContainer = document.querySelector('.app-container');
-    let topBar = document.getElementById('waiter-top-booking-bar');
-
-    // Priority 1: Payment Pending Top Bar (Food Served -> Payment Pending)
-    const paymentPendingSessions = sessions.filter(s => s.status === 'PAYMENT_PENDING' || s.delivered === 'Y');
-    const paymentPendingOrders = orders.filter(o => (o.status === 'PAYMENT_PENDING' || o.delivered === 'Y') && o.status !== 'COMPLETED' && o.status !== 'PAID');
-
-    if (paymentPendingSessions.length > 0 || paymentPendingOrders.length > 0) {
-      const targetObj = paymentPendingSessions[0] || paymentPendingOrders[0];
-      const tableNo = targetObj.table_no || targetObj.table_number || targetObj.table_id || 'Table 01';
-      
-      if (!topBar && appContainer) {
-        topBar = document.createElement('div');
-        topBar.id = 'waiter-top-booking-bar';
-        appContainer.parentNode.insertBefore(topBar, appContainer);
-      }
-      if (topBar) {
-        topBar.style.cssText = 'max-width: 1320px; margin: 16px auto 0; padding: 0 16px;';
-        topBar.innerHTML = `
-          <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(236, 72, 153, 0.25)); border: 1.5px solid #f59e0b; border-radius: var(--radius-xl); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.6); animation: slideDown 0.3s ease;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <div style="background: rgba(245, 158, 11, 0.25); width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                <i class="fa-solid fa-file-invoice-dollar" style="color: #f59e0b; font-size: 22px;"></i>
-              </div>
-              <div>
-                <h4 style="font-size: 15px; font-weight: 700; color: #fff; margin: 0 0 2px;">
-                  💳 PAYMENT PENDING: Food Served for <span style="color: #f59e0b; font-family: var(--font-mono);">${tableNo}</span>
-                </h4>
-                <span style="font-size: 12px; color: var(--text-secondary);">
-                  Customer: <strong style="color: #fff;">${targetObj.customer_name || 'Guest'}</strong> &nbsp;·&nbsp; GST Bill Ready for Settlement &nbsp;·&nbsp; <strong style="color: #f59e0b;">Action Required: Generate Bill & Collect Payment</strong>
-                </span>
-              </div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <button type="button" class="btn-sentry btn-top-gen-bill" data-table="${tableNo}" style="padding: 8px 16px; font-size: 12px; background: #f59e0b; color: #000; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(245,158,11,0.4);">
-                <i class="fa-solid fa-file-invoice-dollar"></i> Generate Bill & Pay (${tableNo})
-              </button>
-              <button type="button" class="btn-sentry" onclick="this.closest('#waiter-top-booking-bar').remove()" style="padding: 6px 10px; font-size: 11px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 6px; cursor: pointer;">
-                <i class="fa-solid fa-xmark"></i>
-              </button>
-            </div>
-          </div>
-        `;
-
-        topBar.querySelector('.btn-top-gen-bill')?.addEventListener('click', (e) => {
-          e.preventDefault();
-          const targetTable = e.currentTarget.getAttribute('data-table');
-          openWaiterBillPaymentModal(targetTable);
-        });
-      }
-      return;
-    }
-
-    // Priority 2: Table Booked Top Bar (Active Booking)
-    const activeSessions = sessions.filter(s => s.status === 'ACTIVE');
-    if (activeSessions.length > 0) {
-      const latestSession = activeSessions[0];
-      if (!topBar && appContainer) {
-        topBar = document.createElement('div');
-        topBar.id = 'waiter-top-booking-bar';
-        appContainer.parentNode.insertBefore(topBar, appContainer);
-      }
-      if (topBar) {
-        topBar.style.cssText = 'max-width: 1320px; margin: 16px auto 0; padding: 0 16px;';
-        topBar.innerHTML = `
-          <div style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.25), rgba(194, 239, 78, 0.25)); border: 1.5px solid var(--color-accent-pink); border-radius: var(--radius-xl); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); animation: slideDown 0.3s ease;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <div style="background: rgba(236, 72, 153, 0.2); width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                <i class="fa-solid fa-bell-concierge" style="color: var(--color-accent-pink); font-size: 22px;"></i>
-              </div>
-              <div>
-                <h4 style="font-size: 15px; font-weight: 700; color: #fff; margin: 0 0 2px;">
-                  🔔 NEW TABLE BOOKED: <span style="color: var(--color-accent-lime); font-family: var(--font-mono);">${latestSession.table_no}</span>
-                </h4>
-                <span style="font-size: 12px; color: var(--text-secondary);">
-                  Customer: <strong style="color: #fff;">${latestSession.customer_name}</strong> &nbsp;·&nbsp; Session ID: <strong style="color: var(--color-accent-lime); font-family: var(--font-mono);">${latestSession.session_id}</strong> &nbsp;·&nbsp; Allotted Waiter: <strong style="color: var(--color-accent-pink);">${latestSession.waiter_id || 'Waitstaff'}</strong>
-                </span>
-              </div>
-            </div>
-            <button type="button" class="btn-sentry" onclick="this.closest('#waiter-top-booking-bar').remove()" style="padding: 6px 12px; font-size: 11px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 6px; cursor: pointer;">
-              <i class="fa-solid fa-xmark"></i> Dismiss
-            </button>
-          </div>
-        `;
-      }
-    } else if (topBar) {
-      topBar.remove();
-    }
+    // Top notification bar disabled in favor of dedicated Notifications Tab
+    const topBar = document.getElementById('waiter-top-booking-bar');
+    if (topBar) topBar.remove();
   }
 
   let knownAssignedTables = new Set();
