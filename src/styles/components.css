@@ -1277,8 +1277,23 @@
 
 @media (max-width: 640px) {
   .portal-gateway-grid {
-    grid-template-columns: 1fr;
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
     gap: 14px;
+    padding-bottom: 12px;
+  }
+
+  .portal-gateway-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .portal-choice-card {
+    min-width: 85%;
+    flex-shrink: 0;
+    scroll-snap-align: center;
   }
 }
 
