@@ -146,12 +146,25 @@ export function openEmailAuthModal(targetRole = 'Customer', targetUrl = null) {
     btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Continue & Send OTP';
 
     if (result.ok) {
-      // Move to OTP step
-      document.getElementById('email-auth-step-1').style.display = 'none';
-      document.getElementById('email-auth-step-2').style.display = 'block';
-      document.getElementById('email-auth-step-label').textContent = `Enter the OTP code sent to ${email}`;
-      document.getElementById('otp-code-input')?.focus();
-      startResendCountdown();
+      if (result.directSignIn && result.session) {
+        // Existing user — password verified, sign in directly (no OTP needed)
+        clearTimer();
+        modal.remove();
+        await authService.handleSupabaseSession(result.session, targetRole);
+        const finalTarget = targetUrl || authService.getRoleRedirectUrl(targetRole);
+        authService.showToast(`Signed in as ${targetRole}! Redirecting...`);
+        setTimeout(() => {
+          window.isAppNavigation = true;
+          window.location.href = finalTarget;
+        }, 400);
+      } else {
+        // New user — OTP sent, move to verification step
+        document.getElementById('email-auth-step-1').style.display = 'none';
+        document.getElementById('email-auth-step-2').style.display = 'block';
+        document.getElementById('email-auth-step-label').textContent = `Enter the OTP code sent to ${email}`;
+        document.getElementById('otp-code-input')?.focus();
+        startResendCountdown();
+      }
     } else {
       showError(result.reason || 'Could not process. Please try again.');
     }

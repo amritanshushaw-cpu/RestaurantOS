@@ -402,6 +402,17 @@ class AuthService {
       return { ok: false, reason: 'Supabase is not configured.' };
     }
 
+    // Helper to extract error message from various Supabase error shapes
+    const getErrMsg = (err, fallback = 'Unknown error') => {
+      if (!err) return fallback;
+      if (typeof err === 'string') return err;
+      if (err.message && typeof err.message === 'string' && err.message.trim() && err.message !== '{}') return err.message;
+      if (err.msg && typeof err.msg === 'string') return err.msg;
+      if (err.error_description) return err.error_description;
+      try { const s = JSON.stringify(err); if (s !== '{}') return s; } catch (_) {}
+      return fallback;
+    };
+
     try {
       // Step A: Try signUp (new user) — Supabase sends confirmation OTP email
       const { data: signUpData, error: signUpError } = await dbEngine.supabase.auth.signUp({
@@ -409,45 +420,48 @@ class AuthService {
         password: cleanPassword,
       });
 
+      console.log('[Auth] signUp result:', { signUpData, signUpError });
+
       // If user already exists, signUp returns a fake user with no identities
       const isExistingUser = signUpData?.user && (!signUpData.user.identities || signUpData.user.identities.length === 0);
 
-      if (signUpError && !isExistingUser) {
-        // If the error is "User already registered", that's fine — we proceed to OTP
-        if (signUpError.message?.toLowerCase().includes('already registered') ||
-            signUpError.message?.toLowerCase().includes('already exists')) {
-          // Existing user → send magic link / OTP
-        } else {
-          this.showToast(`Sign-up error: ${signUpError.message}`);
-          return { ok: false, reason: signUpError.message };
-        }
-      }
-
       if (!signUpError && signUpData?.user && !isExistingUser) {
-        // New user created successfully — Supabase sends confirmation email with OTP
+        // New user created — Supabase sends confirmation email with OTP
         this.pendingOtpEmail = cleanEmail;
         this.showToast(`Confirmation OTP sent to ${cleanEmail}`);
         return { ok: true, isNewUser: true };
       }
 
-      // Step B: Existing user — send OTP via signInWithOtp
-      const { error: otpError } = await dbEngine.supabase.auth.signInWithOtp({
+      // Step B: Existing user — verify password with signInWithPassword
+      const { data: signInData, error: signInError } = await dbEngine.supabase.auth.signInWithPassword({
         email: cleanEmail,
-        options: { shouldCreateUser: false }
+        password: cleanPassword,
       });
 
-      if (otpError) {
-        this.showToast(`OTP error: ${otpError.message}`);
-        return { ok: false, reason: otpError.message };
+      console.log('[Auth] signInWithPassword result:', { signInData, signInError });
+
+      if (signInError) {
+        const msg = getErrMsg(signInError, 'Invalid email or password.');
+        this.showToast(`Sign-in error: ${msg}`);
+        return { ok: false, reason: msg };
       }
 
-      this.pendingOtpEmail = cleanEmail;
-      this.showToast(`OTP code sent to ${cleanEmail}`);
-      return { ok: true, isNewUser: false };
+      if (signInData?.session) {
+        // Password correct — user is authenticated. Sign them in directly.
+        this.pendingOtpEmail = cleanEmail;
+        this.pendingSession = signInData.session;
+        this.showToast(`Password verified! Signing in...`);
+        return { ok: true, isNewUser: false, directSignIn: true, session: signInData.session };
+      }
+
+      // Fallback
+      this.showToast('Could not authenticate. Please check your credentials.');
+      return { ok: false, reason: 'Could not authenticate. Check email and password.' };
 
     } catch (e) {
-      this.showToast(`Authentication error: ${e.message}`);
-      return { ok: false, reason: e.message };
+      console.error('[Auth] sendEmailPasswordOtp error:', e);
+      this.showToast(`Authentication error: ${e.message || e}`);
+      return { ok: false, reason: e.message || 'Unexpected error' };
     }
   }
 
