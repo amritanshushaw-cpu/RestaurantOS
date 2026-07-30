@@ -379,42 +379,80 @@ class AuthService {
   }
 
   // ---------------------------------------------------------------------
-  // Real Email OTP Verification (Supabase Auth)
+  // Email + Password + OTP Authentication (Supabase Built-in Email)
+  // Works for ALL users — no custom domain or SMTP needed.
+  // Flow: signUp (new) or signIn (existing) → Supabase sends OTP → verifyOtp
   // ---------------------------------------------------------------------
 
-  async sendEmailOtp(email) {
-    const cleanEmail = (email || '').trim();
+  async sendEmailPasswordOtp(email, password) {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const cleanPassword = (password || '').trim();
+
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
-      this.showToast('Enter a valid email address first.');
-      return { ok: false, reason: 'invalid_email' };
+      this.showToast('Enter a valid email address.');
+      return { ok: false, reason: 'Please enter a valid email address.' };
+    }
+    if (!cleanPassword || cleanPassword.length < 6) {
+      this.showToast('Password must be at least 6 characters.');
+      return { ok: false, reason: 'Password must be at least 6 characters.' };
     }
 
     if (!dbEngine.supabase || !dbEngine.hasValidSupabaseConfig()) {
-      this.pendingOtpEmail = cleanEmail;
-      this.showToast(`Demo mode — use code 123456 for ${cleanEmail}`);
-      return { ok: true };
+      this.showToast('Supabase is not configured. Check src/config.js.');
+      return { ok: false, reason: 'Supabase is not configured.' };
     }
 
     try {
-      const { error } = await dbEngine.supabase.auth.signInWithOtp({
+      // Step A: Try signUp (new user) — Supabase sends confirmation OTP email
+      const { data: signUpData, error: signUpError } = await dbEngine.supabase.auth.signUp({
         email: cleanEmail,
-        options: { shouldCreateUser: true }
+        password: cleanPassword,
       });
-      if (error) {
-        this.showToast(`Verification error: ${error.message}`);
-        return { ok: false, reason: error.message };
+
+      // If user already exists, signUp returns a fake user with no identities
+      const isExistingUser = signUpData?.user && (!signUpData.user.identities || signUpData.user.identities.length === 0);
+
+      if (signUpError && !isExistingUser) {
+        // If the error is "User already registered", that's fine — we proceed to OTP
+        if (signUpError.message?.toLowerCase().includes('already registered') ||
+            signUpError.message?.toLowerCase().includes('already exists')) {
+          // Existing user → send magic link / OTP
+        } else {
+          this.showToast(`Sign-up error: ${signUpError.message}`);
+          return { ok: false, reason: signUpError.message };
+        }
       }
+
+      if (!signUpError && signUpData?.user && !isExistingUser) {
+        // New user created successfully — Supabase sends confirmation email with OTP
+        this.pendingOtpEmail = cleanEmail;
+        this.showToast(`Confirmation OTP sent to ${cleanEmail}`);
+        return { ok: true, isNewUser: true };
+      }
+
+      // Step B: Existing user — send OTP via signInWithOtp
+      const { error: otpError } = await dbEngine.supabase.auth.signInWithOtp({
+        email: cleanEmail,
+        options: { shouldCreateUser: false }
+      });
+
+      if (otpError) {
+        this.showToast(`OTP error: ${otpError.message}`);
+        return { ok: false, reason: otpError.message };
+      }
+
       this.pendingOtpEmail = cleanEmail;
-      this.showToast(`Verification code sent to ${cleanEmail}`);
-      return { ok: true };
+      this.showToast(`OTP code sent to ${cleanEmail}`);
+      return { ok: true, isNewUser: false };
+
     } catch (e) {
-      this.showToast(`Could not send verification code: ${e.message}`);
+      this.showToast(`Authentication error: ${e.message}`);
       return { ok: false, reason: e.message };
     }
   }
 
   async verifyEmailOtp(email, token, role = 'Customer', targetUrl = null) {
-    const cleanEmail = (email || this.pendingOtpEmail || '').trim();
+    const cleanEmail = (email || this.pendingOtpEmail || '').trim().toLowerCase();
     const cleanToken = (token || '').trim();
     const finalTarget = targetUrl || this.getRoleRedirectUrl(role);
 
@@ -422,44 +460,39 @@ class AuthService {
     localStorage.setItem('rest_os_pending_redirect', finalTarget);
 
     if (!cleanToken) {
-      this.showToast('Please enter the 6-digit verification code.');
-      return { ok: false, reason: 'missing_token' };
+      this.showToast('Please enter the OTP verification code.');
+      return { ok: false, reason: 'Please enter the OTP code.' };
     }
 
     if (!dbEngine.supabase || !dbEngine.hasValidSupabaseConfig()) {
-      if (cleanToken !== '123456') {
-        this.showToast('Invalid demo code. Use 123456.');
-        return { ok: false, reason: 'invalid_code' };
-      }
-      const user = {
-        id: 'email-demo-' + Date.now(),
-        name: cleanEmail.split('@')[0],
-        email: cleanEmail,
-        role: role,
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(cleanEmail)}`
-      };
-      this.saveUser(user);
-      this.showToast(`Demo verified as ${user.name} (${role} Mode). Redirecting…`);
-      this.pendingOtpEmail = null;
-      setTimeout(() => { 
-        window.isAppNavigation = true;
-        window.location.href = finalTarget; 
-      }, 350);
-      return { ok: true };
+      this.showToast('Supabase is not configured.');
+      return { ok: false, reason: 'Supabase is not configured.' };
     }
 
     try {
-      const { data, error } = await dbEngine.supabase.auth.verifyOtp({
+      // Try verifying as email OTP first (for signInWithOtp flow)
+      let result = await dbEngine.supabase.auth.verifyOtp({
         email: cleanEmail,
         token: cleanToken,
         type: 'email'
       });
-      if (error || !data?.session) {
-        this.showToast(`Verification failed: ${error ? error.message : 'invalid code'}`);
-        return { ok: false, reason: error ? error.message : 'invalid_code' };
+
+      // If that fails, try as signup confirmation OTP
+      if (result.error) {
+        result = await dbEngine.supabase.auth.verifyOtp({
+          email: cleanEmail,
+          token: cleanToken,
+          type: 'signup'
+        });
       }
+
+      if (result.error || !result.data?.session) {
+        this.showToast(`Verification failed: ${result.error ? result.error.message : 'Invalid or expired OTP code'}`);
+        return { ok: false, reason: result.error ? result.error.message : 'Invalid or expired OTP code' };
+      }
+
       this.pendingOtpEmail = null;
-      await this.handleSupabaseSession(data.session, role);
+      await this.handleSupabaseSession(result.data.session, role);
       this.closeAuthModal();
       return { ok: true };
     } catch (e) {
@@ -467,6 +500,7 @@ class AuthService {
       return { ok: false, reason: e.message };
     }
   }
+
 
   // ---------------------------------------------------------------------
   // Real Mobile Phone OTP Verification (Supabase Auth Cloud)
