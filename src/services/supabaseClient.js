@@ -68,6 +68,9 @@ class DynamicDatabaseEngine {
             this.handleRemoteTableSync(payload.payload.tables);
           }
         })
+        .on('broadcast', { event: 'analytics_reset' }, () => {
+          this.handleRemoteAnalyticsReset();
+        })
         .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
             console.info('⚡ RestaurantOS: Multi-Device Cloud Realtime Channel Subscribed!');
@@ -75,6 +78,22 @@ class DynamicDatabaseEngine {
         });
     } catch (e) {
       console.warn('Realtime channel notice:', e.message);
+    }
+  }
+
+  broadcastAnalyticsReset() {
+    try {
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new CustomEvent('rest_os_analytics_reset'));
+    } catch (e) {}
+    if (this.realtimeChannel) {
+      try {
+        this.realtimeChannel.send({
+          type: 'broadcast',
+          event: 'analytics_reset',
+          payload: { timestamp: Date.now() }
+        });
+      } catch (e) {}
     }
   }
 
@@ -639,8 +658,7 @@ class DynamicDatabaseEngine {
     };
   }
 
-  // Reset all analytics, order history, table sessions, and revenue metrics (Manager feature)
-  resetAllAnalytics() {
+  handleRemoteAnalyticsReset() {
     localStorage.removeItem(STORAGE_KEYS.ORDERS);
     localStorage.removeItem(STORAGE_KEYS.SESSIONS);
     localStorage.removeItem(STORAGE_KEYS.PAYMENTS);
@@ -650,22 +668,39 @@ class DynamicDatabaseEngine {
     localStorage.removeItem('rest_os_active_session');
 
     // Reset table statuses back to AVAILABLE
-    const tables = this.getTables();
-    tables.forEach(tbl => {
-      tbl.status = 'AVAILABLE';
-      tbl.vacant = 'Y';
-    });
-    localStorage.setItem(STORAGE_KEYS.TABLES, JSON.stringify(tables));
+    const defaultTables = [
+      { id: 'tbl-01', table_number: 'Table 01', seats: 2, section: 'Patio', status: 'AVAILABLE', vacant: 'Y' },
+      { id: 'tbl-02', table_number: 'Table 02', seats: 4, section: 'Main Hall', status: 'AVAILABLE', vacant: 'Y' },
+      { id: 'tbl-03', table_number: 'Table 03', seats: 4, section: 'Main Hall', status: 'AVAILABLE', vacant: 'Y' },
+      { id: 'tbl-04', table_number: 'Table 04', seats: 6, section: 'VIP Booth', status: 'AVAILABLE', vacant: 'Y' },
+      { id: 'tbl-05', table_number: 'Table 05', seats: 2, section: 'Patio', status: 'AVAILABLE', vacant: 'Y' },
+      { id: 'tbl-06', table_number: 'Table 06', seats: 8, section: 'Main Hall', status: 'AVAILABLE', vacant: 'Y' },
+      { id: 'tbl-07', table_number: 'Table 07', seats: 2, section: 'Terrace', status: 'AVAILABLE', vacant: 'Y' },
+      { id: 'tbl-08', table_number: 'Table 08', seats: 4, section: 'Main Hall', status: 'AVAILABLE', vacant: 'Y' },
+      { id: 'tbl-09', table_number: 'Table 09', seats: 6, section: 'VIP Booth', status: 'AVAILABLE', vacant: 'Y' },
+      { id: 'tbl-10', table_number: 'Table 10', seats: 8, section: 'Terrace', status: 'AVAILABLE', vacant: 'Y' }
+    ];
+    localStorage.setItem(STORAGE_KEYS.TABLES, JSON.stringify(defaultTables));
 
-    // Broadcast reset event over cloud realtime channel
-    this.broadcastOrderSync({ id: 'reset-' + Date.now(), status: 'RESET', order_number: 'RESET', items: [] });
-    this.broadcastSessionSync({ session_id: 'reset-' + Date.now(), status: 'RESET' });
+    try {
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new CustomEvent('rest_os_analytics_reset'));
+      window.dispatchEvent(new CustomEvent('rest_os_table_sync', { detail: defaultTables }));
+    } catch (e) {}
 
-    try { window.dispatchEvent(new Event('storage')); } catch (e) {}
+    if (window.authService && window.authService.showToast) {
+      window.authService.showToast('🧹 Manager Reset: All Analytics, Orders & Tables reset across all devices!');
+    }
+  }
+
+  // Reset all analytics, order history, table sessions, and revenue metrics (Manager feature)
+  resetAllAnalytics() {
+    this.handleRemoteAnalyticsReset();
+    this.broadcastAnalyticsReset();
 
     return {
       ok: true,
-      message: 'All analytics, order history, sessions, and revenue metrics reset.'
+      message: 'All analytics, order history, sessions, and revenue metrics reset across all devices.'
     };
   }
 

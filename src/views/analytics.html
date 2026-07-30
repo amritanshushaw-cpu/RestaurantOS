@@ -340,6 +340,7 @@
     });
 
     window.addEventListener('storage', renderAnalytics);
+    window.addEventListener('rest_os_analytics_reset', renderAnalytics);
     document.addEventListener('DOMContentLoaded', renderAnalytics);
     setInterval(renderAnalytics, 3000);
   </script>
