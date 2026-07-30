@@ -702,7 +702,13 @@ class DynamicDatabaseEngine {
     localStorage.removeItem(STORAGE_KEYS.CUSTOMER_HISTORY);
     localStorage.removeItem(STORAGE_KEYS.TABLE_VACANCY);
     localStorage.removeItem('rest_os_active_session');
-    try { sessionStorage.removeItem('rest_os_active_session'); } catch (e) {}
+    localStorage.removeItem('rest_os_orders');
+    localStorage.removeItem('rest_os_sessions');
+    localStorage.removeItem('rest_os_payments');
+    localStorage.removeItem('rest_os_queue');
+    localStorage.removeItem('rest_os_customer_history');
+    localStorage.removeItem('rest_os_table_vacancy');
+    try { sessionStorage.clear(); } catch (e) {}
     localStorage.setItem('rest_os_last_reset', Date.now().toString());
 
     // Reset table statuses back to AVAILABLE
