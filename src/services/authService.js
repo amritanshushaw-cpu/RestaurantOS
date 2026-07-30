@@ -414,49 +414,83 @@ class AuthService {
     };
 
     try {
-      // Step A: Try signUp (new user) — Supabase sends confirmation OTP email
+      // ── Step 1: Try signUp (new user) ──
       const { data: signUpData, error: signUpError } = await dbEngine.supabase.auth.signUp({
         email: cleanEmail,
         password: cleanPassword,
       });
 
-      console.log('[Auth] signUp result:', { signUpData, signUpError });
+      console.log('[Auth] signUp response:', { user: signUpData?.user?.id, identities: signUpData?.user?.identities?.length, error: signUpError });
 
-      // If user already exists, signUp returns a fake user with no identities
       const isExistingUser = signUpData?.user && (!signUpData.user.identities || signUpData.user.identities.length === 0);
 
       if (!signUpError && signUpData?.user && !isExistingUser) {
-        // New user created — Supabase sends confirmation email with OTP
+        // Brand new user created → Supabase sent confirmation OTP email
         this.pendingOtpEmail = cleanEmail;
-        this.showToast(`Confirmation OTP sent to ${cleanEmail}`);
+        this.showToast(`Confirmation OTP sent to ${cleanEmail}! Check your inbox.`);
         return { ok: true, isNewUser: true };
       }
 
-      // Step B: Existing user — verify password with signInWithPassword
+      // ── Step 2: Existing user — try password sign-in ──
       const { data: signInData, error: signInError } = await dbEngine.supabase.auth.signInWithPassword({
         email: cleanEmail,
         password: cleanPassword,
       });
 
-      console.log('[Auth] signInWithPassword result:', { signInData, signInError });
+      console.log('[Auth] signInWithPassword response:', { session: !!signInData?.session, error: signInError });
 
-      if (signInError) {
-        const msg = getErrMsg(signInError, 'Invalid email or password.');
-        this.showToast(`Sign-in error: ${msg}`);
-        return { ok: false, reason: msg };
-      }
-
-      if (signInData?.session) {
-        // Password correct — user is authenticated. Sign them in directly.
+      // If password sign-in succeeded → direct sign in
+      if (!signInError && signInData?.session) {
         this.pendingOtpEmail = cleanEmail;
-        this.pendingSession = signInData.session;
         this.showToast(`Password verified! Signing in...`);
         return { ok: true, isNewUser: false, directSignIn: true, session: signInData.session };
       }
 
-      // Fallback
-      this.showToast('Could not authenticate. Please check your credentials.');
-      return { ok: false, reason: 'Could not authenticate. Check email and password.' };
+      // ── Step 3: signIn failed — likely unconfirmed email. Resend confirmation OTP ──
+      const errMsg = getErrMsg(signInError, '');
+      const isUnconfirmed = errMsg.toLowerCase().includes('not confirmed') || 
+                            errMsg.toLowerCase().includes('invalid login credentials') ||
+                            errMsg.toLowerCase().includes('invalid credentials');
+
+      console.log('[Auth] signIn failed, attempting OTP resend. Error:', errMsg, 'isUnconfirmed:', isUnconfirmed);
+
+      if (isUnconfirmed) {
+        // Try resending the signup confirmation email
+        const { error: resendError } = await dbEngine.supabase.auth.resend({
+          type: 'signup',
+          email: cleanEmail,
+        });
+
+        console.log('[Auth] resend signup result:', { resendError });
+
+        if (!resendError) {
+          this.pendingOtpEmail = cleanEmail;
+          this.showToast(`OTP code re-sent to ${cleanEmail}! Check your inbox.`);
+          return { ok: true, isNewUser: true };
+        }
+
+        // If resend fails, try signInWithOtp as last resort
+        const { error: otpError } = await dbEngine.supabase.auth.signInWithOtp({
+          email: cleanEmail,
+          options: { shouldCreateUser: false }
+        });
+
+        console.log('[Auth] signInWithOtp fallback result:', { otpError });
+
+        if (!otpError) {
+          this.pendingOtpEmail = cleanEmail;
+          this.showToast(`OTP code sent to ${cleanEmail}! Check your inbox.`);
+          return { ok: true, isNewUser: false };
+        }
+
+        // All OTP methods failed — password might genuinely be wrong
+        this.showToast(`Could not send OTP. Please verify your email and password.`);
+        return { ok: false, reason: 'Could not send OTP. Make sure your email and password are correct.' };
+      }
+
+      // Non-credential error
+      this.showToast(`Sign-in error: ${errMsg || 'Unknown error'}`);
+      return { ok: false, reason: errMsg || 'Could not sign in.' };
 
     } catch (e) {
       console.error('[Auth] sendEmailPasswordOtp error:', e);
