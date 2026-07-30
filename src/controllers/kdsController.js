@@ -22,16 +22,25 @@ document.addEventListener('DOMContentLoaded', () => {
   let waiterFeedContainer = document.getElementById('waiter-notifications-feed');
   if (!waiterFeedContainer && ticketsContainer) {
     const feedSection = document.createElement('section');
-    feedSection.style.cssText = 'background: var(--color-ink-deep); border: 1px solid var(--border-violet); border-radius: var(--radius-xl); padding: 20px; margin-bottom: 24px; text-align: left;';
+    feedSection.style.cssText = 'background: linear-gradient(135deg, rgba(236, 72, 153, 0.08), rgba(167, 139, 250, 0.04)); border: 1.5px solid rgba(236, 72, 153, 0.3); border-radius: var(--radius-xl); padding: 20px; margin-bottom: 24px; text-align: left; box-shadow: 0 10px 30px rgba(236, 72, 153, 0.12);';
     feedSection.innerHTML = `
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid var(--border-violet); padding-bottom: 8px;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <i class="fa-solid fa-concierge-bell" style="color: var(--color-accent-pink); font-size: 18px;"></i>
-          <h3 style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin: 0;">Waiter Interface & Live Alerts Feed</h3>
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; border-bottom: 1px dashed rgba(236, 72, 153, 0.25); padding-bottom: 10px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="background: rgba(236, 72, 153, 0.2); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 10px rgba(236, 72, 153, 0.3);">
+            <i class="fa-solid fa-bell-concierge" style="color: var(--color-accent-pink); font-size: 18px;"></i>
+          </div>
+          <div>
+            <h3 style="font-size: 16px; font-weight: 700; color: #ffffff; margin: 0; display: flex; align-items: center; gap: 8px;">
+              Waiter Interface &amp; Live Alerts Feed
+            </h3>
+            <span style="font-size: 12px; color: var(--text-secondary);">Real-time stream of table bookings, kitchen dispatches, and server assignments</span>
+          </div>
         </div>
-        <span class="badge sandbox-badge" style="font-size: 11px; background: rgba(236, 72, 153, 0.15); color: #ec4899;">LIVE WAITER MODE</span>
+        <span class="badge sandbox-badge" style="font-size: 11px; background: rgba(236, 72, 153, 0.2); color: #ec4899; border: 1px solid rgba(236, 72, 153, 0.4); padding: 5px 12px; border-radius: 6px; font-weight: 700;">
+          <i class="fa-solid fa-satellite-dish" style="margin-right: 4px;"></i> LIVE WAITER STREAM
+        </span>
       </div>
-      <div id="waiter-feed-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 140px; overflow-y: auto; font-size: 13px; color: var(--text-secondary);">
+      <div id="waiter-feed-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 160px; overflow-y: auto; font-size: 13px;">
         <p style="margin: 0; color: var(--text-tertiary);">Listening for table bookings, order dispatches, and payment type alerts...</p>
       </div>
     `;
@@ -44,23 +53,46 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!feedList) return;
 
     const sessions = dbEngine.getSessions();
-    const activeSessions = sessions.filter(s => s.status === 'ACTIVE');
+    const activeSessions = sessions.filter(s => s.status === 'ACTIVE' || s.status === 'PAYMENT_PENDING' || s.status === 'OCCUPIED');
 
     if (activeSessions.length === 0) {
-      feedList.innerHTML = '<p style="margin: 0; color: var(--text-tertiary);">No active waiter sessions. Table booking notifications will appear here live.</p>';
+      feedList.innerHTML = `
+        <div style="text-align: center; padding: 16px; background: rgba(0,0,0,0.2); border: 1px dashed var(--border-violet); border-radius: var(--radius-md); color: var(--text-tertiary);">
+          <i class="fa-solid fa-circle-info" style="color: var(--color-accent-lime); font-size: 18px; margin-bottom: 4px; display: block;"></i>
+          No active waiter table bookings right now. New table sessions will stream here live!
+        </div>
+      `;
       return;
     }
 
-    feedList.innerHTML = activeSessions.map(s => `
-      <div style="background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-md); padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-        <div>
-          <strong style="color: var(--color-accent-lime); font-family: var(--font-mono);">[NOTIFICATION] Table Booked:</strong> ${s.table_no} &nbsp;·&nbsp;
-          <strong>Session ID:</strong> <span class="mono" style="color: #fff;">${s.session_id}</span> &nbsp;·&nbsp;
-          <strong>Waiter Allotted:</strong> ${s.waiter_id}
+    feedList.innerHTML = activeSessions.map(s => {
+      const isDelivered = s.delivered === 'Y';
+      const statusBadge = isDelivered 
+        ? `<span class="badge" style="font-size: 10px; background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.4); font-weight: 700; padding: 4px 10px; border-radius: 6px;"><i class="fa-solid fa-circle-check"></i> SERVED (Y)</span>`
+        : `<span class="badge" style="font-size: 10px; background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.4); font-weight: 700; padding: 4px 10px; border-radius: 6px;"><i class="fa-solid fa-hourglass-half"></i> IN PREP (N)</span>`;
+
+      return `
+        <div style="background: var(--color-primary); border: 1px solid var(--border-violet); border-radius: var(--radius-md); padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; gap: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); transition: all 0.2s ease;">
+          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <span class="badge" style="background: rgba(236, 72, 153, 0.18); color: #ec4899; border: 1px solid rgba(236, 72, 153, 0.35); font-size: 10px; font-weight: 700; padding: 4px 9px; border-radius: 5px;">
+              <i class="fa-solid fa-bell"></i> TABLE BOOKED
+            </span>
+            <span style="font-weight: 800; font-size: 14px; color: #ffffff; letter-spacing: 0.2px;">${s.table_no}</span>
+            <span style="color: var(--text-tertiary); font-size: 12px;">&bull;</span>
+            <span style="font-size: 12px; color: var(--text-secondary);">
+              Session ID: <code style="background: rgba(0,0,0,0.3); color: var(--color-accent-lime); padding: 2px 8px; border-radius: 4px; font-family: var(--font-mono); font-weight: 700;">${s.session_id}</code>
+            </span>
+            <span style="color: var(--text-tertiary); font-size: 12px;">&bull;</span>
+            <span style="font-size: 12px; color: var(--color-accent-pink); font-weight: 700;">
+              <i class="fa-solid fa-user-gear"></i> Waiter Allotted: ${s.waiter_id}
+            </span>
+          </div>
+          <div>
+            ${statusBadge}
+          </div>
         </div>
-        <span class="badge" style="font-size: 10px; background: rgba(194, 239, 78, 0.15); color: var(--color-accent-lime);">Delivered: ${s.delivered || 'N'}</span>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   }
 
   // Poll & Render Dynamic Tickets
